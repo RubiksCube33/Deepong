@@ -7,26 +7,30 @@ using Random = UnityEngine.Random;
 public class BallController : MonoBehaviour
 {
     private Rigidbody rb;
+    private float speed = 150f;
+    private Renderer rend;
 
-    private float randX;
-    private float randY;
-    private float randZ;
-    
     // Start is called before the first frame update
     void Start()
     {
-        randX = Random.Range(0f, 10f);
-        randY = Random.Range(0f, 10f);
-        randZ = Random.Range(0f, 10f);
-        
         rb = GetComponent<Rigidbody>();
-        rb.velocity = new Vector3(randX, randY, randZ);
+        rend = GetComponent<Renderer>();
     }
-
-    void OnCollisionExit(Collision collision)
+    
+    private void OnCollisionEnter(Collision collision)
     {
-        Vector3 currentVelocity = rb.velocity;
-        rb.velocity = currentVelocity * 1.1f;
+        if (rb.velocity == Vector3.zero)
+        {
+            ContactPoint contact = collision.contacts[0];
+            Vector3 hitDirection = (collision.transform.position - contact.point).normalized;
+            Vector3 forceDirection = hitDirection;
+            float forceMagnitude = 25.0f;
+        
+            rb.velocity = forceDirection * forceMagnitude;
+        }
+        
+        Color newColor = new Color(Random.value, Random.value, Random.value);
+        rend.material.color = newColor;
     }
 
     // Update is called once per frame
