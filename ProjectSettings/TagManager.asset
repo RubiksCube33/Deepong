@@ -3,7 +3,11 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Anchor
+  - Court_Wall
+  - Game_Ball
+  - Paddle
   layers:
   - Default
   - TransparentFX
