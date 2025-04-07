@@ -24,7 +24,7 @@ public class BallController : MonoBehaviour
             ContactPoint contact = collision.contacts[0];
             Vector3 hitDirection = (collision.transform.position - contact.point).normalized;
             Vector3 forceDirection = hitDirection;
-            float forceMagnitude = 25.0f;
+            float forceMagnitude = 10.0f;
         
             rb.velocity = forceDirection * forceMagnitude;
         }
