@@ -68,8 +68,8 @@ namespace Photon.Pun
                 }
                 else
                 {
-                    tr.position = Vector3.MoveTowards(tr.position, this.m_NetworkPosition, this.m_Distance * Time.deltaTime * PhotonNetwork.SerializationRate);
-                    tr.rotation = Quaternion.RotateTowards(tr.rotation, this.m_NetworkRotation, this.m_Angle * Time.deltaTime *  PhotonNetwork.SerializationRate);
+                    tr.position = Vector3.Lerp(tr.position, this.m_NetworkPosition, Time.deltaTime * 10f);
+                    tr.rotation = Quaternion.Lerp(tr.rotation, this.m_NetworkRotation, Time.deltaTime * 10f);
                 }
             }
         }
