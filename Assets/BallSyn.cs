@@ -15,29 +15,31 @@ public class BallSyn : MonoBehaviourPun, IPunObservable
         networkVel = Vector3.zero;
     }
 
-    void Update()
+    void FixedUpdate()
     {
         if (!photonView.IsMine)
         {
-            // 보간(Lerp) + 외삽(Extrapolation) 예시
-            networkPos += networkVel * Time.deltaTime;
-            transform.position = Vector3.Lerp(transform.position, networkPos, Time.deltaTime * 10f);
+            Vector3 nextPos = Vector3.Lerp(rb.position, networkPos, Time.fixedDeltaTime * 15f);
+            rb.MovePosition(nextPos); // 더 자연스러움
         }
     }
+
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting)
         {
-            // 내 오브젝트: 위치와 속도 전송
             stream.SendNext(transform.position);
             stream.SendNext(rb.velocity);
         }
         else
         {
-            // 원격 오브젝트: 수신
             networkPos = (Vector3)stream.ReceiveNext();
             networkVel = (Vector3)stream.ReceiveNext();
+
+            float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTime));
+            networkPos += networkVel * lag;
         }
     }
+
 }
