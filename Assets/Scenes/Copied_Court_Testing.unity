@@ -778,6 +778,8 @@ GameObject:
   - component: {fileID: 421886542}
   - component: {fileID: 421886541}
   - component: {fileID: 421886548}
+  - component: {fileID: 421886550}
+  - component: {fileID: 421886549}
   m_Layer: 3
   m_Name: Sphere
   m_TagString: Game_Ball
@@ -1030,9 +1032,44 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 421886540}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 382b368c3db5c0449b3e2471903e19ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &421886549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 421886540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents:
+  - {fileID: 421886550}
+  sceneViewId: 1
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
+--- !u!114 &421886550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 421886540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0205c870ec6d21c4381e7bea7c88f8bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &548229389
@@ -1684,6 +1721,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: -45, y: 0, z: 0}
+--- !u!1 &1156635186
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1156635188}
+  - component: {fileID: 1156635187}
+  m_Layer: 0
+  m_Name: Photon Room
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1156635187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1156635186}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57c262d944312e9498c066570d38802e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1156635188
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1156635186}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1233515939
 GameObject:
   m_ObjectHideFlags: 0
@@ -2376,6 +2457,8 @@ MonoBehaviour:
   restartButton: {fileID: 1600101420}
   mainMenuButton: {fileID: 1233515943}
   settingsButton: {fileID: 1713283928}
+  scoreToWin: 11
+  ballInitialPosition: {x: -1.05, y: 1.004, z: -4.362}
 --- !u!1 &1562279697
 GameObject:
   m_ObjectHideFlags: 0
@@ -3560,3 +3643,4 @@ SceneRoots:
   - {fileID: 1667047512}
   - {fileID: 1447289076}
   - {fileID: 2124215450}
+  - {fileID: 1156635188}

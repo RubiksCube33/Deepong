@@ -509,9 +509,7 @@ GameObject:
   - component: {fileID: 421886543}
   - component: {fileID: 421886542}
   - component: {fileID: 421886541}
-  - component: {fileID: 421886549}
   - component: {fileID: 421886548}
-  - component: {fileID: 421886551}
   - component: {fileID: 421886550}
   m_Layer: 3
   m_Name: Sphere
@@ -777,28 +775,10 @@ MonoBehaviour:
   OwnershipTransfer: 0
   observableSearch: 2
   ObservedComponents:
-  - {fileID: 421886549}
-  - {fileID: 421886551}
   - {fileID: 421886550}
   sceneViewId: 1
   InstantiationId: 0
   isRuntimeInstantiated: 0
---- !u!114 &421886549
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 421886540}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SynchronizePosition: 1
-  m_SynchronizeRotation: 1
-  m_SynchronizeScale: 0
-  m_UseLocal: 1
 --- !u!114 &421886550
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -811,22 +791,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0205c870ec6d21c4381e7bea7c88f8bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &421886551
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 421886540}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 64179f3720bbfe947b7724caa67b7c1d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SynchronizeVelocity: 1
-  m_SynchronizeAngularVelocity: 0
-  m_TeleportEnabled: 0
-  m_TeleportIfDistanceGreaterThan: 3
 --- !u!1001 &703239447
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1351,7 +1315,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1229630644}
-  - component: {fileID: 1229630643}
+  - component: {fileID: 1229630645}
   m_Layer: 0
   m_Name: Photon Room
   m_TagString: Untagged
@@ -1359,18 +1323,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1229630643
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1229630642}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3eca042bb6b206249aad0d639e156a55, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &1229630644
 Transform:
   m_ObjectHideFlags: 0
@@ -1386,6 +1338,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1229630645
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1229630642}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57c262d944312e9498c066570d38802e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1273861214
 GameObject:
   m_ObjectHideFlags: 0
