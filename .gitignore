@@ -72,4 +72,6 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 /.idea
 /.vscode
+/ProjectSettings
+.vsconfig
 /[Aa]ssets/Imported_Assets/
