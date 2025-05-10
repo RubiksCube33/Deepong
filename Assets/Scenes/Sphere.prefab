@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 6129204923097343415}
   - component: {fileID: 4974112659444356}
   - component: {fileID: 8464668129738108565}
+  - component: {fileID: 8160469428714177551}
   m_Layer: 3
   m_Name: Sphere
   m_TagString: Game_Ball
@@ -68,7 +69,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  - {fileID: 2100000, guid: b5dcda18eb89d254e8011859299b1235, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -310,3 +311,18 @@ MonoBehaviour:
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
+--- !u!114 &8160469428714177551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3418441386187508399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6154c297a5a53524492cb2103a99238c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rotationSpeed: 10
+  tiltStrength: 15
+  minVelocityThreshold: 0.1
