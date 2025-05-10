@@ -8,6 +8,7 @@ TagManager:
   - Court_Wall
   - Game_Ball
   - Paddle
+  - VRController
   layers:
   - Default
   - TransparentFX
