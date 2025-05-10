@@ -643,6 +643,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdc85956020ba0f4eb7d46a512f254ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  baseForce: 10
+  velocityMultiplier: 0.5
+  wallBounceMultiplier: 0.9
+  wallMinimumSpeed: 8
 --- !u!54 &421886543
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -891,6 +895,14 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6178189216777813793, guid: 77e7c27b2c5525e4aa8cc9f99d654486, type: 3}
+      propertyPath: m_TagString
+      value: VRController
+      objectReference: {fileID: 0}
+    - target: {fileID: 7277802326798953684, guid: 77e7c27b2c5525e4aa8cc9f99d654486, type: 3}
+      propertyPath: m_TagString
+      value: VRController
+      objectReference: {fileID: 0}
     - target: {fileID: 7277802327414017196, guid: 77e7c27b2c5525e4aa8cc9f99d654486, type: 3}
       propertyPath: m_BackGroundColor.a
       value: 1
@@ -1066,6 +1078,10 @@ PrefabInstance:
     - target: {fileID: 8298045291338814966, guid: 77e7c27b2c5525e4aa8cc9f99d654486, type: 3}
       propertyPath: m_Name
       value: XR Origin (XR Rig)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8833969059611364245, guid: 77e7c27b2c5525e4aa8cc9f99d654486, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
