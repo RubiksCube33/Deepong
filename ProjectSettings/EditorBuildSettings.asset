@@ -14,15 +14,15 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Copied_SampleScene.unity
     guid: 109e0302d0efc924bbfcb68369fcd5de
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/MainMenuScene.unity
     guid: fa2e0e9be89f47a4894215b31e7a1879
-  - enabled: 1
-    path: Assets/Scenes/WaitingRoomScene.unity
-    guid: 402e9333d22f09647b02e4bb3b8b8a0d
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Copied_Court_Testing.unity
     guid: 0ad5ed9a60f3e3745a9abe254072bc0f
+  - enabled: 1
+    path: Assets/Scenes/CourtScene.unity
+    guid: ff8636926061644c4a94f28f24f8795b
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: bfa1182bd221b4ca89619141f66f1260, type: 2}
     Unity.XR.WindowsMR.Settings: {fileID: 11400000, guid: dc5a169419fa04987b057f65238cf3ba, type: 2}
