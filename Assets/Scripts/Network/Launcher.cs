@@ -14,6 +14,13 @@ public class Launcher : MonoBehaviourPunCallbacks
     [SerializeField] private GameObject roomListItemPrefab; // 방 목록 항목 프리팹
     [SerializeField] private Text debugText; // 디버그 정보를 표시할 텍스트
     
+    // 에디터 테스트용 설정
+    [Header("에디터 테스트용 설정")]
+    [SerializeField] private bool autoCreateRoomOnStart = true;
+    [SerializeField] private string testRoomName = "TestRoom";
+    [SerializeField] private KeyCode createRoomKey = KeyCode.F1;
+    [SerializeField] private KeyCode joinRoomKey = KeyCode.F2;
+    
     // 룸 설정을 위한 기본값
     private const string GAME_VERSION = "1.0";
     private const int MAX_PLAYERS = 2;
@@ -21,6 +28,9 @@ public class Launcher : MonoBehaviourPunCallbacks
     // 방 목록 캐시
     private Dictionary<string, RoomInfo> cachedRoomList = new Dictionary<string, RoomInfo>();
     private Dictionary<string, GameObject> roomListItems = new Dictionary<string, GameObject>();
+    
+    // 마지막 로그 메시지 (콘솔 출력용)
+    private string lastLogMessage;
     
     void Start()
     {
@@ -60,6 +70,18 @@ public class Launcher : MonoBehaviourPunCallbacks
             
             UpdateDebugText(connectionStatus);
         }
+        
+        // 에디터 테스트용 키 입력 처리
+        #if UNITY_EDITOR
+        if (Input.GetKeyDown(createRoomKey))
+        {
+            CreateTestRoom();
+        }
+        else if (Input.GetKeyDown(joinRoomKey))
+        {
+            JoinTestRoom();
+        }
+        #endif
     }
     
     private void UpdateDebugText(string message)
@@ -69,7 +91,11 @@ public class Launcher : MonoBehaviourPunCallbacks
             debugText.text = message;
         }
         
-        Debug.Log("[Photon 상태] " + message);
+        if (message != lastLogMessage)
+        {
+            Debug.Log("[Photon 상태] " + message);
+            lastLogMessage = message;
+        }
     }
     
     private void ConnectToPhoton()
@@ -115,6 +141,55 @@ public class Launcher : MonoBehaviourPunCallbacks
         // 방 생성
         PhotonNetwork.CreateRoom(roomName, roomOptions);
         UpdateDebugText("방 생성 시도: " + roomName);
+    }
+    
+    // 에디터 테스트용 방 생성 메서드
+    public void CreateTestRoom()
+    {
+        if (!PhotonNetwork.IsConnected)
+        {
+            UpdateDebugText("서버에 연결되지 않았습니다. 테스트 방 생성 불가");
+            return;
+        }
+        
+        if (PhotonNetwork.InRoom)
+        {
+            UpdateDebugText("이미 방에 있습니다. 테스트 방을 새로 생성하려면 먼저 방을 나가세요.");
+            return;
+        }
+        
+        // 방 옵션 설정 (테스트용)
+        RoomOptions roomOptions = new RoomOptions
+        {
+            MaxPlayers = MAX_PLAYERS,
+            IsVisible = true,
+            IsOpen = true,
+            PublishUserId = true
+        };
+        
+        // 테스트 방 생성
+        PhotonNetwork.CreateRoom(testRoomName, roomOptions);
+        UpdateDebugText($"테스트 방 생성 시도: {testRoomName} (키: {createRoomKey})");
+    }
+    
+    // 에디터 테스트용 방 참가 메서드
+    public void JoinTestRoom()
+    {
+        if (!PhotonNetwork.IsConnected)
+        {
+            UpdateDebugText("서버에 연결되지 않았습니다. 테스트 방 참가 불가");
+            return;
+        }
+        
+        if (PhotonNetwork.InRoom)
+        {
+            UpdateDebugText("이미 방에 있습니다. 다른 테스트 방에 참가하려면 먼저 방을 나가세요.");
+            return;
+        }
+        
+        // 테스트 방 참가
+        PhotonNetwork.JoinRoom(testRoomName);
+        UpdateDebugText($"테스트 방 참가 시도: {testRoomName} (키: {joinRoomKey})");
     }
     
     // 방 참가 메서드
@@ -218,6 +293,34 @@ public class Launcher : MonoBehaviourPunCallbacks
         // 방 목록 초기화
         cachedRoomList.Clear();
         UpdateRoomList();
+        
+        // 에디터 테스트 모드인 경우 자동으로 방 생성 또는 참가
+        #if UNITY_EDITOR
+        if (autoCreateRoomOnStart)
+        {
+            // 이미 같은 이름의 방이 있는지 확인
+            bool roomExists = false;
+            foreach (RoomInfo roomInfo in cachedRoomList.Values)
+            {
+                if (roomInfo.Name == testRoomName && !roomInfo.RemovedFromList)
+                {
+                    roomExists = true;
+                    break;
+                }
+            }
+            
+            if (roomExists)
+            {
+                // 방이 이미 존재하면 참가
+                JoinTestRoom();
+            }
+            else
+            {
+                // 방이 없으면 생성
+                CreateTestRoom();
+            }
+        }
+        #endif
     }
     
     // 방 목록 업데이트 콜백
@@ -239,6 +342,21 @@ public class Launcher : MonoBehaviourPunCallbacks
         }
         
         UpdateRoomList();
+        
+        // 에디터 테스트 모드인 경우 자동으로 방 참가 시도
+        #if UNITY_EDITOR
+        if (autoCreateRoomOnStart && !PhotonNetwork.InRoom)
+        {
+            foreach (RoomInfo roomInfo in roomList)
+            {
+                if (roomInfo.Name == testRoomName && !roomInfo.RemovedFromList)
+                {
+                    JoinTestRoom();
+                    break;
+                }
+            }
+        }
+        #endif
     }
     
     // 방 생성 성공 시 호출되는 콜백
@@ -264,12 +382,30 @@ public class Launcher : MonoBehaviourPunCallbacks
     public override void OnCreateRoomFailed(short returnCode, string message)
     {
         UpdateDebugText($"방 생성 실패: {message} (코드: {returnCode})");
+        
+        // 테스트 중이고 방 생성 실패 시 (아마도 이미 방이 존재하는 경우)
+        #if UNITY_EDITOR
+        if (autoCreateRoomOnStart)
+        {
+            // 방이 이미 있다면 참가 시도
+            JoinTestRoom();
+        }
+        #endif
     }
     
     // 방 참가 실패 시 호출되는 콜백
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
         UpdateDebugText($"방 참가 실패: {message} (코드: {returnCode})");
+        
+        // 테스트 중이고 방 참가 실패 시 (아마도 방이 존재하지 않는 경우)
+        #if UNITY_EDITOR
+        if (autoCreateRoomOnStart)
+        {
+            // 방이 없다면 생성 시도
+            CreateTestRoom();
+        }
+        #endif
     }
     
     // 랜덤 방 참가 실패 시 호출되는 콜백
