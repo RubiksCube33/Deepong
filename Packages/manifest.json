@@ -2,6 +2,7 @@
   "dependencies": {
     "com.justinpbarnett.unity-mcp": "https://github.com/justinpbarnett/unity-mcp.git?path=/UnityMcpBridge",
     "com.meta.xr.sdk.all": "74.0.2",
+    "com.unity.cinemachine": "2.10.3",
     "com.unity.collab-proxy": "2.7.1",
     "com.unity.device-simulator.devices": "1.0.0",
     "com.unity.feature.development": "1.0.1",
