@@ -2,7 +2,7 @@ using Photon.Pun;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
-public class BallSyn : MonoBehaviourPun, IPunObservable
+public class BallSync : MonoBehaviourPun, IPunObservable
 {
     // 네트워크 관련 변수
     Vector3 networkPos;
@@ -20,9 +20,25 @@ public class BallSyn : MonoBehaviourPun, IPunObservable
         networkPos = rb.position;
         networkVel = Vector3.zero;
     }
+    
+    void Start()
+    {
+        // 마스터 클라이언트가 공의 소유권을 가짐
+        if (PhotonNetwork.IsConnected && PhotonNetwork.IsMasterClient)
+        {
+            photonView.RequestOwnership();
+        }
+    }
 
     void FixedUpdate()
     {
+        // 공의 속도 감시 및 보정
+        if (photonView.IsMine && rb.velocity.magnitude < 1f && rb.velocity.magnitude > 0f)
+        {
+            // 속도가 너무 낮으면 최소 속도 보장
+            rb.velocity = rb.velocity.normalized * 1f;
+        }
+        
         if (!photonView.IsMine)
         {
             // 수신 후 경과 시간 업데이트
