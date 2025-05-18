@@ -13,7 +13,7 @@ public class MenuManager : MonoBehaviour
     private IEnumerator LoadGameSceneAsync()
     {
         // 씬을 비동기적으로 로드
-        AsyncOperation asyncOperation = SceneManager.LoadSceneAsync("Copied_Court_Testing");
+        AsyncOperation asyncOperation = SceneManager.LoadSceneAsync("CourtScene");
         
         // 씬이 백그라운드에서 로드되는 동안 사용자에게 보여지지 않도록 설정
         asyncOperation.allowSceneActivation = false;
