@@ -190,7 +190,7 @@ MeshCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 140310910}
-  m_Material: {fileID: 13400000, guid: a87a8b86e08ed6845b7be02773a32f70, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -283,8 +283,61 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 93802013029001419, guid: e19c3a32a210a46478e161475a5f84f4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 159957422}
   m_SourcePrefab: {fileID: 100100000, guid: e19c3a32a210a46478e161475a5f84f4, type: 3}
+--- !u!1 &159957421 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 93802013029001419, guid: e19c3a32a210a46478e161475a5f84f4, type: 3}
+  m_PrefabInstance: {fileID: 159957420}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &159957422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 159957421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f75e489a85a7e8e42a26064a0192f6b8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  xrOrigin: {fileID: 0}
+  leftHandController: {fileID: 0}
+  rightHandController: {fileID: 0}
+  headset: {fileID: 0}
+  humanoidRoot: {fileID: 0}
+  humanoidHead: {fileID: 0}
+  humanoidLeftHand: {fileID: 0}
+  humanoidRightHand: {fileID: 0}
+  rootPositionOffset: {x: 0, y: 0, z: 0}
+  headPositionOffset: {x: 0, y: -0.5, z: 0}
+  leftHandPositionOffset: {x: 0, y: 0, z: 0}
+  rightHandPositionOffset: {x: 0, y: 0, z: 0}
+  rootRotationOffset: {x: 0, y: 0, z: 0}
+  headRotationOffset: {x: 0, y: 0, z: 0}
+  leftHandRotationOffset: {x: 0, y: 0, z: 0}
+  rightHandRotationOffset: {x: 0, y: 0, z: 0}
+  modelScale: 1
+  useIK: 1
+  ikWeight: 1
+  enableHeadsetMovement: 1
+  moveSpeed: 2
+  rotationSmoothTime: 0.12
+  gravity: -15
+  fallTimeout: 0.15
+  movementThreshold: 0.01
+  movementMultiplier: 10
+  heightOffset: 0
+  grounded: 1
+  groundedOffset: -0.14
+  groundedRadius: 0.28
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1 &231463603
 GameObject:
   m_ObjectHideFlags: 0
@@ -353,7 +406,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 231463603}
-  m_Material: {fileID: 13400000, guid: a87a8b86e08ed6845b7be02773a32f70, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -495,7 +548,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 940259198}
-  m_Material: {fileID: 13400000, guid: a87a8b86e08ed6845b7be02773a32f70, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -677,7 +730,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1445017381}
-  m_Material: {fileID: 13400000, guid: a87a8b86e08ed6845b7be02773a32f70, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1005,7 +1058,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2046703413}
-  m_Material: {fileID: 13400000, guid: a87a8b86e08ed6845b7be02773a32f70, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0

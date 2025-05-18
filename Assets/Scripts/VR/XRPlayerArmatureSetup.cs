@@ -18,6 +18,8 @@ public class XRPlayerArmatureSetup : MonoBehaviour
     [Header("Player Armature")]
     [SerializeField] private GameObject playerArmaturePrefab;
     [SerializeField] private bool instantiateOnStart = true;
+    [SerializeField] private bool useExistingArmature = false;
+    [SerializeField] private GameObject existingArmature;
     [SerializeField] private Vector3 positionOffset = new Vector3(0, -0.9f, 0);
     [SerializeField] private Vector3 rotationOffset = Vector3.zero;
     [SerializeField] private float scaleFactor = 1.0f;
@@ -36,10 +38,144 @@ public class XRPlayerArmatureSetup : MonoBehaviour
     
     void Start()
     {
-        if (instantiateOnStart && playerArmaturePrefab != null)
+        if (useExistingArmature && existingArmature != null)
+        {
+            SetupExistingPlayerArmature();
+        }
+        else if (instantiateOnStart && playerArmaturePrefab != null)
         {
             InstantiatePlayerArmature();
         }
+    }
+    
+    /// <summary>
+    /// Sets up an existing player armature in the scene
+    /// </summary>
+    public void SetupExistingPlayerArmature()
+    {
+        if (existingArmature == null)
+        {
+            // Try to find armature as a child if not explicitly set
+            existingArmature = FindArmatureInChildren();
+            
+            if (existingArmature == null)
+            {
+                Debug.LogError("Existing armature is not found or assigned!");
+                return;
+            }
+        }
+        
+        if (xrOrigin == null)
+        {
+            xrOrigin = transform;
+        }
+        
+        if (cameraOffset == null)
+        {
+            // Try to find Camera Offset as a child of XR Origin
+            cameraOffset = xrOrigin.Find("Camera Offset");
+            if (cameraOffset == null)
+            {
+                Debug.LogError("Camera Offset not found!");
+                return;
+            }
+        }
+        
+        if (headCamera == null)
+        {
+            // Try to find Main Camera as a child of Camera Offset
+            headCamera = cameraOffset.Find("Main Camera");
+            if (headCamera == null)
+            {
+                Debug.LogError("Main Camera not found!");
+                return;
+            }
+        }
+        
+        if (leftController == null)
+        {
+            // Try to find Left Controller as a child of Camera Offset
+            leftController = cameraOffset.Find("Left Controller");
+            if (leftController == null)
+            {
+                Debug.LogWarning("Left Controller not found! Some VR functionality may be limited.");
+            }
+        }
+        
+        if (rightController == null)
+        {
+            // Try to find Right Controller as a child of Camera Offset
+            rightController = cameraOffset.Find("Right Controller");
+            if (rightController == null)
+            {
+                Debug.LogWarning("Right Controller not found! Some VR functionality may be limited.");
+            }
+        }
+        
+        instantiatedArmature = existingArmature;
+        
+        // Position, rotate, and scale it correctly
+        instantiatedArmature.transform.localPosition = positionOffset;
+        instantiatedArmature.transform.localRotation = Quaternion.Euler(rotationOffset);
+        instantiatedArmature.transform.localScale = Vector3.one * scaleFactor;
+        
+        // Add VRHumanoidController component if not already present
+        humanoidController = instantiatedArmature.GetComponent<VRHumanoidController>();
+        if (humanoidController == null)
+        {
+            humanoidController = instantiatedArmature.AddComponent<VRHumanoidController>();
+        }
+        
+        // Get the animator
+        armatureAnimator = instantiatedArmature.GetComponent<Animator>();
+        if (armatureAnimator == null)
+        {
+            Debug.LogWarning("Armature has no Animator component! Adding one...");
+            armatureAnimator = instantiatedArmature.AddComponent<Animator>();
+        }
+        
+        // Find the key transforms if not manually assigned
+        FindKeyTransforms();
+        
+        // Set up the VRHumanoidController
+        SetupHumanoidController();
+        
+        // Hide head mesh if requested (to avoid seeing it from the inside when in VR)
+        if (hideHeadMesh && headTransform != null)
+        {
+            ToggleHeadMeshVisibility(false);
+        }
+        
+        // Disable ThirdPersonController if present to avoid conflicts
+        StarterAssets.ThirdPersonController tpc = instantiatedArmature.GetComponent<StarterAssets.ThirdPersonController>();
+        if (tpc != null)
+        {
+            tpc.enabled = false;
+        }
+        
+        Debug.Log("Existing Player Armature setup complete!");
+    }
+    
+    /// <summary>
+    /// Finds a PlayerArmature or similar humanoid model in children
+    /// </summary>
+    private GameObject FindArmatureInChildren()
+    {
+        // First try to find a GameObject named "PlayerArmature"
+        Transform playerArmature = transform.Find("PlayerArmature");
+        if (playerArmature != null)
+        {
+            return playerArmature.gameObject;
+        }
+        
+        // Look for any child with an Animator component
+        Animator[] childAnimators = GetComponentsInChildren<Animator>();
+        if (childAnimators.Length > 0)
+        {
+            return childAnimators[0].gameObject;
+        }
+        
+        return null;
     }
     
     /// <summary>
