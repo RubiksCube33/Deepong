@@ -77,3 +77,4 @@ crashlytics-build.properties
 /[Aa]ssets/Imported_Assets/
 /ProjectSettings
 Assets/XR/Settings/Open XR Package Settings.asset
+/Assets/XR/Settings
