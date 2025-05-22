@@ -13,6 +13,10 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
     [Header("스폰 위치")]
     public Vector3 player1Position = new Vector3(-9f, 1f, 0f); // 코트 왼쪽 끝
     public Vector3 player2Position = new Vector3(9f, 1f, 0f);  // 코트 오른쪽 끝
+    
+    [Header("스폰 회전")]
+    public Quaternion player1Rotation = Quaternion.Euler(0, 90, 0);  // 오른쪽을 바라보도록
+    public Quaternion player2Rotation = Quaternion.Euler(0, -90, 0); // 왼쪽을 바라보도록
 
     private Rigidbody rb;
 
@@ -23,8 +27,8 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
 
     void Start()
     {
-        // 게임 시작 시 플레이어를 자기 위치로 이동
-        SetInitialPosition();
+        // 약간의 딜레이 후 플레이어를 자기 위치로 이동 (다른 스크립트 이후 실행되도록)
+        Invoke("SetInitialPosition", 0.1f);
     }
 
     void SetInitialPosition()
@@ -40,11 +44,17 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
         if (isPlayerOne)
         {
             transform.position = player1Position;
+            // 설정된 회전값 사용
+            transform.rotation = player1Rotation;
+            Debug.Log($"PlayerSetup: Player 1 회전값 = {player1Rotation.eulerAngles}");
             Debug.Log("Player 1이 왼쪽 위치에 배치되었습니다.");
         }
         else
         {
             transform.position = player2Position;
+            // 설정된 회전값 사용
+            transform.rotation = player2Rotation;
+            Debug.Log($"PlayerSetup: Player 2 회전값 = {player2Rotation.eulerAngles}");
             Debug.Log("Player 2가 오른쪽 위치에 배치되었습니다.");
         }
         

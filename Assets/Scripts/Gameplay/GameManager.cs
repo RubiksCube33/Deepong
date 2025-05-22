@@ -110,11 +110,18 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         if (player1Object != null && player2Object != null)
         {
-            // 플레이어 1과 2를 각각의 스폰 포인트로 이동
+            // 플레이어 1과 2를 각각의 스폰 포인트로 이동 및 회전 설정
             player1Object.transform.position = player1SpawnPoint.position;
-            player2Object.transform.position = player2SpawnPoint.position;
+            // 스폰 포인트의 회전값을 사용
+            player1Object.transform.rotation = player1SpawnPoint.rotation;
+            Debug.Log($"GameManager: 플레이어 1 회전값 = {player1SpawnPoint.rotation.eulerAngles}");
             
-            Debug.Log("플레이어 위치가 설정되었습니다.");
+            player2Object.transform.position = player2SpawnPoint.position;
+            // 스폰 포인트의 회전값을 사용
+            player2Object.transform.rotation = player2SpawnPoint.rotation;
+            Debug.Log($"GameManager: 플레이어 2 회전값 = {player2SpawnPoint.rotation.eulerAngles}");
+            
+            Debug.Log("플레이어 위치와 방향이 설정되었습니다. (GameManager)");
         }
         else
         {

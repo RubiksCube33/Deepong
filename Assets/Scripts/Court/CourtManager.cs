@@ -43,12 +43,14 @@ public class CourtManager : MonoBehaviourPunCallbacks
         GameObject p1Marker = new GameObject("Player1Position");
         p1Marker.transform.parent = markersHolder.transform;
         p1Marker.transform.position = new Vector3(-9f, 1f, 0f); // 코트 왼쪽 끝
+        p1Marker.transform.rotation = Quaternion.Euler(0, 90, 0); // 오른쪽을 바라보도록 설정
         player1Position = p1Marker.transform;
         
         // 플레이어 2 포지션 마커 (코트 오른쪽)
         GameObject p2Marker = new GameObject("Player2Position");
         p2Marker.transform.parent = markersHolder.transform;
         p2Marker.transform.position = new Vector3(9f, 1f, 0f); // 코트 오른쪽 끝
+        p2Marker.transform.rotation = Quaternion.Euler(0, -90, 0); // 왼쪽을 바라보도록 설정
         player2Position = p2Marker.transform;
         
         Debug.Log("기본 위치 마커가 생성되었습니다.");
@@ -110,13 +112,19 @@ public class CourtManager : MonoBehaviourPunCallbacks
             return;
         }
         
-        // 플레이어 1을 왼쪽 위치로 이동
+        // 플레이어 1을 왼쪽 위치로 이동 및 회전
         player1.transform.position = player1Position.position;
+        // 마커의 회전값 사용
+        player1.transform.rotation = player1Position.rotation;
+        Debug.Log($"CourtManager: 플레이어 1 회전값 = {player1Position.rotation.eulerAngles}");
         
-        // 플레이어 2를 오른쪽 위치로 이동
+        // 플레이어 2를 오른쪽 위치로 이동 및 회전
         player2.transform.position = player2Position.position;
+        // 마커의 회전값 사용
+        player2.transform.rotation = player2Position.rotation;
+        Debug.Log($"CourtManager: 플레이어 2 회전값 = {player2Position.rotation.eulerAngles}");
         
-        Debug.Log("플레이어 위치가 코트 양 끝으로 설정되었습니다.");
+        Debug.Log("플레이어 위치와 방향이 코트 양 끝으로 설정되었습니다. (CourtManager)");
         
         // 네트워크 동기화
         if (PhotonNetwork.IsConnected && photonView != null)
@@ -132,7 +140,10 @@ public class CourtManager : MonoBehaviourPunCallbacks
         if (player1 != null && player2 != null && player1Position != null && player2Position != null)
         {
             player1.transform.position = player1Position.position;
+            player1.transform.rotation = player1Position.rotation;
+            
             player2.transform.position = player2Position.position;
+            player2.transform.rotation = player2Position.rotation;
         }
     }
 }
