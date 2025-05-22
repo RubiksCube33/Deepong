@@ -9,6 +9,8 @@ TagManager:
   - Game_Ball
   - Paddle
   - VRController
+  - wallback
+  - wallfront
   layers:
   - Default
   - TransparentFX
