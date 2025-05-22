@@ -177,10 +177,33 @@ public class VRHumanoidController : MonoBehaviour
     {
         if (enableHeadsetMovement)
         {
-            // 캐릭터 컨트롤러가 이미 위치를 관리함
+            // Get current position of the humanoid root
+            Vector3 currentPosition = humanoidRoot.position;
+            
+            // Calculate the appropriate floor height - use a fixed ground offset
+            // Maintain the robot at a consistent height from the ground
+            float groundHeight = 0.0f; // Assuming 0 is the floor level
+            float desiredRootHeight = groundHeight + heightOffset;
+            
+            // Adjust X and Z to follow headset but keep Y at a fixed height
+            currentPosition.x = headset.position.x;
+            currentPosition.z = headset.position.z;
+            currentPosition.y = desiredRootHeight;
+            
+            // Update the character position
+            if (characterController != null)
+            {
+                characterController.height = 2.0f; 
+                characterController.center = new Vector3(0, 1.0f, 0);
+                
+                // Apply the position directly to ensure consistent height
+                humanoidRoot.position = currentPosition;
+            }
+            
             return;
         }
 
+        // No headset movement case (unchanged)
         // 캐릭터 컨트롤러가 없는 경우에만 수동으로 위치 업데이트
         // 헤드셋 위치 기준으로 로봇 위치 조정 (높이는 initialRootPosition.y 유지)
         Vector3 targetPosition = xrOrigin.position + rootPositionOffset;
@@ -345,14 +368,20 @@ public class VRHumanoidController : MonoBehaviour
         if (humanoidHead == null || headset == null)
             return;
             
-        // 머리가 늘어나는 문제 해결: 캐릭터 기준으로 상대적인 헤드 오프셋만 적용
-        float headHeight = 1.6f; // 캐릭터의 머리 높이 (기본값, 조정 필요)
+        // Calculate the offset between humanoid root and head
+        // The head should be positioned relative to the body, maintaining proper anatomy
+        float headHeight = 1.6f; // Approximate height of the head from the root
         
-        // 헤드셋의 회전만 적용하고, 위치는 로봇 기준 상대적 위치 사용
-        Vector3 targetHeadPosition = humanoidRoot.position + new Vector3(0, headHeight, 0) + headPositionOffset;
+        // Position the head above the root plus the offset to match the headset's rotation
+        Vector3 targetHeadPosition = new Vector3(
+            headset.position.x,
+            humanoidRoot.position.y + headHeight,
+            headset.position.z
+        ) + headPositionOffset;
+        
         humanoidHead.position = targetHeadPosition;
         
-        // 회전은 헤드셋의 회전 적용
+        // Apply the headset's rotation to the head
         humanoidHead.rotation = headset.rotation * Quaternion.Euler(headRotationOffset);
     }
     
