@@ -27,6 +27,10 @@ namespace Unity.VRTemplate
         [SerializeField]
         [Tooltip("Whether the associated tooltip and curve will be disabled on Start.")]
         bool m_TurnOffAtStart = true;
+        
+        [SerializeField]
+        [Tooltip("Whether to completely disable tooltip functionality.")]
+        bool m_DisableTooltips = true;
 
         bool m_Gazing = false;
 
@@ -52,6 +56,9 @@ namespace Unity.VRTemplate
 
         public void GazeHoverStart()
         {
+            if (m_DisableTooltips)
+                return;
+                
             m_Gazing = true;
             if (m_StartCo != null)
                 StopCoroutine(m_StartCo);
@@ -62,6 +69,9 @@ namespace Unity.VRTemplate
 
         public void GazeHoverEnd()
         {
+            if (m_DisableTooltips)
+                return;
+                
             m_Gazing = false;
             m_EndCo = StartCoroutine(EndDelay());
         }
@@ -82,6 +92,9 @@ namespace Unity.VRTemplate
 
         void TurnOnStuff()
         {
+            if (m_DisableTooltips)
+                return;
+                
             if (m_LazyTooltip != null)
                 m_LazyTooltip.gameObject.SetActive(true);
             if (m_Curve != null)
