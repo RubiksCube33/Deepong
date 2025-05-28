@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using System.Collections;
 using Photon.Pun;
 using Photon.Realtime;
+using System.Collections.Generic;
 
 // Model - 데이터 관리
 public class ScoreModel
@@ -189,9 +190,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     // 볼 참조 추가
     [SerializeField] private GameObject ballObject;
     private BallController ballController;
-    
-    // 코트 매니저 참조 추가
-    private CourtManager courtManager;
 
     private ScoreModel model;
     private ScoreView view;
@@ -245,14 +243,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         if (ballObject != null)
         {
             ballController = ballObject.GetComponent<BallController>();
-        }
-        
-        // 코트 매니저 찾기
-        courtManager = FindObjectOfType<CourtManager>();
-        if (courtManager == null)
-        {
-            Debug.LogWarning("CourtManager를 찾을 수 없습니다. 자동으로 생성합니다.");
-            CreateCourtManager();
         }
     }
 
@@ -459,30 +449,23 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     // 게임 종료 처리
     private void EndGame()
     {
-        // 플레이어들을 원래 위치로 이동
-        ResetPlayersToInitialPositions();
+        // 게임 종료 처리를 코루틴으로 실행하여 안정성 확보
+        StartCoroutine(EndGameRoutine());
+    }
+    
+    // 게임 종료 처리 코루틴
+    private IEnumerator EndGameRoutine()
+    {
+        // 약간의 지연으로 UI와 게임 상태가 안정화되도록 함
+        yield return new WaitForSeconds(0.1f);
         
         // 공 정지 및 위치 초기화
         ResetBall();
         
         // 게임 상태를 중지로 설정 (필요시 추가 로직)
-        Debug.Log("게임이 종료되었습니다. 플레이어들이 초기 위치로 이동합니다.");
+        Debug.Log("게임이 종료되었습니다.");
     }
     
-    // 플레이어들을 초기 위치로 이동
-    private void ResetPlayersToInitialPositions()
-    {
-        if (courtManager != null)
-        {
-            // CourtManager를 통해 플레이어 위치 초기화
-            courtManager.ResetPlayersToInitialPositions();
-        }
-        else
-        {
-            Debug.LogWarning("CourtManager가 없어 플레이어 위치를 초기화할 수 없습니다.");
-        }
-    }
-
     // 게임 재시작
     public void RestartGame()
     {
@@ -562,33 +545,5 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     public bool IsGameEnded()
     {
         return model.GameEnded;
-    }
-
-    // CourtManager 자동 생성
-    private void CreateCourtManager()
-    {
-        // CourtManager 생성
-        GameObject courtManagerObj = new GameObject("CourtManager");
-        courtManager = courtManagerObj.AddComponent<CourtManager>();
-        
-        // 네트워크 동기화를 위한 PhotonView 추가 (네트워크 연결 시에만)
-        if (PhotonNetwork.IsConnected || PhotonNetwork.NetworkingClient != null)
-        {
-            PhotonView photonView = courtManagerObj.AddComponent<PhotonView>();
-            
-            // ViewID 자동 할당
-            if (PhotonNetwork.AllocateViewID(photonView))
-            {
-                photonView.Synchronization = ViewSynchronization.UnreliableOnChange;
-                photonView.ObservedComponents = new System.Collections.Generic.List<Component> { courtManager };
-                photonView.OwnershipTransfer = OwnershipOption.Takeover;
-            }
-            else
-            {
-                Debug.LogWarning("CourtManager PhotonView ID 할당에 실패했습니다.");
-            }
-        }
-
-        Debug.Log("CourtManager가 성공적으로 생성되었습니다.");
     }
 }
