@@ -189,6 +189,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     // 볼 참조 추가
     [SerializeField] private GameObject ballObject;
     private BallController ballController;
+    
+    // 코트 매니저 참조 추가
+    private CourtManager courtManager;
 
     private ScoreModel model;
     private ScoreView view;
@@ -243,6 +246,14 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         {
             ballController = ballObject.GetComponent<BallController>();
         }
+        
+        // 코트 매니저 찾기
+        courtManager = FindObjectOfType<CourtManager>();
+        if (courtManager == null)
+        {
+            Debug.LogWarning("CourtManager를 찾을 수 없습니다. 자동으로 생성합니다.");
+            CreateCourtManager();
+        }
     }
 
     void OnDestroy()
@@ -258,26 +269,63 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             view.SettingsButton.onClick.RemoveListener(OpenSettings);
     }
 
-    // 점수 증가 (로컬 플레이어)
+    // 점수 증가 (로컬 플레이어) - 싱글플레이어 전용
     public void AddScore()
     {
-        if (PhotonNetwork.IsConnected)
-        {
-            // 멀티플레이어 모드 - Photon RPC를 통해 모든 클라이언트에 점수 증가 전파
-            photonView.RPC("AddScoreRPC", RpcTarget.All, PhotonNetwork.LocalPlayer.ActorNumber);
-        }
-        else
+        if (model.GameEnded) return; // 게임이 끝났으면 점수 추가 안함
+        
+        if (!PhotonNetwork.IsConnected)
         {
             // 싱글플레이어 모드 - 직접 점수 추가
             model.AddMyScore();
             UpdateScoreUI();
             CheckGameOver();
         }
+        else
+        {
+            Debug.LogWarning("멀티플레이어 모드에서는 AddPlayer1Score() 또는 AddPlayer2Score()를 사용하세요.");
+        }
+    }
+
+    // Player1의 점수 증가 (멀티플레이어용)
+    public void AddPlayer1Score()
+    {
+        if (model.GameEnded) return; // 게임이 끝났으면 점수 추가 안함
+        
+        if (PhotonNetwork.IsConnected)
+        {
+            // 멀티플레이어 모드 - Photon RPC를 통해 모든 클라이언트에 점수 증가 전파
+            photonView.RPC("AddScoreRPC", RpcTarget.All, 1);
+        }
+        else
+        {
+            // 싱글플레이어에서는 AddScore 사용
+            AddScore();
+        }
+    }
+
+    // Player2의 점수 증가 (멀티플레이어용)
+    public void AddPlayer2Score()
+    {
+        if (model.GameEnded) return; // 게임이 끝났으면 점수 추가 안함
+        
+        if (PhotonNetwork.IsConnected)
+        {
+            // 멀티플레이어 모드 - Photon RPC를 통해 모든 클라이언트에 점수 증가 전파
+            photonView.RPC("AddScoreRPC", RpcTarget.All, 2);
+        }
+        else
+        {
+            // 싱글플레이어에서는 AddOpponentScore 사용
+            AddOpponentScore();
+        }
     }
 
     // 상대편 점수 증가 (싱글플레이어 전용)
     public void AddOpponentScore()
     {
+        if (model.GameEnded) return; // 게임이 끝났으면 점수 추가 안함
+        
         if (!PhotonNetwork.IsConnected)
         {
             // 싱글플레이어 모드에서만 사용
@@ -288,14 +336,19 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    void AddScoreRPC(int playerActorNumber)
+    void AddScoreRPC(int scoringPlayerActorNumber)
     {
-        if (playerActorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
+        if (model.GameEnded) return; // 게임이 끝났으면 점수 추가 안함
+        
+        // 득점한 플레이어가 Player1(ActorNumber 1)인지 Player2(ActorNumber 2)인지에 따라 점수 증가
+        if (scoringPlayerActorNumber == 1)
         {
+            // Player1이 득점 - MyScore는 Player1의 점수
             model.AddMyScore();
         }
-        else
+        else if (scoringPlayerActorNumber == 2)
         {
+            // Player2가 득점 - OpponentScore는 Player2의 점수
             model.AddOpponentScore();
         }
 
@@ -308,7 +361,18 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     {
         // 플레이어별로 점수 표시 방식 변경
         // 각 플레이어는 자신의 점수를 왼쪽에, 상대방 점수를 오른쪽에 봅니다.
-        bool isPlayer1 = PhotonNetwork.LocalPlayer.ActorNumber == 1;
+        bool isPlayer1;
+        
+        if (PhotonNetwork.IsConnected)
+        {
+            // 멀티플레이어 모드: ActorNumber로 판단
+            isPlayer1 = PhotonNetwork.LocalPlayer.ActorNumber == 1;
+        }
+        else
+        {
+            // 싱글플레이어 모드: 항상 플레이어가 Player1 역할
+            isPlayer1 = true;
+        }
         
         int myScore, opponentScore;
         
@@ -367,11 +431,55 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             }
             else
             {
-                // 싱글플레이어 모드 - 단순히 점수 도달 메시지
-                resultMessage = $"게임 완료! 점수: {model.MyScore}";
+                // 싱글플레이어 모드 - 플레이어 vs AI
+                if (model.MyScore >= model.ScoreToWin)
+                {
+                    // 플레이어가 11점 달성
+                    resultMessage = "YOU WIN!";
+                }
+                else if (model.OpponentScore >= model.ScoreToWin)
+                {
+                    // AI(상대)가 11점 달성
+                    resultMessage = "YOU LOSE!";
+                }
+                else
+                {
+                    // 예외 상황 (이론적으로 발생하지 않아야 함)
+                    resultMessage = $"게임 완료! 점수: {model.MyScore} : {model.OpponentScore}";
+                }
             }
             
             view.ShowResult(resultMessage);
+            
+            // 게임 종료 처리
+            EndGame();
+        }
+    }
+
+    // 게임 종료 처리
+    private void EndGame()
+    {
+        // 플레이어들을 원래 위치로 이동
+        ResetPlayersToInitialPositions();
+        
+        // 공 정지 및 위치 초기화
+        ResetBall();
+        
+        // 게임 상태를 중지로 설정 (필요시 추가 로직)
+        Debug.Log("게임이 종료되었습니다. 플레이어들이 초기 위치로 이동합니다.");
+    }
+    
+    // 플레이어들을 초기 위치로 이동
+    private void ResetPlayersToInitialPositions()
+    {
+        if (courtManager != null)
+        {
+            // CourtManager를 통해 플레이어 위치 초기화
+            courtManager.ResetPlayersToInitialPositions();
+        }
+        else
+        {
+            Debug.LogWarning("CourtManager가 없어 플레이어 위치를 초기화할 수 없습니다.");
         }
     }
 
@@ -448,5 +556,39 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     public bool IsResultPanelActive()
     {
         return view.IsResultPanelActive();
+    }
+
+    // 게임이 끝났는지 확인하는 메서드
+    public bool IsGameEnded()
+    {
+        return model.GameEnded;
+    }
+
+    // CourtManager 자동 생성
+    private void CreateCourtManager()
+    {
+        // CourtManager 생성
+        GameObject courtManagerObj = new GameObject("CourtManager");
+        courtManager = courtManagerObj.AddComponent<CourtManager>();
+        
+        // 네트워크 동기화를 위한 PhotonView 추가 (네트워크 연결 시에만)
+        if (PhotonNetwork.IsConnected || PhotonNetwork.NetworkingClient != null)
+        {
+            PhotonView photonView = courtManagerObj.AddComponent<PhotonView>();
+            
+            // ViewID 자동 할당
+            if (PhotonNetwork.AllocateViewID(photonView))
+            {
+                photonView.Synchronization = ViewSynchronization.UnreliableOnChange;
+                photonView.ObservedComponents = new System.Collections.Generic.List<Component> { courtManager };
+                photonView.OwnershipTransfer = OwnershipOption.Takeover;
+            }
+            else
+            {
+                Debug.LogWarning("CourtManager PhotonView ID 할당에 실패했습니다.");
+            }
+        }
+
+        Debug.Log("CourtManager가 성공적으로 생성되었습니다.");
     }
 }

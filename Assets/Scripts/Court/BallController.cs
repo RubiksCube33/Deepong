@@ -50,17 +50,20 @@ public class BallController : MonoBehaviourPunCallbacks
         // 점수 벽과의 충돌 감지
         if (collision.gameObject.CompareTag(wallBackTag))
         {
+            // 게임이 끝났으면 점수 추가하지 않음
+            if (scoreManager != null && scoreManager.IsGameEnded())
+            {
+                return;
+            }
+            
             // WallBack(플레이어1 뒤 벽)에 맞음 = 플레이어2의 점수 추가
             if (PhotonNetwork.IsConnected)
             {
-                // 멀티플레이어 모드: 플레이어2가 플레이어1의 뒤 벽을 맞춤 = 플레이어2 득점
+                // 멀티플레이어 모드: 마스터 클라이언트가 점수 처리
                 if (photonView.IsMine)
                 {
-                    // 플레이어2에게 점수 추가 (플레이어2가 직접 자신의 점수를 올림)
-                    if (PhotonNetwork.LocalPlayer.ActorNumber == 2)
-                    {
-                        scoreManager.AddScore(); // 플레이어2 자신의 점수 추가
-                    }
+                    // Player2가 득점
+                    scoreManager.AddPlayer2Score();
                     ResetBallPosition();
                 }
             }
@@ -76,17 +79,20 @@ public class BallController : MonoBehaviourPunCallbacks
         }
         else if (collision.gameObject.CompareTag(wallFrontTag))
         {
+            // 게임이 끝났으면 점수 추가하지 않음
+            if (scoreManager != null && scoreManager.IsGameEnded())
+            {
+                return;
+            }
+            
             // WallFront(플레이어2 뒤 벽)에 맞음 = 플레이어1의 점수 추가
             if (PhotonNetwork.IsConnected)
             {
-                // 멀티플레이어 모드: 플레이어1이 플레이어2의 뒤 벽을 맞춤 = 플레이어1 득점
+                // 멀티플레이어 모드: 마스터 클라이언트가 점수 처리
                 if (photonView.IsMine)
                 {
-                    // 플레이어1에게 점수 추가 (플레이어1이 직접 자신의 점수를 올림)
-                    if (PhotonNetwork.LocalPlayer.ActorNumber == 1)
-                    {
-                        scoreManager.AddScore(); // 플레이어1 자신의 점수 추가
-                    }
+                    // Player1이 득점
+                    scoreManager.AddPlayer1Score();
                     ResetBallPosition();
                 }
             }
