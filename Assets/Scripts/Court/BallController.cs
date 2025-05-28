@@ -50,20 +50,54 @@ public class BallController : MonoBehaviourPunCallbacks
         // 점수 벽과의 충돌 감지
         if (collision.gameObject.CompareTag(wallBackTag))
         {
-            // 플레이어2의 점수 추가 (플레이어1 뒤 벽에 맞음)
-            if (PhotonNetwork.IsConnected && photonView.IsMine)
+            // WallBack(플레이어1 뒤 벽)에 맞음 = 플레이어2의 점수 추가
+            if (PhotonNetwork.IsConnected)
             {
-                AddScoreForPlayer(2);
-                ResetBallPosition();
+                // 멀티플레이어 모드: 플레이어2가 플레이어1의 뒤 벽을 맞춤 = 플레이어2 득점
+                if (photonView.IsMine)
+                {
+                    // 플레이어2에게 점수 추가 (플레이어2가 직접 자신의 점수를 올림)
+                    if (PhotonNetwork.LocalPlayer.ActorNumber == 2)
+                    {
+                        scoreManager.AddScore(); // 플레이어2 자신의 점수 추가
+                    }
+                    ResetBallPosition();
+                }
+            }
+            else
+            {
+                // 싱글플레이어 모드: 플레이어1 뒤 벽 = 상대편(AI) 득점
+                if (scoreManager != null)
+                {
+                    scoreManager.AddOpponentScore(); // 상대편(AI) 점수 추가
+                    ResetBallPosition();
+                }
             }
         }
         else if (collision.gameObject.CompareTag(wallFrontTag))
         {
-            // 플레이어1의 점수 추가 (플레이어2 뒤 벽에 맞음)
-            if (PhotonNetwork.IsConnected && photonView.IsMine)
+            // WallFront(플레이어2 뒤 벽)에 맞음 = 플레이어1의 점수 추가
+            if (PhotonNetwork.IsConnected)
             {
-                AddScoreForPlayer(1);
-                ResetBallPosition();
+                // 멀티플레이어 모드: 플레이어1이 플레이어2의 뒤 벽을 맞춤 = 플레이어1 득점
+                if (photonView.IsMine)
+                {
+                    // 플레이어1에게 점수 추가 (플레이어1이 직접 자신의 점수를 올림)
+                    if (PhotonNetwork.LocalPlayer.ActorNumber == 1)
+                    {
+                        scoreManager.AddScore(); // 플레이어1 자신의 점수 추가
+                    }
+                    ResetBallPosition();
+                }
+            }
+            else
+            {
+                // 싱글플레이어 모드: 플레이어2 뒤 벽 = 플레이어 득점
+                if (scoreManager != null)
+                {
+                    scoreManager.AddScore(); // 플레이어 점수 추가
+                    ResetBallPosition();
+                }
             }
         }
         
@@ -89,23 +123,10 @@ public class BallController : MonoBehaviourPunCallbacks
         rend.material.color = newColor;
     }
     
-    // 특정 플레이어에게 점수 추가
-    private void AddScoreForPlayer(int playerNumber)
-    {
-        if (scoreManager != null)
-        {
-            // 내가 해당 플레이어인지 확인
-            if ((playerNumber == 1 && PhotonNetwork.LocalPlayer.ActorNumber == 1) ||
-                (playerNumber == 2 && PhotonNetwork.LocalPlayer.ActorNumber == 2))
-            {
-                scoreManager.AddScore();
-            }
-        }
-    }
-    
     // 공 위치 초기화
     public void ResetBallPosition()
     {
+        // 멀티플레이어에서만 ownership 체크
         if (PhotonNetwork.IsConnected && !photonView.IsMine)
             return;
             

@@ -228,6 +228,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 435847276}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &185618509
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 185618510}
+  m_Layer: 0
+  m_Name: Player1
+  m_TagString: player1
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &185618510
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 185618509}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.3000002, y: 0.95941126, z: -0.45}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &231463603
 GameObject:
   m_ObjectHideFlags: 0
@@ -790,6 +821,7 @@ GameObject:
   - component: {fileID: 662996329}
   - component: {fileID: 662996331}
   - component: {fileID: 662996330}
+  - component: {fileID: 662996332}
   m_Layer: 5
   m_Name: ScoreText3D
   m_TagString: Untagged
@@ -950,6 +982,52 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &662996332
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 662996328}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f6ac26022003374e9c358bf76973e26, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isPlayer1Text: 1
+  player1Position: {fileID: 185618510}
+  player2Position: {fileID: 709033148}
+--- !u!1 &709033147
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 709033148}
+  m_Layer: 0
+  m_Name: Player2
+  m_TagString: player2
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &709033148
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 709033147}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.3000002, y: 0.95941126, z: 3.326}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &940259198
 GameObject:
   m_ObjectHideFlags: 0
@@ -1513,9 +1591,9 @@ MonoBehaviour:
   restartButton: {fileID: 1405377298}
   mainMenuButton: {fileID: 2026925342}
   settingsButton: {fileID: 1439560913}
-  scoreText3D: {fileID: 0}
-  player1Position: {fileID: 0}
-  player2Position: {fileID: 0}
+  scoreText3D: {fileID: 662996330}
+  player1Position: {fileID: 185618510}
+  player2Position: {fileID: 709033148}
   autoFindScoreText3D: 1
   autoFindPlayerPositions: 1
 --- !u!1 &1405377294
@@ -2010,6 +2088,7 @@ GameObject:
   - component: {fileID: 1625167415}
   - component: {fileID: 1625167417}
   - component: {fileID: 1625167416}
+  - component: {fileID: 1625167418}
   m_Layer: 5
   m_Name: ScoreText3D (1)
   m_TagString: Untagged
@@ -2170,6 +2249,21 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1625167418
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1625167414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f6ac26022003374e9c358bf76973e26, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isPlayer1Text: 0
+  player1Position: {fileID: 185618510}
+  player2Position: {fileID: 709033148}
 --- !u!1 &1722223142
 GameObject:
   m_ObjectHideFlags: 0
@@ -2843,3 +2937,5 @@ SceneRoots:
   - {fileID: 1265038889}
   - {fileID: 1256393732}
   - {fileID: 1128240762}
+  - {fileID: 185618510}
+  - {fileID: 709033148}

@@ -11,6 +11,8 @@ TagManager:
   - VRController
   - wallback
   - wallfront
+  - player1
+  - player2
   layers:
   - Default
   - TransparentFX

@@ -9,8 +9,10 @@ using Photon.Realtime;
 // Model - 데이터 관리
 public class ScoreModel
 {
-    public int MyScore { get; private set; } = 0;
-    public int OpponentScore { get; private set; } = 0;
+    // 주의: MyScore = 플레이어 1의 점수, OpponentScore = 플레이어 2의 점수
+    // 각 플레이어의 시점에서 표시할 때는 UpdateScoreUI에서 변환됨
+    public int MyScore { get; private set; } = 0;        // 플레이어 1의 점수
+    public int OpponentScore { get; private set; } = 0;  // 플레이어 2의 점수
     public int ScoreToWin { get; private set; } = 11;
     public bool GameEnded { get; private set; } = false;
 
@@ -60,7 +62,7 @@ public class ScoreView : MonoBehaviour
     [SerializeField] private Button settingsButton;
 
     [Header("3D 텍스트 설정")]
-    [SerializeField] private TextMeshPro scoreText3D; // 3D 텍스트 설정
+    [SerializeField] private TextMeshPro scoreText3D; // 하나의 3D 텍스트만 사용
     [SerializeField] private Transform player1Position; // 플레이어 1 위치
     [SerializeField] private Transform player2Position; // 플레이어 2 위치
 
@@ -76,8 +78,8 @@ public class ScoreView : MonoBehaviour
         // 3D 텍스트 초기화
         if (scoreText3D != null)
         {
-            // 초기 텍스트 방향 설정
-            UpdateTextOrientation();
+            // 초기 텍스트 설정
+            scoreText3D.text = "0 : 0";
         }
         else
         {
@@ -85,37 +87,13 @@ public class ScoreView : MonoBehaviour
         }
     }
 
-    // 3D 텍스트 방향 업데이트
-    private void UpdateTextOrientation()
-    {
-        if (scoreText3D == null) return;
-
-        // 현재 플레이어의 위치에 따라 텍스트 회전
-        Transform currentPlayerPosition = PhotonNetwork.IsMasterClient ? player1Position : player2Position;
-        
-        if (currentPlayerPosition != null)
-        {
-            // 플레이어를 향하도록 텍스트 회전
-            scoreText3D.transform.rotation = Quaternion.LookRotation(
-                currentPlayerPosition.position - scoreText3D.transform.position,
-                Vector3.up
-            );
-            
-            // y축 180도 회전하여 텍스트가 올바르게 보이도록 함
-            scoreText3D.transform.Rotate(0, 180, 0);
-        }
-    }
-
     public void UpdateScoreText(int myScore, int opponentScore, bool isPlayer1)
     {
-        // 3D 텍스트 업데이트
+        // 3D 텍스트 업데이트 - 간단하게 하나의 텍스트만 사용
         if (scoreText3D != null)
         {
             string scoreDisplay = $"{myScore} : {opponentScore}";
             scoreText3D.text = scoreDisplay;
-            
-            // 텍스트 방향 업데이트
-            UpdateTextOrientation();
         }
     }
 
@@ -177,6 +155,29 @@ public class ScoreView : MonoBehaviour
     public Button RestartButton => restartButton;
     public Button MainMenuButton => mainMenuButton;
     public Button SettingsButton => settingsButton;
+    
+    // 공개 초기화 메서드 - 리플렉션 대신 사용
+    public void InitializeUIReferences(
+        GameObject resultPanelRef,
+        TextMeshProUGUI resultTextRef,
+        Button restartButtonRef,
+        Button mainMenuButtonRef,
+        Button settingsButtonRef,
+        TextMeshPro scoreText3DRef,
+        Transform player1PositionRef,
+        Transform player2PositionRef)
+    {
+        resultPanel = resultPanelRef;
+        resultText = resultTextRef;
+        restartButton = restartButtonRef;
+        mainMenuButton = mainMenuButtonRef;
+        settingsButton = settingsButtonRef;
+        scoreText3D = scoreText3DRef;
+        player1Position = player1PositionRef;
+        player2Position = player2PositionRef;
+        
+        Debug.Log("ScoreView UI 참조가 성공적으로 설정되었습니다.");
+    }
 }
 
 // Controller - 로직 처리 및 이벤트 연결
@@ -225,11 +226,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         // 공 객체 찾기
         if (ballObject == null)
         {
-            ballObject = GameObject.FindGameObjectWithTag("Ball");
+            ballObject = GameObject.FindGameObjectWithTag("Game_Ball");
             if (ballObject == null)
             {
                 // 태그가 없으면 이름으로 시도
-                ballObject = GameObject.Find("Ball");
+                ballObject = GameObject.Find("GameBall");
                 if (ballObject == null)
                 {
                     Debug.LogError("공 객체를 찾을 수 없습니다!");
@@ -260,8 +261,30 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     // 점수 증가 (로컬 플레이어)
     public void AddScore()
     {
-        // Photon RPC를 통해 모든 클라이언트에 점수 증가 전파
-        photonView.RPC("AddScoreRPC", RpcTarget.All, PhotonNetwork.LocalPlayer.ActorNumber);
+        if (PhotonNetwork.IsConnected)
+        {
+            // 멀티플레이어 모드 - Photon RPC를 통해 모든 클라이언트에 점수 증가 전파
+            photonView.RPC("AddScoreRPC", RpcTarget.All, PhotonNetwork.LocalPlayer.ActorNumber);
+        }
+        else
+        {
+            // 싱글플레이어 모드 - 직접 점수 추가
+            model.AddMyScore();
+            UpdateScoreUI();
+            CheckGameOver();
+        }
+    }
+
+    // 상대편 점수 증가 (싱글플레이어 전용)
+    public void AddOpponentScore()
+    {
+        if (!PhotonNetwork.IsConnected)
+        {
+            // 싱글플레이어 모드에서만 사용
+            model.AddOpponentScore();
+            UpdateScoreUI();
+            CheckGameOver();
+        }
     }
 
     [PunRPC]
@@ -283,9 +306,24 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     // 점수 UI 업데이트
     private void UpdateScoreUI()
     {
+        // 플레이어별로 점수 표시 방식 변경
+        // 각 플레이어는 자신의 점수를 왼쪽에, 상대방 점수를 오른쪽에 봅니다.
         bool isPlayer1 = PhotonNetwork.LocalPlayer.ActorNumber == 1;
-        int myScore = isPlayer1 ? model.MyScore : model.OpponentScore;
-        int opponentScore = isPlayer1 ? model.OpponentScore : model.MyScore;
+        
+        int myScore, opponentScore;
+        
+        if (isPlayer1)
+        {
+            // 플레이어 1의 시점: 자신의 점수(MyScore)가 왼쪽, 상대방 점수(OpponentScore)가 오른쪽
+            myScore = model.MyScore;
+            opponentScore = model.OpponentScore;
+        }
+        else
+        {
+            // 플레이어 2의 시점: 자신의 점수(OpponentScore)가 왼쪽, 상대방 점수(MyScore)가 오른쪽
+            myScore = model.OpponentScore;
+            opponentScore = model.MyScore;
+        }
         
         view.UpdateScoreText(myScore, opponentScore, isPlayer1);
     }
@@ -296,14 +334,43 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         if (model.GameEnded)
         {
             string resultMessage;
-            if (model.MyScore > model.OpponentScore)
+            
+            if (PhotonNetwork.IsConnected)
             {
-                resultMessage = "YOU WIN!";
+                // 멀티플레이어 모드
+                bool isPlayer1 = PhotonNetwork.LocalPlayer.ActorNumber == 1;
+                
+                // 각 플레이어의 시점에서 승리/패배 판단
+                int myActualScore, opponentActualScore;
+                
+                if (isPlayer1)
+                {
+                    // 플레이어 1의 시점
+                    myActualScore = model.MyScore;
+                    opponentActualScore = model.OpponentScore;
+                }
+                else
+                {
+                    // 플레이어 2의 시점
+                    myActualScore = model.OpponentScore;
+                    opponentActualScore = model.MyScore;
+                }
+                
+                if (myActualScore > opponentActualScore)
+                {
+                    resultMessage = "YOU WIN!";
+                }
+                else
+                {
+                    resultMessage = "YOU LOSE!";
+                }
             }
             else
             {
-                resultMessage = "YOU LOSE!";
+                // 싱글플레이어 모드 - 단순히 점수 도달 메시지
+                resultMessage = $"게임 완료! 점수: {model.MyScore}";
             }
+            
             view.ShowResult(resultMessage);
         }
     }
@@ -311,14 +378,14 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     // 게임 재시작
     public void RestartGame()
     {
-        // 네트워크 게임인 경우 모든 클라이언트에 재시작 전파
         if (PhotonNetwork.IsConnected)
         {
+            // 네트워크 게임인 경우 모든 클라이언트에 재시작 전파
             photonView.RPC("RestartGameRPC", RpcTarget.All);
         }
         else
         {
-            // 비 네트워크 게임은 로컬에서만 재시작
+            // 싱글플레이어 게임은 로컬에서만 재시작
             RestartGameRPC();
         }
     }
