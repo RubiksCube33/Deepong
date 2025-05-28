@@ -23,6 +23,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Copied_Court_Testing.unity
     guid: 0ad5ed9a60f3e3745a9abe254072bc0f
+  - enabled: 1
+    path: Assets/Scenes/ChoosingRoomScene.unity
+    guid: cb9cc40dafb37b44899f4f9f44cb188b
+  - enabled: 1
+    path: Assets/Scenes/MakingRoomScene.unity
+    guid: daf0c7cac2d2e714799f843f2e6bb217
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: bfa1182bd221b4ca89619141f66f1260, type: 2}
     Unity.XR.WindowsMR.Settings: {fileID: 11400000, guid: dc5a169419fa04987b057f65238cf3ba, type: 2}

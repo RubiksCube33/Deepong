@@ -24,7 +24,7 @@ public class MakingRoomUI : MonoBehaviour
     private void InitializeUI()
     {
         if (roomNameInput != null)
-            roomNameInput.text = "새로운 방 " + Random.Range(1000, 9999);
+            roomNameInput.text = "New Room " + Random.Range(1000, 9999);
         
         if (errorPanel != null)
             errorPanel.SetActive(false);
@@ -33,7 +33,7 @@ public class MakingRoomUI : MonoBehaviour
         if (passwordInput != null)
         {
             passwordInput.text = "";
-            passwordInput.placeholder.GetComponent<TextMeshProUGUI>().text = "비밀번호 (선택사항)";
+            passwordInput.placeholder.GetComponent<TextMeshProUGUI>().text = "Password (Optional)";
         }
     }
     
@@ -53,20 +53,20 @@ public class MakingRoomUI : MonoBehaviour
         
         if (string.IsNullOrEmpty(roomName))
         {
-            ShowError("방 이름을 입력해주세요!");
+            ShowError("Please enter a room name!");
             return;
         }
         
         if (roomName.Length > 20)
         {
-            ShowError("방 이름은 20자 이하로 입력해주세요!");
+            ShowError("Room name must be 20 characters or less!");
             return;
         }
         
         // 비밀번호가 입력되었다면 길이 체크
         if (!string.IsNullOrEmpty(password) && password.Length > 10)
         {
-            ShowError("비밀번호는 10자 이하로 입력해주세요!");
+            ShowError("Password must be 10 characters or less!");
             return;
         }
         
@@ -85,7 +85,7 @@ public class MakingRoomUI : MonoBehaviour
         RoomData newRoom = new RoomData(roomName, password, 2);
         RoomDataManager.Instance.AddRoom(newRoom);
         
-        string roomType = string.IsNullOrEmpty(password) ? "공개방" : "비밀방";
+        string roomType = string.IsNullOrEmpty(password) ? "Public" : "Private";
         Debug.Log($"방 생성 완료: {roomName} ({roomType})");
         
         SceneManager.LoadScene("ChoosingRoomScene");
@@ -93,7 +93,7 @@ public class MakingRoomUI : MonoBehaviour
     
     public void OnBackClicked()
     {
-        SceneManager.LoadScene("MainMenuScene");
+        SceneManager.LoadScene("WaitingRoomScene");
     }
     
     private void ShowError(string message)
