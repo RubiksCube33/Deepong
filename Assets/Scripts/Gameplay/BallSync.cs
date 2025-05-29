@@ -18,12 +18,16 @@ public class BallSync : MonoBehaviourPun, IPunObservable
     [SerializeField] private float delayCompensation = 0.5f; // 지연 보정 비율 (0.5 = 50%)
     [SerializeField] private float teleportThreshold = 5f; // 순간이동 임계값 (유닛)
     
+    [Header("게임 설정")]
+    [SerializeField] private Vector3 initialPosition = new Vector3(-1.05f, 1.004f, -4.362f);
+    
     private float syncTime = 0.1f; // 동기화 간격 (포톤 기본값)
     private float syncDelay = 0; // 마지막 데이터 수신 후 경과 시간
     private float lastReceiveTime; // 마지막 데이터 수신 시간
     
     private Rigidbody rb;
     private bool hasReceivedData = false; // 첫 데이터 수신 여부
+    private BallController ballController; // BallController 참조
 
     void Awake()
     {
@@ -32,6 +36,9 @@ public class BallSync : MonoBehaviourPun, IPunObservable
         lastNetworkPos = rb.position;
         networkVel = Vector3.zero;
         lastReceiveTime = Time.time;
+        
+        // BallController 참조 획득
+        ballController = GetComponent<BallController>();
     }
     
     void Start()
@@ -138,5 +145,20 @@ public class BallSync : MonoBehaviourPun, IPunObservable
                 rb.velocity = networkVel;
             }
         }
+    }
+    
+    // 공 위치 리셋을 위한 네트워크 RPC (BallController에서 호출)
+    [PunRPC]
+    public void ResetBallPositionRPC()
+    {
+        ResetBall();
+    }
+    
+    // 공 위치 초기화
+    public void ResetBall()
+    {
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        transform.position = initialPosition;
     }
 }

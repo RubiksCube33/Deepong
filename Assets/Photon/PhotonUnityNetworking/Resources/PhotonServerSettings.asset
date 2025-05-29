@@ -41,6 +41,12 @@ MonoBehaviour:
   - RespawnSpaceship
   - RPC_SetPlayerPositions
   - SyncPlayerPositions
+  - AddScoreRPC
+  - RestartGameRPC
+  - ResetBallPositionRPC
+  - RPC_ResetBallPosition
+  - SyncPlayerReset
+  - SyncDirectPlayerReset
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

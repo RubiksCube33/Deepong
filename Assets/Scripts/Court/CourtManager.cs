@@ -56,42 +56,90 @@ public class CourtManager : MonoBehaviourPunCallbacks
     
     void FindPlayerObjects()
     {
-        // 씬에서 실린더 오브젝트 찾기
-        GameObject[] cylinders = GameObject.FindGameObjectsWithTag("Player");
+        List<GameObject> foundPlayers = new List<GameObject>();
         
-        // Player 태그가 없는 경우 Cylinder 형태로 찾기
-        if (cylinders.Length < 2)
+        // 1. Player 태그로 찾기
+        GameObject[] taggedPlayers = GameObject.FindGameObjectsWithTag("Player");
+        if (taggedPlayers.Length >= 2)
         {
-            cylinders = GameObject.FindObjectsOfType<GameObject>();
-            List<GameObject> foundCylinders = new List<GameObject>();
-            
-            foreach (GameObject obj in cylinders)
+            foundPlayers.AddRange(taggedPlayers);
+            Debug.Log("Player 태그가 있는 오브젝트를 찾았습니다.");
+        }
+        
+        // 2. player1, player2 태그로 찾기
+        if (foundPlayers.Count < 2)
+        {
+            GameObject p1 = GameObject.FindGameObjectWithTag("player1");
+            GameObject p2 = GameObject.FindGameObjectWithTag("player2");
+            if (p1 != null && p2 != null)
             {
-                if (obj.name.Contains("Cylinder") || 
+                foundPlayers.Clear();
+                foundPlayers.Add(p1);
+                foundPlayers.Add(p2);
+                Debug.Log("player1, player2 태그 오브젝트를 찾았습니다.");
+            }
+        }
+        
+        // 3. Cylinder 형태로 찾기
+        if (foundPlayers.Count < 2)
+        {
+            GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+            List<GameObject> cylinders = new List<GameObject>();
+            
+            foreach (GameObject obj in allObjects)
+            {
+                if (obj.name.Contains("Cylinder") || obj.name.Contains("Player") ||
                     (obj.GetComponent<MeshFilter>() != null && 
                      obj.GetComponent<MeshFilter>().sharedMesh != null && 
                      obj.GetComponent<MeshFilter>().sharedMesh.name.Contains("Cylinder")))
                 {
-                    foundCylinders.Add(obj);
+                    cylinders.Add(obj);
                 }
             }
             
-            if (foundCylinders.Count >= 2)
+            if (cylinders.Count >= 2)
             {
-                player1 = foundCylinders[0];
-                player2 = foundCylinders[1];
-                Debug.Log("실린더 오브젝트를 플레이어로 찾았습니다.");
+                foundPlayers.Clear();
+                foundPlayers.Add(cylinders[0]);
+                foundPlayers.Add(cylinders[1]);
+                Debug.Log($"실린더 형태 오브젝트를 플레이어로 찾았습니다: {cylinders[0].name}, {cylinders[1].name}");
             }
-            else
+        }
+        
+        // 4. 활성화된 게임 오브젝트 중에서 찾기 (마지막 수단)
+        if (foundPlayers.Count < 2)
+        {
+            GameObject[] allActive = FindObjectsOfType<GameObject>();
+            List<GameObject> candidates = new List<GameObject>();
+            
+            foreach (GameObject obj in allActive)
             {
-                Debug.LogWarning("씬에서 충분한 실린더 오브젝트를 찾을 수 없습니다!");
+                // 메시 렌더러가 있고 활성화된 오브젝트
+                if (obj.activeInHierarchy && obj.GetComponent<MeshRenderer>() != null)
+                {
+                    candidates.Add(obj);
+                }
             }
+            
+            if (candidates.Count >= 2)
+            {
+                foundPlayers.Clear();
+                foundPlayers.Add(candidates[0]);
+                foundPlayers.Add(candidates[1]);
+                Debug.Log($"활성화된 오브젝트를 플레이어로 사용합니다: {candidates[0].name}, {candidates[1].name}");
+            }
+        }
+        
+        // 결과 할당
+        if (foundPlayers.Count >= 2)
+        {
+            player1 = foundPlayers[0];
+            player2 = foundPlayers[1];
+            Debug.Log($"플레이어 할당 완료: Player1={player1.name}, Player2={player2.name}");
         }
         else
         {
-            player1 = cylinders[0];
-            player2 = cylinders[1];
-            Debug.Log("Player 태그가 있는 오브젝트를 찾았습니다.");
+            Debug.LogWarning($"충분한 플레이어 오브젝트를 찾을 수 없습니다! 찾은 개수: {foundPlayers.Count}");
         }
     }
     
