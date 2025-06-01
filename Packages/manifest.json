@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "com.atteneder.gltfast": "https://github.com/atteneder/glTFast.git",
     "com.justinpbarnett.unity-mcp": "https://github.com/justinpbarnett/unity-mcp.git?path=/UnityMcpBridge",
     "com.meta.xr.sdk.all": "74.0.2",
     "com.unity.cinemachine": "2.10.3",
