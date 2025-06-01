@@ -1328,6 +1328,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   connectingInfoPanel: {fileID: 0}
+  createRoomButton: {fileID: 0}
+  joinRoomButton: {fileID: 0}
+  roomNameInput: {fileID: 0}
+  roomListContent: {fileID: 0}
+  roomListItemPrefab: {fileID: 0}
+  debugText: {fileID: 0}
+  autoCreateRoomOnStart: 1
+  testRoomName: TestRoom
+  createRoomKey: 282
+  joinRoomKey: 283
 --- !u!1 &1273861214
 GameObject:
   m_ObjectHideFlags: 0
