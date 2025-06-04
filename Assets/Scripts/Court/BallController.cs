@@ -22,6 +22,14 @@ public class BallController : MonoBehaviourPunCallbacks
 
     // 점수 관리를 위한 참조
     private ScoreManager scoreManager;
+
+    [Header("충돌 시 소리 설정")]
+    private AudioSource sfxSource;
+    [SerializeField] private AudioClip collisionSfxWall;
+    
+    [Header("사운드 재생 방식 선택")]
+    [SerializeField] private bool useSoundManager = true; // true: SoundManager 사용, false: 직접 AudioSource 사용
+    [SerializeField] private string wallBounceSoundName = "02_zapsplat_leisure_small_rubber_toy_ball_single_bounce_concrete_002_106377";
     
     // Start is called before the first frame update
     void Start()
@@ -31,6 +39,16 @@ public class BallController : MonoBehaviourPunCallbacks
         
         // 현재 위치를 초기 위치로 저장
         initialPosition = transform.position;
+        
+        // AudioSource 컴포넌트 가져오기 또는 추가
+        sfxSource = GetComponent<AudioSource>();
+        if (sfxSource == null)
+        {
+            sfxSource = gameObject.AddComponent<AudioSource>();
+            sfxSource.playOnAwake = false;
+            sfxSource.loop = false;
+            sfxSource.volume = 0.7f;
+        }
         
         // 씬에서 ScoreManager 찾기
         scoreManager = FindObjectOfType<ScoreManager>();
@@ -47,9 +65,14 @@ public class BallController : MonoBehaviourPunCallbacks
         Vector3 forceDirection = hitDirection;
         float forceMagnitude = baseForce;
         
+        // 벽 충돌 사운드 재생 (점수 벽 포함)
+        bool isWallCollision = false;
+        
         // 점수 벽과의 충돌 감지
         if (collision.gameObject.CompareTag(wallBackTag))
         {
+            isWallCollision = true;
+            
             // 게임이 끝났으면 점수 추가하지 않음
             if (scoreManager != null && scoreManager.IsGameEnded())
             {
@@ -79,6 +102,8 @@ public class BallController : MonoBehaviourPunCallbacks
         }
         else if (collision.gameObject.CompareTag(wallFrontTag))
         {
+            isWallCollision = true;
+            
             // 게임이 끝났으면 점수 추가하지 않음
             if (scoreManager != null && scoreManager.IsGameEnded())
             {
@@ -106,7 +131,11 @@ public class BallController : MonoBehaviourPunCallbacks
                 }
             }
         }
-        
+        // 일반 벽 충돌 감지 (Wall 태그 확인)
+        else if (collision.gameObject.CompareTag("Wall"))
+        {
+            isWallCollision = true;
+        }
         // VR 컨트롤러 검출
         else if (collision.gameObject.CompareTag("VRController"))
         {
@@ -124,9 +153,55 @@ public class BallController : MonoBehaviourPunCallbacks
             }
         }
         
+        // 벽 충돌 시 사운드 재생
+        if (isWallCollision)
+        {
+            PlayWallCollisionSound();
+        }
+        
         // 색상 변경
         Color newColor = new Color(Random.value, Random.value, Random.value);
         rend.material.color = newColor;
+    }
+    
+    /// <summary>
+    /// 벽 충돌 시 사운드를 재생합니다.
+    /// </summary>
+    private void PlayWallCollisionSound()
+    {
+        if (useSoundManager)
+        {
+            // SoundManager를 사용한 사운드 재생 (권장)
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySFX(wallBounceSoundName);
+            }
+            else
+            {
+                Debug.LogWarning("SoundManager Instance가 없습니다. 직접 AudioSource를 사용합니다.");
+                PlayDirectAudioSource();
+            }
+        }
+        else
+        {
+            // 직접 AudioSource를 사용한 사운드 재생
+            PlayDirectAudioSource();
+        }
+    }
+    
+    /// <summary>
+    /// 직접 AudioSource를 사용하여 사운드를 재생합니다.
+    /// </summary>
+    private void PlayDirectAudioSource()
+    {
+        if (sfxSource != null && collisionSfxWall != null)
+        {
+            sfxSource.PlayOneShot(collisionSfxWall);
+        }
+        else
+        {
+            Debug.LogWarning("AudioSource 또는 AudioClip이 설정되지 않았습니다.");
+        }
     }
     
     // 공 위치 초기화

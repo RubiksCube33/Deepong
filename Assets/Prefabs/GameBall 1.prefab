@@ -151,6 +151,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseForce: 10
   velocityMultiplier: 0.5
+  wallBackTag: wallback
+  wallFrontTag: wallfront
+  collisionSfxWall: {fileID: 8300000, guid: 4534d9a92e51e7f44b9669d919e7c9bf, type: 3}
+  useSoundManager: 1
+  wallBounceSoundName: 02_zapsplat_leisure_small_rubber_toy_ball_single_bounce_concrete_002_106377
 --- !u!96 &1653235544838964820
 TrailRenderer:
   serializedVersion: 3
@@ -299,3 +304,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b4a03ed33f19f647881fbdbc1c76f95, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  minSyncSpeed: 5
+  maxSyncSpeed: 15
+  distanceMultiplier: 3
+  velocityLerpSpeed: 3
+  delayCompensation: 0.5
+  teleportThreshold: 5
+  initialPosition: {x: -1.05, y: 1.004, z: -4.362}
