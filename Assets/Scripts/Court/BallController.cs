@@ -17,11 +17,20 @@ public class BallController : MonoBehaviourPunCallbacks
 
     [Header("게임 설정")]
     private Vector3 initialPosition;  // 시작 시 현재 위치를 저장
+    
     [SerializeField] private string wallBackTag = "wallback";  // 플레이어1 뒤 벽
     [SerializeField] private string wallFrontTag = "wallfront"; // 플레이어2 뒤 벽
 
     // 점수 관리를 위한 참조
     private ScoreManager scoreManager;
+
+    [Header("충돌 시 소리 설정")]
+    private AudioSource sfxSource;
+    
+    
+    [Header("사운드 재생 방식 선택")]
+    [SerializeField] private bool useSoundManager = true; // true: SoundManager 사용, false: 직접 AudioSource 사용
+    [SerializeField] private string wallBounceSoundName = "01_zapsplat_leisure_small_rubber_toy_ball_single_catch_002_106380";
     
     // Start is called before the first frame update
     void Start()
@@ -31,6 +40,10 @@ public class BallController : MonoBehaviourPunCallbacks
         
         // 현재 위치를 초기 위치로 저장
         initialPosition = transform.position;
+        
+        // AudioSource 컴포넌트 가져오기
+        sfxSource = GetComponent<AudioSource>();
+        
         
         // 씬에서 ScoreManager 찾기
         scoreManager = FindObjectOfType<ScoreManager>();
@@ -47,9 +60,14 @@ public class BallController : MonoBehaviourPunCallbacks
         Vector3 forceDirection = hitDirection;
         float forceMagnitude = baseForce;
         
+        
+        PlayDirectAudioSource();
+
         // 점수 벽과의 충돌 감지
         if (collision.gameObject.CompareTag(wallBackTag))
         {
+
+            
             // 게임이 끝났으면 점수 추가하지 않음
             if (scoreManager != null && scoreManager.IsGameEnded())
             {
@@ -79,6 +97,8 @@ public class BallController : MonoBehaviourPunCallbacks
         }
         else if (collision.gameObject.CompareTag(wallFrontTag))
         {
+            
+            
             // 게임이 끝났으면 점수 추가하지 않음
             if (scoreManager != null && scoreManager.IsGameEnded())
             {
@@ -127,6 +147,22 @@ public class BallController : MonoBehaviourPunCallbacks
         // 색상 변경
         Color newColor = new Color(Random.value, Random.value, Random.value);
         rend.material.color = newColor;
+    }
+    
+    
+    /// <summary>
+    /// 직접 AudioSource를 사용하여 사운드를 재생합니다.
+    /// </summary>
+    private void PlayDirectAudioSource()
+    {
+        if (sfxSource != null)
+        {
+            sfxSource.Play();
+        }
+        else
+        {
+            Debug.LogWarning("AudioSource 또는 AudioClip이 설정되지 않았습니다.");
+        }
     }
     
     // 공 위치 초기화
