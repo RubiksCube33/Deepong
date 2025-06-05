@@ -155,7 +155,7 @@ MonoBehaviour:
   wallFrontTag: wallfront
   collisionSfxWall: {fileID: 8300000, guid: 4534d9a92e51e7f44b9669d919e7c9bf, type: 3}
   useSoundManager: 1
-  wallBounceSoundName: 02_zapsplat_leisure_small_rubber_toy_ball_single_bounce_concrete_002_106377
+  wallBounceSoundName: 01_zapsplat_leisure_small_rubber_toy_ball_single_catch_002_106380
 --- !u!96 &1653235544838964820
 TrailRenderer:
   serializedVersion: 3
