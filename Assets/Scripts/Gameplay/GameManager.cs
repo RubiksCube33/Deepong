@@ -62,15 +62,17 @@ public class GameManager : MonoBehaviourPunCallbacks
         GameObject p1Spawn = new GameObject("Player1SpawnPoint");
         p1Spawn.transform.parent = spawnPointsHolder.transform;
         p1Spawn.transform.position = new Vector3(-1.31f, 1f, -5.81f); // 이미지에 보여진 player1 위치
+        p1Spawn.transform.rotation = Quaternion.Euler(0f, 0f, 0f); // 기본 회전값 (필요에 따라 수정)
         player1SpawnPoint = p1Spawn.transform;
         
         // 플레이어 2 스폰 포인트
         GameObject p2Spawn = new GameObject("Player2SpawnPoint");
         p2Spawn.transform.parent = spawnPointsHolder.transform;
         p2Spawn.transform.position = new Vector3(-0.98f, 1f, 10.207f); // 이미지에 보여진 player2 위치
+        p2Spawn.transform.rotation = Quaternion.Euler(0f, 180f, 0f); // 플레이어 2는 반대방향을 바라보도록 설정
         player2SpawnPoint = p2Spawn.transform;
         
-        Debug.Log("플레이어 스폰 포인트가 생성되었습니다.");
+        Debug.Log("플레이어 스폰 포인트가 생성되었습니다 (위치 및 회전 포함).");
     }
     
     void FindPlayerObjects()
@@ -154,17 +156,21 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         if (player1Object != null && player2Object != null)
         {
-            Debug.Log($"플레이어 위치 설정 시작 - Player1: {player1Object.name}, Player2: {player2Object.name}");
-            Debug.Log($"현재 Player1 위치: {player1Object.transform.position}");
-            Debug.Log($"현재 Player2 위치: {player2Object.transform.position}");
-            Debug.Log($"목표 Player1 위치: {player1SpawnPoint.position}");
-            Debug.Log($"목표 Player2 위치: {player2SpawnPoint.position}");
+            Debug.Log($"플레이어 위치 및 회전 설정 시작 - Player1: {player1Object.name}, Player2: {player2Object.name}");
+            Debug.Log($"현재 Player1 위치: {player1Object.transform.position}, 회전: {player1Object.transform.rotation.eulerAngles}");
+            Debug.Log($"현재 Player2 위치: {player2Object.transform.position}, 회전: {player2Object.transform.rotation.eulerAngles}");
+            Debug.Log($"목표 Player1 위치: {player1SpawnPoint.position}, 회전: {player1SpawnPoint.rotation.eulerAngles}");
+            Debug.Log($"목표 Player2 위치: {player2SpawnPoint.position}, 회전: {player2SpawnPoint.rotation.eulerAngles}");
             
-            // 플레이어 1과 2를 각각의 스폰 포인트로 이동
+            // 플레이어 1과 2를 각각의 스폰 포인트로 이동 및 회전
             player1Object.transform.position = player1SpawnPoint.position;
-            player2Object.transform.position = player2SpawnPoint.position;
+            player1Object.transform.rotation = player1SpawnPoint.rotation;
             
-            Debug.Log($"플레이어 위치 설정 완료 - Player1: {player1Object.transform.position}, Player2: {player2Object.transform.position}");
+            player2Object.transform.position = player2SpawnPoint.position;
+            player2Object.transform.rotation = player2SpawnPoint.rotation;
+            
+            Debug.Log($"플레이어 위치 및 회전 설정 완료 - Player1: {player1Object.transform.position}, 회전: {player1Object.transform.rotation.eulerAngles}");
+            Debug.Log($"Player2: {player2Object.transform.position}, 회전: {player2Object.transform.rotation.eulerAngles}");
         }
         else
         {
@@ -205,7 +211,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         Debug.Log($"플레이어 오브젝트 검색 완료 - Player1: {(player1Object != null ? player1Object.name : "찾을 수 없음")}, Player2: {(player2Object != null ? player2Object.name : "찾을 수 없음")}");
     }
     
-    [ContextMenu("Reset Player Positions")]
+    [ContextMenu("Reset Player Positions and Rotations")]
     void ResetPlayerPositions()
     {
         PositionPlayers();
