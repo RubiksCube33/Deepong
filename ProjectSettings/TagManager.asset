@@ -13,6 +13,10 @@ TagManager:
   - wallfront
   - player1
   - player2
+  - CinemachineTarget
+  - Paddle_Racket
+  - Paddle_Sword
+  - Paddle_Glove
   layers:
   - Default
   - TransparentFX
