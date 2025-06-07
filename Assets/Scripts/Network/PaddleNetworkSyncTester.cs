@@ -61,6 +61,33 @@ public class PaddleNetworkSyncTester : MonoBehaviour
         Debug.Log($"Photon 연결 상태: {PhotonNetwork.IsConnected}");
         Debug.Log($"로컬 플레이어: {(paddleNetworkSync.photonView != null ? paddleNetworkSync.photonView.IsMine : "PhotonView 없음")}");
         
+        // PhotonView 상세 정보
+        if (paddleNetworkSync.photonView != null)
+        {
+            var photonView = paddleNetworkSync.photonView;
+            Debug.Log($"PhotonView 정보:");
+            Debug.Log($"  ViewID: {photonView.ViewID}");
+            Debug.Log($"  IsMine: {photonView.IsMine}");
+            Debug.Log($"  Observed Components 수: {photonView.ObservedComponents.Count}");
+            
+            bool paddleSyncObserved = false;
+            foreach (var observed in photonView.ObservedComponents)
+            {
+                if (observed == paddleNetworkSync)
+                {
+                    paddleSyncObserved = true;
+                    break;
+                }
+            }
+            Debug.Log($"  PaddleNetworkSync 관찰됨: {paddleSyncObserved}");
+            
+            if (!paddleSyncObserved)
+            {
+                Debug.LogWarning("⚠️ PaddleNetworkSync가 PhotonView의 Observed Components에 추가되지 않았습니다!");
+                Debug.LogWarning("Unity Inspector에서 PhotonView > Observed Components에 PaddleNetworkSync를 추가해주세요.");
+            }
+        }
+        
         // PaddleChangeController 정보
         var paddleController = paddleNetworkSync.GetComponent<DeepongVR.Court.PaddleChangeController>();
         if (paddleController != null)

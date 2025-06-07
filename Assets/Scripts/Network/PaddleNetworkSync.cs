@@ -81,6 +81,12 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             return;
         }
         
+        // PhotonView 설정 확인
+        CheckPhotonViewSetup();
+        
+        // 패들 Transform 찾기
+        FindPaddleTransforms();
+        
         // 상세한 구조 진단
         if (enableDebugLogs)
         {
@@ -240,6 +246,48 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
     }
     
     /// <summary>
+    /// PhotonView 설정을 확인하고 자동으로 설정합니다.
+    /// </summary>
+    void CheckPhotonViewSetup()
+    {
+        if (photonView == null)
+        {
+            Debug.LogError("[PaddleNetworkSync] PhotonView를 찾을 수 없습니다!");
+            return;
+        }
+        
+        // Observed Components에 이 스크립트가 추가되어 있는지 확인
+        bool isObserved = false;
+        foreach (var observed in photonView.ObservedComponents)
+        {
+            if (observed == this)
+            {
+                isObserved = true;
+                break;
+            }
+        }
+        
+        if (!isObserved)
+        {
+            // 자동으로 Observed Components에 추가
+            var observedList = new System.Collections.Generic.List<Component>(photonView.ObservedComponents);
+            observedList.Add(this);
+            photonView.ObservedComponents = observedList;
+            
+            Debug.Log("[PaddleNetworkSync] PhotonView Observed Components에 자동으로 추가되었습니다.");
+        }
+        
+        if (enableDebugLogs)
+        {
+            Debug.Log($"[PaddleNetworkSync] PhotonView 설정:");
+            Debug.Log($"  ViewID: {photonView.ViewID}");
+            Debug.Log($"  IsMine: {photonView.IsMine}");
+            Debug.Log($"  Observed Components 수: {photonView.ObservedComponents.Count}");
+            Debug.Log($"  이 스크립트 관찰됨: {isObserved}");
+        }
+    }
+    
+    /// <summary>
     /// 오브젝트 구조를 진단합니다.
     /// </summary>
     void DiagnoseObjectStructure()
@@ -383,6 +431,7 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
         if (paddleController == null) return;
         
         int currentPaddleType = paddleController.CurrentPaddleIndex;
+        Vector3 previousPosition = currentPaddlePosition;
         
         switch (currentPaddleType)
         {
@@ -395,6 +444,12 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             case 2: // Glove
                 UpdateGlovePositions();
                 break;
+        }
+        
+        // 위치 변화 디버깅
+        if (enableDebugLogs && Vector3.Distance(previousPosition, currentPaddlePosition) > 0.01f)
+        {
+            Debug.Log($"[PaddleNetworkSync] 위치 업데이트 - 패들타입: {currentPaddleType}, 위치: {currentPaddlePosition}");
         }
     }
     
@@ -504,30 +559,68 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
     /// </summary>
     void UpdateRemotePaddlePositions()
     {
+        if (enableDebugLogs)
+        {
+            Debug.Log($"[PaddleNetworkSync] 원격 패들 위치 업데이트 시작 - 패들타입: {networkData.paddleType}");
+        }
+        
         switch (networkData.paddleType)
         {
             case 0: // Racket
                 if (racketTransform != null)
                 {
+                    if (enableDebugLogs)
+                    {
+                        Debug.Log($"[PaddleNetworkSync] Racket 동기화: {networkData.position} -> {racketTransform.name}");
+                    }
                     SyncTransform(racketTransform, networkData.position, networkData.rotation);
+                }
+                else if (enableDebugLogs)
+                {
+                    Debug.LogWarning("[PaddleNetworkSync] Racket Transform이 null입니다!");
                 }
                 break;
                 
             case 1: // Sword
                 if (swordTransform != null)
                 {
+                    if (enableDebugLogs)
+                    {
+                        Debug.Log($"[PaddleNetworkSync] Sword 동기화: {networkData.position} -> {swordTransform.name}");
+                    }
                     SyncTransform(swordTransform, networkData.position, networkData.rotation);
+                }
+                else if (enableDebugLogs)
+                {
+                    Debug.LogWarning("[PaddleNetworkSync] Sword Transform이 null입니다!");
                 }
                 break;
                 
             case 2: // Glove
                 if (leftGloveTransform != null)
                 {
+                    if (enableDebugLogs)
+                    {
+                        Debug.Log($"[PaddleNetworkSync] Left Glove 동기화: {networkData.leftGlovePosition} -> {leftGloveTransform.name}");
+                    }
                     SyncTransform(leftGloveTransform, networkData.leftGlovePosition, networkData.leftGloveRotation);
                 }
+                else if (enableDebugLogs)
+                {
+                    Debug.LogWarning("[PaddleNetworkSync] Left Glove Transform이 null입니다!");
+                }
+                
                 if (rightGloveTransform != null)
                 {
+                    if (enableDebugLogs)
+                    {
+                        Debug.Log($"[PaddleNetworkSync] Right Glove 동기화: {networkData.rightGlovePosition} -> {rightGloveTransform.name}");
+                    }
                     SyncTransform(rightGloveTransform, networkData.rightGlovePosition, networkData.rightGloveRotation);
+                }
+                else if (enableDebugLogs)
+                {
+                    Debug.LogWarning("[PaddleNetworkSync] Right Glove Transform이 null입니다!");
                 }
                 break;
         }
@@ -587,7 +680,18 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             
             if (enableDebugLogs)
             {
-                Debug.Log($"[PaddleNetworkSync] 데이터 전송 - 패들타입: {currentPaddleType}");
+                string positionInfo = "";
+                switch (currentPaddleType)
+                {
+                    case 0:
+                    case 1:
+                        positionInfo = $", 위치: {currentPaddlePosition}";
+                        break;
+                    case 2:
+                        positionInfo = $", 왼손: {currentLeftGlovePosition}, 오른손: {currentRightGlovePosition}";
+                        break;
+                }
+                Debug.Log($"[PaddleNetworkSync] 데이터 전송 - 패들타입: {currentPaddleType}{positionInfo}");
             }
         }
         else
@@ -616,7 +720,18 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             
             if (enableDebugLogs)
             {
-                Debug.Log($"[PaddleNetworkSync] 데이터 수신 - 패들타입: {networkData.paddleType}");
+                string positionInfo = "";
+                switch (networkData.paddleType)
+                {
+                    case 0:
+                    case 1:
+                        positionInfo = $", 위치: {networkData.position}";
+                        break;
+                    case 2:
+                        positionInfo = $", 왼손: {networkData.leftGlovePosition}, 오른손: {networkData.rightGlovePosition}";
+                        break;
+                }
+                Debug.Log($"[PaddleNetworkSync] 데이터 수신 - 패들타입: {networkData.paddleType}{positionInfo}");
             }
         }
     }
