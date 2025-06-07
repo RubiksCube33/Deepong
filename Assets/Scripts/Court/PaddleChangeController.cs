@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.Events;
+using System;
 
 namespace DeepongVR.Court
 {
@@ -18,13 +20,66 @@ namespace DeepongVR.Court
         [Header("Controller Settings")]
         [SerializeField] private bool isRightController = true; // 오른쪽 컨트롤러인지 여부
 
+        [Header("Events")]
+        [SerializeField] private UnityEvent<int> OnPaddleChanged; // 패들 변경 시 발생하는 이벤트
+
         [Header("Debug")]
         [SerializeField] private bool enableDebugLogs = true;
 
         // 내부 변수들
         private InputAction primaryButtonAction;
-        private int currentPaddleIndex = 0;
+        private int _currentPaddleIndex = 0;
         private GameObject[] paddles;
+
+        // 정적 이벤트 (다른 스크립트에서 구독 가능)
+        public static event Action<int, string> OnPaddleChangedGlobal;
+
+        /// <summary>
+        /// 현재 패들 인덱스 (다른 스크립트에서 읽기/쓰기 가능)
+        /// </summary>
+        public int CurrentPaddleIndex
+        {
+            //Getter & Setter 사용
+            //값 변경 시 이벤트 발생
+            get { return _currentPaddleIndex; }
+            set 
+            { 
+                if (_currentPaddleIndex != value)
+                {
+                    _currentPaddleIndex = Mathf.Clamp(value, 0, 2); // 0~2 범위로 제한
+                    SetActivePaddle(_currentPaddleIndex);
+                    
+                    // 이벤트 발생
+                    OnPaddleChanged?.Invoke(_currentPaddleIndex);
+                    OnPaddleChangedGlobal?.Invoke(_currentPaddleIndex, GetCurrentPaddleName());
+                    
+                    if (enableDebugLogs)
+                    {
+                        Debug.Log($"[PaddleChangeController] 패들 인덱스 변경: {_currentPaddleIndex} ({GetCurrentPaddleName()})");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 현재 패들 이름 (읽기 전용)
+        /// </summary>
+        public string CurrentPaddleName => GetCurrentPaddleName();
+
+        /// <summary>
+        /// 패들 타입 열거형
+        /// </summary>
+        public enum PaddleType
+        {
+            Racket = 0,
+            Sword = 1,
+            Glove = 2
+        }
+
+        /// <summary>
+        /// 현재 패들 타입 (읽기 전용)
+        /// </summary>
+        public PaddleType CurrentPaddleType => (PaddleType)_currentPaddleIndex;
 
         void Start()
         {
@@ -32,7 +87,7 @@ namespace DeepongVR.Court
             paddles = new GameObject[] { paddle_racket, paddle_sword, paddle_glove_left, paddle_glove_right };
             
             // 초기 패들 설정 (첫 번째만 활성화)
-            SetActivePaddle(0);
+            CurrentPaddleIndex = 0; // Property를 사용해서 이벤트도 발생
         }
 
         void OnEnable()
@@ -80,6 +135,8 @@ namespace DeepongVR.Court
             {
                 // 다음 패들로 변경
                 ChangeToNextPaddle();
+
+                // 여기에 패들 변경 시 변경한 패들 정보를 Photon으로 넘겨주거나 하는 부분 코드를 작성
             }
         }
 
@@ -88,14 +145,24 @@ namespace DeepongVR.Court
         /// </summary>
         public void ChangeToNextPaddle()
         {
-            currentPaddleIndex = (currentPaddleIndex + 1) % 3; // 패들 타입은 3개 (racket, sword, glove)
-            SetActivePaddle(currentPaddleIndex);
+            CurrentPaddleIndex = (_currentPaddleIndex + 1) % 3; // Property 사용
+        }
 
-            if (enableDebugLogs)
-            {
-                string paddleName = GetCurrentPaddleName();
-                Debug.Log($"[PaddleChangeController] 패들 변경: {paddleName}");
-            }
+        /// <summary>
+        /// 이전 패들로 변경
+        /// </summary>
+        public void ChangeToPreviousPaddle()
+        {
+            CurrentPaddleIndex = (_currentPaddleIndex - 1 + 3) % 3; // Property 사용
+        }
+
+        /// <summary>
+        /// 특정 패들로 직접 변경
+        /// </summary>
+        /// <param name="paddleType">변경할 패들 타입</param>
+        public void ChangeToPaddle(PaddleType paddleType)
+        {
+            CurrentPaddleIndex = (int)paddleType;
         }
 
         /// <summary>
@@ -137,13 +204,26 @@ namespace DeepongVR.Court
         /// </summary>
         private string GetCurrentPaddleName()
         {
-            switch (currentPaddleIndex)
+            switch (_currentPaddleIndex)
             {
                 case 0: return "Racket";
                 case 1: return "Sword";
                 case 2: return "Glove (Both Hands)";
                 default: return "Unknown";
             }
+        }
+
+        // Context Menu로 에디터에서 테스트 가능
+        [ContextMenu("Next Paddle")]
+        private void TestNextPaddle()
+        {
+            ChangeToNextPaddle();
+        }
+
+        [ContextMenu("Previous Paddle")]
+        private void TestPreviousPaddle()
+        {
+            ChangeToPreviousPaddle();
         }
     }
 } 
