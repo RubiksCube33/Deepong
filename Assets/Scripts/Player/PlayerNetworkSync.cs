@@ -47,6 +47,12 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
     
     // VR 컨트롤러 참조 (Robot 모드용)
     private VRHumanoidController vrController;
+    
+    // 원격 플레이어 VR 컨트롤러 시각화
+    [Header("원격 플레이어 시각화")]
+    [SerializeField] private GameObject leftControllerVisualizer;
+    [SerializeField] private GameObject rightControllerVisualizer;
+    [SerializeField] private bool createControllerVisualizers = true;
 
     void Awake()
     {
@@ -61,19 +67,90 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
         vrController = GetComponent<VRHumanoidController>();
         if (vrController != null)
         {
+            // 머리는 XR 헤드셋 Transform 사용 (실제 VR 위치)
             if (headTransform == null)
-                headTransform = vrController.HumanoidHead;
-            if (leftHandTransform == null)
-                leftHandTransform = vrController.HumanoidLeftHand;
-            if (rightHandTransform == null)
-                rightHandTransform = vrController.HumanoidRightHand;
+                headTransform = vrController.Headset;
                 
-            // Robot 모드 자동 감지
-            useVirtualHands = vrController.IsRobotMode;
+            // 손은 XR 컨트롤러 Transform 사용 (실제 VR 컨트롤러 위치)
+            if (leftHandTransform == null)
+                leftHandTransform = vrController.LeftHandController;
+            if (rightHandTransform == null)
+                rightHandTransform = vrController.RightHandController;
+                
+            // VR 멀티플레이어 환경에서는 항상 실제 컨트롤러 위치 사용
+            // Robot 모드는 원격 플레이어 시각화용으로만 사용
+            useVirtualHands = false; // VR 컨트롤러 동기화를 위해 false로 고정
+            
+            Debug.Log($"VR 컨트롤러 참조 설정 완료: Head={headTransform?.name}, LeftHand={leftHandTransform?.name}, RightHand={rightHandTransform?.name}, VirtualHands={useVirtualHands}");
+        }
+        else
+        {
+            // VRHumanoidController가 없는 경우 XR Origin에서 직접 찾기
+            FindXRControllerReferences();
         }
         
         // 초기값 설정
         InitializeNetworkValues();
+        
+        // 원격 플레이어용 컨트롤러 시각화 오브젝트 생성
+        if (!photonView.IsMine && createControllerVisualizers)
+        {
+            CreateControllerVisualizers();
+        }
+    }
+    
+    /// <summary>
+    /// XR Origin에서 직접 컨트롤러 참조를 찾습니다.
+    /// </summary>
+    void FindXRControllerReferences()
+    {
+        // XR Origin 찾기
+        Transform xrOrigin = transform.root;
+        
+        // Camera Offset 찾기
+        Transform cameraOffset = xrOrigin.Find("Camera Offset");
+        if (cameraOffset == null)
+        {
+            // 다른 이름으로 시도
+            cameraOffset = xrOrigin.Find("XR Origin/Camera Offset");
+        }
+        
+        if (cameraOffset != null)
+        {
+            // 헤드셋 찾기
+            if (headTransform == null)
+            {
+                headTransform = cameraOffset.Find("Main Camera");
+                if (headTransform == null)
+                    headTransform = cameraOffset.Find("CenterEyeAnchor");
+            }
+            
+            // 왼쪽 컨트롤러 찾기
+            if (leftHandTransform == null)
+            {
+                leftHandTransform = cameraOffset.Find("LeftHand Controller");
+                if (leftHandTransform == null)
+                    leftHandTransform = cameraOffset.Find("Left Controller");
+                if (leftHandTransform == null)
+                    leftHandTransform = cameraOffset.Find("LeftHandAnchor");
+            }
+            
+            // 오른쪽 컨트롤러 찾기
+            if (rightHandTransform == null)
+            {
+                rightHandTransform = cameraOffset.Find("RightHand Controller");
+                if (rightHandTransform == null)
+                    rightHandTransform = cameraOffset.Find("Right Controller");
+                if (rightHandTransform == null)
+                    rightHandTransform = cameraOffset.Find("RightHandAnchor");
+            }
+            
+            Debug.Log($"XR 컨트롤러 직접 참조 설정: Head={headTransform?.name}, LeftHand={leftHandTransform?.name}, RightHand={rightHandTransform?.name}");
+        }
+        else
+        {
+            Debug.LogWarning("Camera Offset을 찾을 수 없습니다. VR 컨트롤러 동기화가 제한됩니다.");
+        }
     }
     
     void InitializeNetworkValues()
@@ -162,28 +239,39 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
                                                     deltaTime * rotationLerpRate);
         }
         
-        // Robot 모드가 아닌 경우에만 실제 손 Transform 동기화
-        if (!useVirtualHands)
+        // VR 컨트롤러 시각화 동기화 (원격 플레이어용)
+        if (leftControllerVisualizer != null)
         {
-            // 왼손 동기화
-            if (leftHandTransform != null)
-            {
-                leftHandTransform.position = Vector3.Lerp(leftHandTransform.position, networkLeftHandPosition, 
-                                                         deltaTime * positionLerpRate);
-                leftHandTransform.rotation = Quaternion.Lerp(leftHandTransform.rotation, networkLeftHandRotation, 
-                                                            deltaTime * rotationLerpRate);
-            }
-            
-            // 오른손 동기화
-            if (rightHandTransform != null)
-            {
-                rightHandTransform.position = Vector3.Lerp(rightHandTransform.position, networkRightHandPosition, 
-                                                          deltaTime * positionLerpRate);
-                rightHandTransform.rotation = Quaternion.Lerp(rightHandTransform.rotation, networkRightHandRotation, 
-                                                             deltaTime * rotationLerpRate);
-            }
+            leftControllerVisualizer.transform.position = Vector3.Lerp(leftControllerVisualizer.transform.position, networkLeftHandPosition, 
+                                                                      deltaTime * positionLerpRate);
+            leftControllerVisualizer.transform.rotation = Quaternion.Lerp(leftControllerVisualizer.transform.rotation, networkLeftHandRotation, 
+                                                                         deltaTime * rotationLerpRate);
         }
-        // Robot 모드인 경우 VRHumanoidController의 가상 손 위치는 자동으로 업데이트됨
+        
+        if (rightControllerVisualizer != null)
+        {
+            rightControllerVisualizer.transform.position = Vector3.Lerp(rightControllerVisualizer.transform.position, networkRightHandPosition, 
+                                                                       deltaTime * positionLerpRate);
+            rightControllerVisualizer.transform.rotation = Quaternion.Lerp(rightControllerVisualizer.transform.rotation, networkRightHandRotation, 
+                                                                          deltaTime * rotationLerpRate);
+        }
+        
+        // Humanoid 손 Transform도 업데이트 (IK나 애니메이션용)
+        if (vrController != null && vrController.HumanoidLeftHand != null)
+        {
+            vrController.HumanoidLeftHand.position = Vector3.Lerp(vrController.HumanoidLeftHand.position, networkLeftHandPosition, 
+                                                                 deltaTime * positionLerpRate);
+            vrController.HumanoidLeftHand.rotation = Quaternion.Lerp(vrController.HumanoidLeftHand.rotation, networkLeftHandRotation, 
+                                                                    deltaTime * rotationLerpRate);
+        }
+        
+        if (vrController != null && vrController.HumanoidRightHand != null)
+        {
+            vrController.HumanoidRightHand.position = Vector3.Lerp(vrController.HumanoidRightHand.position, networkRightHandPosition, 
+                                                                  deltaTime * positionLerpRate);
+            vrController.HumanoidRightHand.rotation = Quaternion.Lerp(vrController.HumanoidRightHand.rotation, networkRightHandRotation, 
+                                                                     deltaTime * rotationLerpRate);
+        }
     }
     
     void SyncAnimationParameters()
@@ -242,39 +330,42 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
                 stream.SendNext(Quaternion.identity);
             }
             
-            // 손 위치/회전 (Robot 모드 고려)
-            if (useVirtualHands && vrController != null)
+            // VR 컨트롤러 위치/회전 전송 (항상 실제 위치 사용)
+            Vector3 leftPos = Vector3.zero;
+            Quaternion leftRot = Quaternion.identity;
+            Vector3 rightPos = Vector3.zero;
+            Quaternion rightRot = Quaternion.identity;
+            
+            if (leftHandTransform != null)
             {
-                // Robot 모드: 가상 손 위치 전송
-                stream.SendNext(vrController.VirtualLeftHandPosition);
-                stream.SendNext(vrController.VirtualLeftHandRotation);
-                stream.SendNext(vrController.VirtualRightHandPosition);
-                stream.SendNext(vrController.VirtualRightHandRotation);
+                leftPos = leftHandTransform.position;
+                leftRot = leftHandTransform.rotation;
+                stream.SendNext(leftPos);
+                stream.SendNext(leftRot);
             }
             else
             {
-                // 일반 모드: 실제 손 Transform 전송
-                if (leftHandTransform != null)
-                {
-                    stream.SendNext(leftHandTransform.position);
-                    stream.SendNext(leftHandTransform.rotation);
-                }
-                else
-                {
-                    stream.SendNext(Vector3.zero);
-                    stream.SendNext(Quaternion.identity);
-                }
-                
-                if (rightHandTransform != null)
-                {
-                    stream.SendNext(rightHandTransform.position);
-                    stream.SendNext(rightHandTransform.rotation);
-                }
-                else
-                {
-                    stream.SendNext(Vector3.zero);
-                    stream.SendNext(Quaternion.identity);
-                }
+                stream.SendNext(Vector3.zero);
+                stream.SendNext(Quaternion.identity);
+            }
+            
+            if (rightHandTransform != null)
+            {
+                rightPos = rightHandTransform.position;
+                rightRot = rightHandTransform.rotation;
+                stream.SendNext(rightPos);
+                stream.SendNext(rightRot);
+            }
+            else
+            {
+                stream.SendNext(Vector3.zero);
+                stream.SendNext(Quaternion.identity);
+            }
+            
+            // 디버깅: 컨트롤러 위치 전송 확인 (5초마다)
+            if (Time.time % 5f < Time.deltaTime)
+            {
+                Debug.Log($"[{photonView.Owner.NickName}] VR 컨트롤러 위치 전송: L={leftPos}, R={rightPos}");
             }
             
             // 애니메이션 파라미터들 (안전하게 전송)
@@ -339,5 +430,83 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
                 }
             }
         }
+    }
+    
+    /// <summary>
+    /// 원격 플레이어의 VR 컨트롤러를 시각화하는 오브젝트를 생성합니다.
+    /// </summary>
+    void CreateControllerVisualizers()
+    {
+        // 왼쪽 컨트롤러 시각화 오브젝트 생성
+        if (leftControllerVisualizer == null)
+        {
+            leftControllerVisualizer = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            leftControllerVisualizer.name = $"{photonView.Owner.NickName}_LeftController";
+            leftControllerVisualizer.transform.localScale = new Vector3(0.1f, 0.1f, 0.15f);
+            
+            // 머티리얼 설정 (빨간색)
+            Renderer leftRenderer = leftControllerVisualizer.GetComponent<Renderer>();
+            if (leftRenderer != null)
+            {
+                Material leftMat = new Material(Shader.Find("Standard"));
+                leftMat.color = Color.red;
+                leftMat.SetFloat("_Metallic", 0.5f);
+                leftMat.SetFloat("_Smoothness", 0.8f);
+                leftRenderer.material = leftMat;
+            }
+            
+            // 콜라이더 제거 (시각화용이므로)
+            Collider leftCollider = leftControllerVisualizer.GetComponent<Collider>();
+            if (leftCollider != null) DestroyImmediate(leftCollider);
+        }
+        
+        // 오른쪽 컨트롤러 시각화 오브젝트 생성
+        if (rightControllerVisualizer == null)
+        {
+            rightControllerVisualizer = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rightControllerVisualizer.name = $"{photonView.Owner.NickName}_RightController";
+            rightControllerVisualizer.transform.localScale = new Vector3(0.1f, 0.1f, 0.15f);
+            
+            // 머티리얼 설정 (파란색)
+            Renderer rightRenderer = rightControllerVisualizer.GetComponent<Renderer>();
+            if (rightRenderer != null)
+            {
+                Material rightMat = new Material(Shader.Find("Standard"));
+                rightMat.color = Color.blue;
+                rightMat.SetFloat("_Metallic", 0.5f);
+                rightMat.SetFloat("_Smoothness", 0.8f);
+                rightRenderer.material = rightMat;
+            }
+            
+            // 콜라이더 제거 (시각화용이므로)
+            Collider rightCollider = rightControllerVisualizer.GetComponent<Collider>();
+            if (rightCollider != null) DestroyImmediate(rightCollider);
+        }
+        
+        Debug.Log($"원격 플레이어 {photonView.Owner.NickName}의 VR 컨트롤러 시각화 오브젝트 생성 완료");
+    }
+    
+    /// <summary>
+    /// 컨트롤러 시각화 오브젝트들을 제거합니다.
+    /// </summary>
+    void DestroyControllerVisualizers()
+    {
+        if (leftControllerVisualizer != null)
+        {
+            DestroyImmediate(leftControllerVisualizer);
+            leftControllerVisualizer = null;
+        }
+        
+        if (rightControllerVisualizer != null)
+        {
+            DestroyImmediate(rightControllerVisualizer);
+            rightControllerVisualizer = null;
+        }
+    }
+    
+    void OnDestroy()
+    {
+        // 오브젝트가 파괴될 때 시각화 오브젝트들도 정리
+        DestroyControllerVisualizers();
     }
 } 
