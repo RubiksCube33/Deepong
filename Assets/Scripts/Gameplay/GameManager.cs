@@ -17,17 +17,52 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     void Start()
     {
+        Debug.Log("GameManager 시작됨");
+        
+        // 네트워크 환경인지 확인
+        if (PhotonNetwork.IsConnected)
+        {
+            Debug.Log("네트워크 멀티플레이어 모드 - NetworkPlayerManager가 플레이어 스폰을 담당합니다.");
+            // 네트워크 환경에서는 NetworkPlayerManager가 플레이어 관리를 담당
+            // GameManager는 게임 로직에만 집중
+            return;
+        }
+        
+        // 싱글플레이어 또는 로컬 멀티플레이어 모드
+        Debug.Log("로컬 게임 모드 - GameManager가 플레이어 위치를 설정합니다.");
+        
         // 스폰 포인트가 지정되지 않았을 경우 기본값 생성
         if (player1SpawnPoint == null || player2SpawnPoint == null)
         {
+            Debug.Log("스폰 포인트가 설정되지 않아 기본값을 생성합니다.");
             CreateDefaultSpawnPoints();
         }
 
+        // Inspector에서 플레이어 오브젝트가 제대로 할당되었는지 먼저 확인
+        Debug.Log($"Inspector 할당 상태 - Player1: {(player1Object != null ? player1Object.name : "null")}, Player2: {(player2Object != null ? player2Object.name : "null")}");
+        
         // 플레이어 오브젝트 찾기
         FindPlayerObjects();
         
-        // 플레이어 초기 위치 설정
-        PositionPlayers();
+        // 한 번 더 확인 후 위치 설정
+        if (player1Object != null && player2Object != null)
+        {
+            // 잘못된 오브젝트가 할당되었는지 검증
+            if (player1Object.name.ToLower().Contains("eye") || player2Object.name.ToLower().Contains("eye"))
+            {
+                Debug.LogError("잘못된 오브젝트가 할당되었습니다! Inspector에서 올바른 플레이어 오브젝트를 할당해주세요.");
+                player1Object = null;
+                player2Object = null;
+                return;
+            }
+            
+            // 플레이어 초기 위치 설정
+            PositionPlayers();
+        }
+        else
+        {
+            Debug.LogError("플레이어 오브젝트를 찾을 수 없습니다. Inspector에서 직접 할당하거나 씬에서 올바른 이름으로 오브젝트를 설정해주세요.");
+        }
     }
 
     void CreateDefaultSpawnPoints()
@@ -39,58 +74,76 @@ public class GameManager : MonoBehaviourPunCallbacks
         GameObject p1Spawn = new GameObject("Player1SpawnPoint");
         p1Spawn.transform.parent = spawnPointsHolder.transform;
         p1Spawn.transform.position = new Vector3(-1.31f, 1f, -5.81f); // 이미지에 보여진 player1 위치
+        p1Spawn.transform.rotation = Quaternion.Euler(0f, 0f, 0f); // 기본 회전값 (필요에 따라 수정)
         player1SpawnPoint = p1Spawn.transform;
         
         // 플레이어 2 스폰 포인트
         GameObject p2Spawn = new GameObject("Player2SpawnPoint");
         p2Spawn.transform.parent = spawnPointsHolder.transform;
         p2Spawn.transform.position = new Vector3(-0.98f, 1f, 10.207f); // 이미지에 보여진 player2 위치
+        p2Spawn.transform.rotation = Quaternion.Euler(0f, 180f, 0f); // 플레이어 2는 반대방향을 바라보도록 설정
         player2SpawnPoint = p2Spawn.transform;
         
-        Debug.Log("플레이어 스폰 포인트가 생성되었습니다.");
+        Debug.Log("플레이어 스폰 포인트가 생성되었습니다 (위치 및 회전 포함).");
     }
     
     void FindPlayerObjects()
     {
-        // 씬에서 player1과 player2라는 이름의 오브젝트 찾기
-        player1Object = GameObject.Find("player1");
-        player2Object = GameObject.Find("player2");
+        // Inspector에서 직접 할당된 경우 그것을 우선 사용
+        if (player1Object != null && player2Object != null)
+        {
+            Debug.Log("Inspector에서 할당된 플레이어 오브젝트를 사용합니다.");
+            return;
+        }
+
+        // 정확한 이름으로 먼저 찾기 시도
+        player1Object = GameObject.Find("player1");  // 실제 오브젝트 이름에 맞게 수정
+        player2Object = GameObject.Find("Player2");  // 실제 오브젝트 이름에 맞게 수정
         
         if (player1Object != null && player2Object != null)
         {
-            Debug.Log("player1과 player2 오브젝트를 찾았습니다.");
+            Debug.Log($"정확한 이름으로 플레이어 오브젝트를 찾았습니다: {player1Object.name}, {player2Object.name}");
             return;
         }
         
-        // 이름으로 찾기 실패한 경우 태그로 시도
-        GameObject[] playerObjects = GameObject.FindGameObjectsWithTag("Player");
+        // Player 태그로 시도 (eye 오브젝트 제외)
+        GameObject[] taggedObjects = GameObject.FindGameObjectsWithTag("Player");
+        List<GameObject> validPlayers = new List<GameObject>();
         
-        if (playerObjects.Length >= 2)
+        foreach (GameObject obj in taggedObjects)
         {
-            player1Object = playerObjects[0];
-            player2Object = playerObjects[1];
-            Debug.Log("Player 태그로 플레이어 오브젝트를 찾았습니다.");
+            // eye 오브젝트는 제외
+            if (!obj.name.ToLower().Contains("eye"))
+            {
+                validPlayers.Add(obj);
+            }
+        }
+        
+        if (validPlayers.Count >= 2)
+        {
+            player1Object = validPlayers[0];
+            player2Object = validPlayers[1];
+            Debug.Log($"Player 태그로 플레이어 오브젝트를 찾았습니다: {player1Object.name}, {player2Object.name}");
             return;
         }
         
-        // 위의 방법으로 찾지 못한 경우, 실린더 형태를 가진 오브젝트 찾기
-        GameObject[] allObjects = FindObjectsOfType<GameObject>();
+        // 모든 게임오브젝트에서 적합한 플레이어 오브젝트 찾기
+        GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
         List<GameObject> potentialPlayers = new List<GameObject>();
         
         foreach (GameObject obj in allObjects)
         {
-            // 이름에 Player나 Cylinder가 포함된 오브젝트 찾기
-            if (obj.name.Contains("Player") || obj.name.Contains("Cylinder") || 
-                obj.name.Contains("player"))
+            // 씬에 활성화된 오브젝트만 확인
+            if (obj.scene.IsValid() && obj.activeInHierarchy)
             {
-                potentialPlayers.Add(obj);
-            }
-            // 또는 실린더 메시를 가진 오브젝트 찾기
-            else if (obj.GetComponent<MeshFilter>() != null && 
-                     obj.GetComponent<MeshFilter>().sharedMesh != null && 
-                     obj.GetComponent<MeshFilter>().sharedMesh.name.Contains("Cylinder"))
-            {
-                potentialPlayers.Add(obj);
+                // eye가 포함된 이름은 제외하고, 실제 플레이어 오브젝트만 찾기
+                string objName = obj.name.ToLower();
+                if ((objName.Contains("player") || objName.Contains("robot") || objName.Contains("cylinder")) && 
+                    !objName.Contains("eye") && !objName.Contains("camera") && !objName.Contains("ui"))
+                {
+                    potentialPlayers.Add(obj);
+                    Debug.Log($"잠재적 플레이어 오브젝트 발견: {obj.name}");
+                }
             }
         }
         
@@ -98,11 +151,16 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             player1Object = potentialPlayers[0];
             player2Object = potentialPlayers[1];
-            Debug.Log("이름 또는 메시 형태로 플레이어 오브젝트를 찾았습니다.");
+            Debug.Log($"검색으로 플레이어 오브젝트를 찾았습니다: {player1Object.name}, {player2Object.name}");
+        }
+        else if (potentialPlayers.Count == 1)
+        {
+            Debug.LogWarning($"플레이어 오브젝트를 하나만 찾았습니다: {potentialPlayers[0].name}");
+            player1Object = potentialPlayers[0];
         }
         else
         {
-            Debug.LogError("씬에서 충분한 수의 플레이어 오브젝트를 찾을 수 없습니다!");
+            Debug.LogError("씬에서 적절한 플레이어 오브젝트를 찾을 수 없습니다! Inspector에서 직접 할당해주세요.");
         }
     }
     
@@ -110,15 +168,25 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         if (player1Object != null && player2Object != null)
         {
-            // 플레이어 1과 2를 각각의 스폰 포인트로 이동
-            player1Object.transform.position = player1SpawnPoint.position;
-            player2Object.transform.position = player2SpawnPoint.position;
+            Debug.Log($"플레이어 위치 및 회전 설정 시작 - Player1: {player1Object.name}, Player2: {player2Object.name}");
+            Debug.Log($"현재 Player1 위치: {player1Object.transform.position}, 회전: {player1Object.transform.rotation.eulerAngles}");
+            Debug.Log($"현재 Player2 위치: {player2Object.transform.position}, 회전: {player2Object.transform.rotation.eulerAngles}");
+            Debug.Log($"목표 Player1 위치: {player1SpawnPoint.position}, 회전: {player1SpawnPoint.rotation.eulerAngles}");
+            Debug.Log($"목표 Player2 위치: {player2SpawnPoint.position}, 회전: {player2SpawnPoint.rotation.eulerAngles}");
             
-            Debug.Log("플레이어 위치가 설정되었습니다.");
+            // 플레이어 1과 2를 각각의 스폰 포인트로 이동 및 회전
+            player1Object.transform.position = player1SpawnPoint.position;
+            player1Object.transform.rotation = player1SpawnPoint.rotation;
+            
+            player2Object.transform.position = player2SpawnPoint.position;
+            player2Object.transform.rotation = player2SpawnPoint.rotation;
+            
+            Debug.Log($"플레이어 위치 및 회전 설정 완료 - Player1: {player1Object.transform.position}, 회전: {player1Object.transform.rotation.eulerAngles}");
+            Debug.Log($"Player2: {player2Object.transform.position}, 회전: {player2Object.transform.rotation.eulerAngles}");
         }
         else
         {
-            Debug.LogError("플레이어 오브젝트가 설정되지 않았습니다!");
+            Debug.LogError($"플레이어 오브젝트가 설정되지 않았습니다! Player1: {(player1Object != null ? player1Object.name : "null")}, Player2: {(player2Object != null ? player2Object.name : "null")}");
         }
     }
     
@@ -145,5 +213,35 @@ public class GameManager : MonoBehaviourPunCallbacks
     void RPC_SetPlayerPositions()
     {
         PositionPlayers();
+    }
+    
+    // 에디터에서 플레이어 오브젝트를 쉽게 설정할 수 있도록 도와주는 메서드
+    [ContextMenu("Find And Set Player Objects")]
+    void FindAndSetPlayerObjects()
+    {
+        FindPlayerObjects();
+        Debug.Log($"플레이어 오브젝트 검색 완료 - Player1: {(player1Object != null ? player1Object.name : "찾을 수 없음")}, Player2: {(player2Object != null ? player2Object.name : "찾을 수 없음")}");
+    }
+    
+    [ContextMenu("Reset Player Positions and Rotations")]
+    void ResetPlayerPositions()
+    {
+        PositionPlayers();
+    }
+    
+    // Inspector에서 현재 설정된 플레이어 오브젝트 정보를 확인
+    void OnValidate()
+    {
+        if (Application.isPlaying) return;
+        
+        if (player1Object != null && player1Object.name.ToLower().Contains("eye"))
+        {
+            Debug.LogWarning($"Player 1 Object로 '{player1Object.name}'이 할당되어 있습니다. 이것은 올바른 플레이어 오브젝트가 아닐 수 있습니다.");
+        }
+        
+        if (player2Object != null && player2Object.name.ToLower().Contains("eye"))
+        {
+            Debug.LogWarning($"Player 2 Object로 '{player2Object.name}'이 할당되어 있습니다. 이것은 올바른 플레이어 오브젝트가 아닐 수 있습니다.");
+        }
     }
 }
