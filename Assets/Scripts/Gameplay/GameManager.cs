@@ -19,6 +19,18 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         Debug.Log("GameManager 시작됨");
         
+        // 네트워크 환경인지 확인
+        if (PhotonNetwork.IsConnected)
+        {
+            Debug.Log("네트워크 멀티플레이어 모드 - NetworkPlayerManager가 플레이어 스폰을 담당합니다.");
+            // 네트워크 환경에서는 NetworkPlayerManager가 플레이어 관리를 담당
+            // GameManager는 게임 로직에만 집중
+            return;
+        }
+        
+        // 싱글플레이어 또는 로컬 멀티플레이어 모드
+        Debug.Log("로컬 게임 모드 - GameManager가 플레이어 위치를 설정합니다.");
+        
         // 스폰 포인트가 지정되지 않았을 경우 기본값 생성
         if (player1SpawnPoint == null || player2SpawnPoint == null)
         {
