@@ -4,6 +4,7 @@ using UnityEngine;
 /// <summary>
 /// PUN2를 사용하여 플레이어의 위치, 회전, 애니메이션을 동기화합니다.
 /// VR 플레이어의 머리, 양손, 몸체의 움직임을 네트워크를 통해 동기화합니다.
+/// Robot 에셋(팔다리 없음)과 휴머노이드 모델 모두 지원
 /// </summary>
 [RequireComponent(typeof(PhotonView))]
 public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
@@ -13,6 +14,9 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
     [SerializeField] private Transform headTransform; // 머리
     [SerializeField] private Transform leftHandTransform; // 왼손
     [SerializeField] private Transform rightHandTransform; // 오른손
+    
+    [Header("Robot Mode 설정")]
+    [SerializeField] private bool useVirtualHands = false; // Robot 모드에서 가상 손 사용
     
     [Header("동기화 설정")]
     [SerializeField] private float positionLerpRate = 10f; // 위치 보간 속도
@@ -40,6 +44,9 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
     
     // 초기화 플래그
     private bool hasReceivedData = false;
+    
+    // VR 컨트롤러 참조 (Robot 모드용)
+    private VRHumanoidController vrController;
 
     void Awake()
     {
@@ -51,7 +58,7 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             playerAnimator = GetComponent<Animator>();
             
         // VRHumanoidController가 있다면 해당 컴포넌트에서 Transform 참조들을 가져오기
-        VRHumanoidController vrController = GetComponent<VRHumanoidController>();
+        vrController = GetComponent<VRHumanoidController>();
         if (vrController != null)
         {
             if (headTransform == null)
@@ -60,6 +67,9 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
                 leftHandTransform = vrController.HumanoidLeftHand;
             if (rightHandTransform == null)
                 rightHandTransform = vrController.HumanoidRightHand;
+                
+            // Robot 모드 자동 감지
+            useVirtualHands = vrController.IsRobotMode;
         }
         
         // 초기값 설정
@@ -80,16 +90,27 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             networkHeadRotation = headTransform.rotation;
         }
         
-        if (leftHandTransform != null)
+        // Robot 모드인 경우 가상 손 위치 사용, 아니면 실제 Transform 사용
+        if (useVirtualHands && vrController != null)
         {
-            networkLeftHandPosition = leftHandTransform.position;
-            networkLeftHandRotation = leftHandTransform.rotation;
+            networkLeftHandPosition = vrController.VirtualLeftHandPosition;
+            networkLeftHandRotation = vrController.VirtualLeftHandRotation;
+            networkRightHandPosition = vrController.VirtualRightHandPosition;
+            networkRightHandRotation = vrController.VirtualRightHandRotation;
         }
-        
-        if (rightHandTransform != null)
+        else
         {
-            networkRightHandPosition = rightHandTransform.position;
-            networkRightHandRotation = rightHandTransform.rotation;
+            if (leftHandTransform != null)
+            {
+                networkLeftHandPosition = leftHandTransform.position;
+                networkLeftHandRotation = leftHandTransform.rotation;
+            }
+            
+            if (rightHandTransform != null)
+            {
+                networkRightHandPosition = rightHandTransform.position;
+                networkRightHandRotation = rightHandTransform.rotation;
+            }
         }
     }
 
@@ -141,31 +162,54 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
                                                     deltaTime * rotationLerpRate);
         }
         
-        // 왼손 동기화
-        if (leftHandTransform != null)
+        // Robot 모드가 아닌 경우에만 실제 손 Transform 동기화
+        if (!useVirtualHands)
         {
-            leftHandTransform.position = Vector3.Lerp(leftHandTransform.position, networkLeftHandPosition, 
-                                                     deltaTime * positionLerpRate);
-            leftHandTransform.rotation = Quaternion.Lerp(leftHandTransform.rotation, networkLeftHandRotation, 
-                                                        deltaTime * rotationLerpRate);
+            // 왼손 동기화
+            if (leftHandTransform != null)
+            {
+                leftHandTransform.position = Vector3.Lerp(leftHandTransform.position, networkLeftHandPosition, 
+                                                         deltaTime * positionLerpRate);
+                leftHandTransform.rotation = Quaternion.Lerp(leftHandTransform.rotation, networkLeftHandRotation, 
+                                                            deltaTime * rotationLerpRate);
+            }
+            
+            // 오른손 동기화
+            if (rightHandTransform != null)
+            {
+                rightHandTransform.position = Vector3.Lerp(rightHandTransform.position, networkRightHandPosition, 
+                                                          deltaTime * positionLerpRate);
+                rightHandTransform.rotation = Quaternion.Lerp(rightHandTransform.rotation, networkRightHandRotation, 
+                                                             deltaTime * rotationLerpRate);
+            }
         }
-        
-        // 오른손 동기화
-        if (rightHandTransform != null)
-        {
-            rightHandTransform.position = Vector3.Lerp(rightHandTransform.position, networkRightHandPosition, 
-                                                      deltaTime * positionLerpRate);
-            rightHandTransform.rotation = Quaternion.Lerp(rightHandTransform.rotation, networkRightHandRotation, 
-                                                         deltaTime * rotationLerpRate);
-        }
+        // Robot 모드인 경우 VRHumanoidController의 가상 손 위치는 자동으로 업데이트됨
     }
     
     void SyncAnimationParameters()
     {
-        // 애니메이션 파라미터 동기화
-        playerAnimator.SetFloat("Speed", networkSpeed);
-        playerAnimator.SetFloat("MotionSpeed", networkMotionSpeed);
-        playerAnimator.SetBool("Grounded", networkGrounded);
+        // 애니메이션 파라미터 동기화 (존재하는 파라미터만)
+        if (HasAnimatorParameter("Speed"))
+            playerAnimator.SetFloat("Speed", networkSpeed);
+        if (HasAnimatorParameter("MotionSpeed"))
+            playerAnimator.SetFloat("MotionSpeed", networkMotionSpeed);
+        if (HasAnimatorParameter("Grounded"))
+            playerAnimator.SetBool("Grounded", networkGrounded);
+    }
+    
+    /// <summary>
+    /// Animator에 특정 파라미터가 존재하는지 확인
+    /// </summary>
+    private bool HasAnimatorParameter(string parameterName)
+    {
+        if (playerAnimator == null) return false;
+        
+        foreach (AnimatorControllerParameter parameter in playerAnimator.parameters)
+        {
+            if (parameter.name == parameterName)
+                return true;
+        }
+        return false;
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
@@ -198,36 +242,47 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
                 stream.SendNext(Quaternion.identity);
             }
             
-            // 왼손 위치/회전
-            if (leftHandTransform != null)
+            // 손 위치/회전 (Robot 모드 고려)
+            if (useVirtualHands && vrController != null)
             {
-                stream.SendNext(leftHandTransform.position);
-                stream.SendNext(leftHandTransform.rotation);
+                // Robot 모드: 가상 손 위치 전송
+                stream.SendNext(vrController.VirtualLeftHandPosition);
+                stream.SendNext(vrController.VirtualLeftHandRotation);
+                stream.SendNext(vrController.VirtualRightHandPosition);
+                stream.SendNext(vrController.VirtualRightHandRotation);
             }
             else
             {
-                stream.SendNext(Vector3.zero);
-                stream.SendNext(Quaternion.identity);
+                // 일반 모드: 실제 손 Transform 전송
+                if (leftHandTransform != null)
+                {
+                    stream.SendNext(leftHandTransform.position);
+                    stream.SendNext(leftHandTransform.rotation);
+                }
+                else
+                {
+                    stream.SendNext(Vector3.zero);
+                    stream.SendNext(Quaternion.identity);
+                }
+                
+                if (rightHandTransform != null)
+                {
+                    stream.SendNext(rightHandTransform.position);
+                    stream.SendNext(rightHandTransform.rotation);
+                }
+                else
+                {
+                    stream.SendNext(Vector3.zero);
+                    stream.SendNext(Quaternion.identity);
+                }
             }
             
-            // 오른손 위치/회전
-            if (rightHandTransform != null)
-            {
-                stream.SendNext(rightHandTransform.position);
-                stream.SendNext(rightHandTransform.rotation);
-            }
-            else
-            {
-                stream.SendNext(Vector3.zero);
-                stream.SendNext(Quaternion.identity);
-            }
-            
-            // 애니메이션 파라미터들
+            // 애니메이션 파라미터들 (안전하게 전송)
             if (syncAnimationParams && playerAnimator != null)
             {
-                stream.SendNext(playerAnimator.GetFloat("Speed"));
-                stream.SendNext(playerAnimator.GetFloat("MotionSpeed"));
-                stream.SendNext(playerAnimator.GetBool("Grounded"));
+                stream.SendNext(HasAnimatorParameter("Speed") ? playerAnimator.GetFloat("Speed") : 0f);
+                stream.SendNext(HasAnimatorParameter("MotionSpeed") ? playerAnimator.GetFloat("MotionSpeed") : 0f);
+                stream.SendNext(HasAnimatorParameter("Grounded") ? playerAnimator.GetBool("Grounded") : true);
             }
             else
             {
@@ -238,25 +293,23 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
         }
         else
         {
-            // 다른 클라이언트로부터 플레이어 정보를 수신
+            // 다른 클라이언트로부터 애니메이션 정보를 수신
             
-            // 플레이어 루트 위치/회전
+            // 플레이어 루트 위치/회전 수신
             networkRootPosition = (Vector3)stream.ReceiveNext();
             networkRootRotation = (Quaternion)stream.ReceiveNext();
             
-            // 머리 위치/회전
+            // 머리 위치/회전 수신
             networkHeadPosition = (Vector3)stream.ReceiveNext();
             networkHeadRotation = (Quaternion)stream.ReceiveNext();
             
-            // 왼손 위치/회전
+            // 손 위치/회전 수신 (Robot 모드와 상관없이 항상 수신)
             networkLeftHandPosition = (Vector3)stream.ReceiveNext();
             networkLeftHandRotation = (Quaternion)stream.ReceiveNext();
-            
-            // 오른손 위치/회전
             networkRightHandPosition = (Vector3)stream.ReceiveNext();
             networkRightHandRotation = (Quaternion)stream.ReceiveNext();
             
-            // 애니메이션 파라미터들
+            // 애니메이션 파라미터 수신
             networkSpeed = (float)stream.ReceiveNext();
             networkMotionSpeed = (float)stream.ReceiveNext();
             networkGrounded = (bool)stream.ReceiveNext();
@@ -265,24 +318,26 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
         }
     }
     
-    // 디버깅용 기즈모
     void OnDrawGizmosSelected()
     {
-        if (!photonView.IsMine && hasReceivedData)
+        if (!photonView.IsMine)
         {
-            // 네트워크 위치들을 시각화
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(networkRootPosition, 0.1f);
-            
+            // 원격 플레이어의 네트워크 동기화 상태 시각화
             Gizmos.color = Color.blue;
-            if (networkHeadPosition != Vector3.zero)
-                Gizmos.DrawWireSphere(networkHeadPosition, 0.05f);
+            Gizmos.DrawWireSphere(networkRootPosition, 0.5f);
+            
+            if (hasReceivedData)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireSphere(networkHeadPosition, 0.1f);
                 
-            Gizmos.color = Color.green;
-            if (networkLeftHandPosition != Vector3.zero)
-                Gizmos.DrawWireSphere(networkLeftHandPosition, 0.03f);
-            if (networkRightHandPosition != Vector3.zero)
-                Gizmos.DrawWireSphere(networkRightHandPosition, 0.03f);
+                if (!useVirtualHands)
+                {
+                    Gizmos.color = Color.red;
+                    Gizmos.DrawWireSphere(networkLeftHandPosition, 0.05f);
+                    Gizmos.DrawWireSphere(networkRightHandPosition, 0.05f);
+                }
+            }
         }
     }
 } 

@@ -7,6 +7,7 @@ using Photon.Realtime;
 /// <summary>
 /// 네트워크 멀티플레이어에서 플레이어의 기본 설정을 담당합니다.
 /// PlayerNetworkSync와 함께 사용되어 플레이어의 초기 위치와 설정을 관리합니다.
+/// Robot 에셋(팔다리 없음)과 휴머노이드 모델 모두 지원
 /// </summary>
 [RequireComponent(typeof(PhotonView))]
 public class PlayerSetup : MonoBehaviourPunCallbacks
@@ -21,16 +22,43 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
     [Header("VR 설정")]
     [SerializeField] private bool isVRPlayer = true; // VR 플레이어인지 여부
     [SerializeField] private GameObject vrComponents; // VR 관련 컴포넌트들의 부모 오브젝트
+    
+    [Header("Robot Mode 설정")]
+    [SerializeField] private bool isRobotMode = false; // Robot 모드 여부 (자동 감지)
 
     private Rigidbody rb;
     private PlayerNetworkSync networkSync;
     private VRHumanoidController vrController;
+    private Animator playerAnimator;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
         networkSync = GetComponent<PlayerNetworkSync>();
         vrController = GetComponent<VRHumanoidController>();
+        playerAnimator = GetComponent<Animator>();
+        
+        // Robot 모드 자동 감지
+        DetectRobotMode();
+    }
+    
+    /// <summary>
+    /// Robot 모드 자동 감지
+    /// </summary>
+    private void DetectRobotMode()
+    {
+        // VRHumanoidController에서 Robot 모드 확인
+        if (vrController != null)
+        {
+            isRobotMode = vrController.IsRobotMode;
+        }
+        else
+        {
+            // VRHumanoidController가 없는 경우, Animator로 판단
+            isRobotMode = playerAnimator == null || !playerAnimator.isHuman;
+        }
+        
+        Debug.Log($"PlayerSetup - Robot 모드 감지됨: {isRobotMode}");
     }
 
     void Start()
@@ -68,12 +96,19 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
     void SetupLocalPlayer()
     {
         // 로컬 플레이어 설정
-        Debug.Log($"로컬 플레이어 설정: {gameObject.name} (Actor: {photonView.Owner.ActorNumber})");
+        Debug.Log($"로컬 플레이어 설정: {gameObject.name} (Actor: {photonView.Owner.ActorNumber}) - Robot 모드: {isRobotMode}");
         
         // VR 컴포넌트들이 활성화되어 있는지 확인
         if (isVRPlayer && vrController != null)
         {
             vrController.enabled = true;
+            
+            // Robot 모드 설정 동기화
+            if (isRobotMode)
+            {
+                vrController.IsRobotMode = true;
+                Debug.Log("VRHumanoidController가 Robot 모드로 설정되었습니다.");
+            }
         }
         
         // 네트워크 동기화 컴포넌트 설정
@@ -81,17 +116,30 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
         {
             networkSync = gameObject.AddComponent<PlayerNetworkSync>();
         }
+        
+        // PlayerAnimationSync 컴포넌트 확인 및 설정
+        PlayerAnimationSync animSync = GetComponent<PlayerAnimationSync>();
+        if (animSync == null && playerAnimator != null)
+        {
+            animSync = gameObject.AddComponent<PlayerAnimationSync>();
+        }
     }
     
     void SetupRemotePlayer()
     {
         // 원격 플레이어 설정
-        Debug.Log($"원격 플레이어 설정: {gameObject.name} (Actor: {photonView.Owner.ActorNumber})");
+        Debug.Log($"원격 플레이어 설정: {gameObject.name} (Actor: {photonView.Owner.ActorNumber}) - Robot 모드: {isRobotMode}");
         
-        // VR 입력 관련 컴포넌트들 비활성화
+        // VR 입력 관련 컴포넌트들 비활성화 (Robot 모드에서도 동일)
         if (vrController != null)
         {
+            // VR 컨트롤러는 비활성화하지만 Robot 모드 설정은 유지
             vrController.enabled = false;
+            
+            if (isRobotMode)
+            {
+                Debug.Log("원격 플레이어 - Robot 모드가 감지되어 VR 입력만 비활성화됩니다.");
+            }
         }
         
         // XR 관련 컴포넌트 비활성화
@@ -119,8 +167,10 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
         {
             vrComponents.SetActive(false);
         }
+        
+        // Robot 모드인 경우 특별한 처리는 필요 없음 (시각화는 자동으로 비활성화됨)
     }
-
+    
     void SetInitialPosition()
     {
         // 네트워크 환경에서는 기존 매니저들이 위치를 관리하므로 여기서는 처리하지 않음
@@ -169,9 +219,11 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
     /// </summary>
     public string GetPlayerInfo()
     {
+        string modeInfo = isRobotMode ? "Robot" : "Humanoid";
         return $"Player {photonView.Owner.ActorNumber} ({photonView.Owner.NickName}) - " +
                $"{(isPlayerOne ? "Player1" : "Player2")} - " +
                $"{(photonView.IsMine ? "Local" : "Remote")} - " +
+               $"Mode: {modeInfo} - " +
                $"Position: {transform.position}";
     }
     
