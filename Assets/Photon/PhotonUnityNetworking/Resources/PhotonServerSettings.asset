@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PhotonServerSettings
   m_EditorClassIdentifier: 
   AppSettings:
-    AppIdRealtime: 22b44568-7dd1-4b81-88de-141b2bbf4ee0
+    AppIdRealtime: 223a60e7-38d3-4c35-a173-99768c3b09d7
     AppIdFusion: 
     AppIdChat: 
     AppIdVoice: 
@@ -47,6 +47,13 @@ MonoBehaviour:
   - RPC_ResetBallPosition
   - SyncPlayerReset
   - SyncDirectPlayerReset
+  - ForceAnimationState
+  - SyncAnimationTrigger
+  - SyncPaddleChange
+  - OnPaddleChangedRPC
+  - OnButtonEvent
+  - TriggerHapticFeedbackRPC
+  - OnPaddleChanged
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
