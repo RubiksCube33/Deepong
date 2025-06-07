@@ -93,7 +93,24 @@ namespace DeepongVR.Network
         {
             // 컴포넌트 참조 가져오기
             vrController = GetComponent<VRHumanoidController>();
+            
+            // PaddleChangeController를 더 확실하게 찾기
             paddleController = GetComponent<PaddleChangeController>();
+            if (paddleController == null)
+            {
+                paddleController = GetComponentInChildren<PaddleChangeController>();
+            }
+            
+            string playerName = (photonView.Owner != null) ? photonView.Owner.NickName : "Unknown";
+            
+            if (paddleController != null)
+            {
+                Debug.Log($"[VRControllerNetworkSync] PaddleChangeController 찾음: {paddleController.gameObject.name} (플레이어: {playerName})");
+            }
+            else
+            {
+                Debug.LogWarning($"[VRControllerNetworkSync] PaddleChangeController를 찾을 수 없습니다! (플레이어: {playerName})");
+            }
             
             // VRHumanoidController에서 컨트롤러 참조 가져오기
             if (vrController != null)
@@ -230,9 +247,13 @@ namespace DeepongVR.Network
                 vrController.enabled = false;
             }
             
+            // 원격 플레이어의 패들 컨트롤러는 활성화 상태로 유지하되, 입력만 비활성화
             if (paddleController != null)
             {
-                paddleController.enabled = false;
+                // PaddleChangeController의 입력 처리를 비활성화하는 것이 아니라
+                // 네트워크에서 받은 데이터로만 패들을 변경하도록 함
+                // paddleController.enabled = false; // 이 줄을 제거
+                Debug.Log("[VRControllerNetworkSync] 원격 플레이어 패들 컨트롤러는 활성화 상태 유지");
             }
             
             Debug.Log("[VRControllerNetworkSync] 원격 플레이어 초기화 완료");
@@ -253,7 +274,15 @@ namespace DeepongVR.Network
             // 패들 상태 업데이트
             if (paddleController != null)
             {
-                networkPaddleIndex = paddleController.CurrentPaddleIndex;
+                int currentPaddleIndex = paddleController.CurrentPaddleIndex;
+                if (currentPaddleIndex != networkPaddleIndex)
+                {
+                    Debug.Log($"[VRControllerNetworkSync] 로컬 패들 변경 감지: {networkPaddleIndex} → {currentPaddleIndex}");
+                    networkPaddleIndex = currentPaddleIndex;
+                    
+                    // RPC로 다른 플레이어들에게 패들 변경 전송
+                    photonView.RPC("OnPaddleChanged", RpcTarget.Others, currentPaddleIndex);
+                }
             }
         }
 
@@ -496,14 +525,12 @@ namespace DeepongVR.Network
             
             // 패들 인덱스
             int receivedPaddleIndex = (int)stream.ReceiveNext();
+            
+            // 패들 변경 감지만 하고 실제 적용은 RPC로 처리
             if (receivedPaddleIndex != networkPaddleIndex)
             {
+                Debug.Log($"[VRControllerNetworkSync] 패들 인덱스 업데이트: {networkPaddleIndex} → {receivedPaddleIndex}");
                 networkPaddleIndex = receivedPaddleIndex;
-                // 원격 플레이어의 패들 변경 처리
-                if (paddleController != null)
-                {
-                    paddleController.CurrentPaddleIndex = networkPaddleIndex;
-                }
             }
             
             hasReceivedInitialData = true;
@@ -531,6 +558,29 @@ namespace DeepongVR.Network
         {
             // 원격 햅틱 피드백 처리 (시각적 효과 등)
             Debug.Log($"[VRControllerNetworkSync] 원격 햅틱 피드백: {controllerName}, 강도: {intensity}, 지속시간: {duration}");
+        }
+
+        [PunRPC]
+        void OnPaddleChanged(int newPaddleIndex)
+        {
+            // 원격 플레이어의 패들 변경 처리
+            if (paddleController != null)
+            {
+                if (paddleController.enabled)
+                {
+                    int previousIndex = paddleController.CurrentPaddleIndex;
+                    paddleController.CurrentPaddleIndex = newPaddleIndex;
+                    Debug.Log($"[VRControllerNetworkSync] 원격 플레이어 패들 적용 완료: {previousIndex} → {paddleController.CurrentPaddleIndex}");
+                }
+                else
+                {
+                    Debug.LogWarning("[VRControllerNetworkSync] PaddleController가 비활성화되어 있어 패들 변경을 적용할 수 없음");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[VRControllerNetworkSync] PaddleController 참조가 없어 패들 변경을 적용할 수 없음");
+            }
         }
 
         #endregion
