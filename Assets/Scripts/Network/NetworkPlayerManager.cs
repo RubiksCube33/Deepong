@@ -171,10 +171,22 @@ public class NetworkPlayerManager : MonoBehaviourPunCallbacks
             }
         }
         
+        // PaddleNetworkSync 컴포넌트 추가
+        PaddleNetworkSync paddleSync = player.GetComponent<PaddleNetworkSync>();
+        if (paddleSync == null)
+        {
+            paddleSync = player.AddComponent<PaddleNetworkSync>();
+        }
+        
         // PhotonView에 네트워크 동기화 컴포넌트들 추가
         if (!pv.ObservedComponents.Contains(networkSync))
         {
             pv.ObservedComponents.Add(networkSync);
+        }
+        
+        if (!pv.ObservedComponents.Contains(paddleSync))
+        {
+            pv.ObservedComponents.Add(paddleSync);
         }
         
         // 네트워크 플레이어 딕셔너리에 추가
