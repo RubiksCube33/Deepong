@@ -1,0 +1,229 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.Events;
+using System;
+
+namespace DeepongVR.Court
+{
+    /// <summary>
+    /// A버튼으로 패들을 순환 변경하는 간단한 컨트롤러
+    /// </summary>
+    public class PaddleChangeController : MonoBehaviour
+    {
+        [Header("Paddle Settings")]
+        [SerializeField] private GameObject paddle_racket;      // 첫 번째 패들
+        [SerializeField] private GameObject paddle_sword;       // 두 번째 패들
+        [SerializeField] private GameObject paddle_glove_left;  // 세 번째 패들
+        [SerializeField] private GameObject paddle_glove_right; // 세 번째 패들의 짝
+
+        [Header("Controller Settings")]
+        [SerializeField] private bool isRightController = true; // 오른쪽 컨트롤러인지 여부
+
+        [Header("Events")]
+        [SerializeField] private UnityEvent<int> OnPaddleChanged; // 패들 변경 시 발생하는 이벤트
+
+        [Header("Debug")]
+        [SerializeField] private bool enableDebugLogs = true;
+
+        // 내부 변수들
+        private InputAction primaryButtonAction;
+        private int _currentPaddleIndex = 0;
+        private GameObject[] paddles;
+
+        // 정적 이벤트 (다른 스크립트에서 구독 가능)
+        public static event Action<int, string> OnPaddleChangedGlobal;
+
+        /// <summary>
+        /// 현재 패들 인덱스 (다른 스크립트에서 읽기/쓰기 가능)
+        /// </summary>
+        public int CurrentPaddleIndex
+        {
+            //Getter & Setter 사용
+            //값 변경 시 이벤트 발생
+            get { return _currentPaddleIndex; }
+            set 
+            { 
+                if (_currentPaddleIndex != value)
+                {
+                    _currentPaddleIndex = Mathf.Clamp(value, 0, 2); // 0~2 범위로 제한
+                    SetActivePaddle(_currentPaddleIndex);
+                    
+                    // 이벤트 발생
+                    OnPaddleChanged?.Invoke(_currentPaddleIndex);
+                    OnPaddleChangedGlobal?.Invoke(_currentPaddleIndex, GetCurrentPaddleName());
+                    
+                    if (enableDebugLogs)
+                    {
+                        Debug.Log($"[PaddleChangeController] 패들 인덱스 변경: {_currentPaddleIndex} ({GetCurrentPaddleName()})");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 현재 패들 이름 (읽기 전용)
+        /// </summary>
+        public string CurrentPaddleName => GetCurrentPaddleName();
+
+        /// <summary>
+        /// 패들 타입 열거형
+        /// </summary>
+        public enum PaddleType
+        {
+            Racket = 0,
+            Sword = 1,
+            Glove = 2
+        }
+
+        /// <summary>
+        /// 현재 패들 타입 (읽기 전용)
+        /// </summary>
+        public PaddleType CurrentPaddleType => (PaddleType)_currentPaddleIndex;
+
+        void Start()
+        {
+            // 패들 배열 초기화
+            paddles = new GameObject[] { paddle_racket, paddle_sword, paddle_glove_left, paddle_glove_right };
+            
+            // 초기 패들 설정 (첫 번째만 활성화)
+            CurrentPaddleIndex = 0; // Property를 사용해서 이벤트도 발생
+        }
+
+        void OnEnable()
+        {
+            SetupInputAction();
+        }
+
+        void OnDisable()
+        {
+            CleanupInputAction();
+        }
+
+        private void SetupInputAction()
+        {
+            // 오른쪽/왼쪽 컨트롤러에 따라 Primary Button 액션 생성
+            string controllerHand = isRightController ? "RightHand" : "LeftHand";
+            
+            primaryButtonAction = new InputAction(
+                name: "PaddleChangePrimaryButton",
+                binding: $"<XRController>{{{controllerHand}}}/primaryButton"
+            );
+
+            primaryButtonAction.performed += OnPrimaryButtonPressed;
+            primaryButtonAction.Enable();
+
+            if (enableDebugLogs)
+            {
+                Debug.Log($"[PaddleChangeController] {controllerHand} Primary Button 액션 설정 완료");
+            }
+        }
+
+        private void CleanupInputAction()
+        {
+            if (primaryButtonAction != null)
+            {
+                primaryButtonAction.performed -= OnPrimaryButtonPressed;
+                primaryButtonAction.Disable();
+                primaryButtonAction.Dispose();
+            }
+        }
+
+        private void OnPrimaryButtonPressed(InputAction.CallbackContext context)
+        {
+            if (context.phase == InputActionPhase.Performed)
+            {
+                // 다음 패들로 변경
+                ChangeToNextPaddle();
+
+                // 여기에 패들 변경 시 변경한 패들 정보를 Photon으로 넘겨주거나 하는 부분 코드를 작성
+            }
+        }
+
+        /// <summary>
+        /// 다음 패들로 변경
+        /// </summary>
+        public void ChangeToNextPaddle()
+        {
+            CurrentPaddleIndex = (_currentPaddleIndex + 1) % 3; // Property 사용
+        }
+
+        /// <summary>
+        /// 이전 패들로 변경
+        /// </summary>
+        public void ChangeToPreviousPaddle()
+        {
+            CurrentPaddleIndex = (_currentPaddleIndex - 1 + 3) % 3; // Property 사용
+        }
+
+        /// <summary>
+        /// 특정 패들로 직접 변경
+        /// </summary>
+        /// <param name="paddleType">변경할 패들 타입</param>
+        public void ChangeToPaddle(PaddleType paddleType)
+        {
+            CurrentPaddleIndex = (int)paddleType;
+        }
+
+        /// <summary>
+        /// 특정 패들을 활성화하고 나머지는 비활성화
+        /// </summary>
+        private void SetActivePaddle(int index)
+        {
+            // 모든 패들 비활성화
+            for (int i = 0; i < paddles.Length; i++)
+            {
+                if (paddles[i] != null)
+                {
+                    paddles[i].SetActive(false);
+                }
+            }
+
+            // 선택된 패들 활성화
+            switch (index)
+            {
+                case 0: // Racket
+                    if (paddle_racket != null)
+                        paddle_racket.SetActive(true);
+                    break;
+                case 1: // Sword
+                    if (paddle_sword != null)
+                        paddle_sword.SetActive(true);
+                    break;
+                case 2: // Glove (both left and right)
+                    if (paddle_glove_left != null)
+                        paddle_glove_left.SetActive(true);
+                    if (paddle_glove_right != null)
+                        paddle_glove_right.SetActive(true);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 현재 패들 이름 가져오기
+        /// </summary>
+        private string GetCurrentPaddleName()
+        {
+            switch (_currentPaddleIndex)
+            {
+                case 0: return "Racket";
+                case 1: return "Sword";
+                case 2: return "Glove (Both Hands)";
+                default: return "Unknown";
+            }
+        }
+
+        // Context Menu로 에디터에서 테스트 가능
+        [ContextMenu("Next Paddle")]
+        private void TestNextPaddle()
+        {
+            ChangeToNextPaddle();
+        }
+
+        [ContextMenu("Previous Paddle")]
+        private void TestPreviousPaddle()
+        {
+            ChangeToPreviousPaddle();
+        }
+    }
+} 
