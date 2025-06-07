@@ -342,6 +342,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49a29eab2630c7048981bbbda1cf7e77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  pvCache: {fileID: 0}
   gameManager: {fileID: 54432432}
   courtManager: {fileID: 0}
   roomManager: {fileID: 0}
@@ -623,6 +624,16 @@ Transform:
   m_Children: []
   m_Father: {fileID: 435847276}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &415812850 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8383160765636418610, guid: a6c44e90216d54101b0354ccc788a745, type: 3}
+  m_PrefabInstance: {fileID: 1232764510}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &415812856 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8383160765636418605, guid: a6c44e90216d54101b0354ccc788a745, type: 3}
+  m_PrefabInstance: {fileID: 1232764510}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &435847275
 GameObject:
   m_ObjectHideFlags: 0
@@ -1179,16 +1190,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerRoot: {fileID: 820992693}
   headTransform: {fileID: 0}
-  leftHandTransform: {fileID: 0}
-  rightHandTransform: {fileID: 0}
+  leftHandTransform: {fileID: 415812856}
+  rightHandTransform: {fileID: 1500605840}
   useVirtualHands: 0
   positionLerpRate: 10
   rotationLerpRate: 10
   teleportThreshold: 5
-  playerAnimator: {fileID: 0}
+  playerAnimator: {fileID: 820992685}
   syncAnimationParams: 1
-  leftControllerVisualizer: {fileID: 0}
-  rightControllerVisualizer: {fileID: 0}
+  leftControllerVisualizer: {fileID: 415812850}
+  rightControllerVisualizer: {fileID: 1500605839}
   createControllerVisualizers: 1
 --- !u!114 &820992687
 MonoBehaviour:
@@ -1211,12 +1222,46 @@ MonoBehaviour:
   ObservedComponents:
   - {fileID: 820992686}
   - {fileID: 820992684}
+  - {fileID: 820992699}
   sceneViewId: 2
   InstantiationId: 0
   isRuntimeInstantiated: 0
 --- !u!4 &820992693 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7170186760365188371, guid: a6c44e90216d54101b0354ccc788a745, type: 3}
+  m_PrefabInstance: {fileID: 1232764510}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &820992699
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 820992683}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b47af3ee90085e47a1fc963d40aba0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  leftController: {fileID: 415812856}
+  rightController: {fileID: 1500605840}
+  headset: {fileID: 0}
+  leftControllerVisualizer: {fileID: 872574561}
+  rightControllerVisualizer: {fileID: 2033377203}
+  createVisualizersForRemotePlayers: 0
+  leftControllerMaterial: {fileID: 0}
+  rightControllerMaterial: {fileID: 0}
+  positionLerpRate: 15
+  rotationLerpRate: 15
+  teleportThreshold: 2
+  syncButtonStates: 1
+  syncHapticFeedback: 1
+  sendRate: 20
+  positionThreshold: 0.01
+  rotationThreshold: 1
+--- !u!1 &872574561 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5855004828551673849, guid: a6c44e90216d54101b0354ccc788a745, type: 3}
   m_PrefabInstance: {fileID: 1232764510}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &879817305 stripped
@@ -1894,6 +1939,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7170186760365188368, guid: a6c44e90216d54101b0354ccc788a745, type: 3}
       insertIndex: -1
       addedObject: {fileID: 820992684}
+    - targetCorrespondingSourceObject: {fileID: 7170186760365188368, guid: a6c44e90216d54101b0354ccc788a745, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 820992699}
   m_SourcePrefab: {fileID: 100100000, guid: a6c44e90216d54101b0354ccc788a745, type: 3}
 --- !u!1 &1445017381
 GameObject:
@@ -2000,6 +2048,16 @@ Transform:
   m_Children: []
   m_Father: {fileID: 435847276}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1500605839 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8383160763933646029, guid: a6c44e90216d54101b0354ccc788a745, type: 3}
+  m_PrefabInstance: {fileID: 1232764510}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1500605840 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8383160763933646028, guid: a6c44e90216d54101b0354ccc788a745, type: 3}
+  m_PrefabInstance: {fileID: 1232764510}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1537918279
 GameObject:
   m_ObjectHideFlags: 0
@@ -2833,6 +2891,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2033377203 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3075572919240565732, guid: a6c44e90216d54101b0354ccc788a745, type: 3}
+  m_PrefabInstance: {fileID: 1232764510}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2046703413
 GameObject:
   m_ObjectHideFlags: 0
