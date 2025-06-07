@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.Events;
 using System;
+using Photon.Pun;
 
 namespace DeepongVR.Court
 {
@@ -30,6 +31,9 @@ namespace DeepongVR.Court
         private InputAction primaryButtonAction;
         private int _currentPaddleIndex = 0;
         private GameObject[] paddles;
+        
+        // 네트워크 관련 참조
+        private PhotonView photonView;
 
         // 정적 이벤트 (다른 스크립트에서 구독 가능)
         public static event Action<int, string> OnPaddleChangedGlobal;
@@ -46,6 +50,7 @@ namespace DeepongVR.Court
             { 
                 if (_currentPaddleIndex != value)
                 {
+                    int previousIndex = _currentPaddleIndex;
                     _currentPaddleIndex = Mathf.Clamp(value, 0, 2); // 0~2 범위로 제한
                     SetActivePaddle(_currentPaddleIndex);
                     
@@ -55,7 +60,10 @@ namespace DeepongVR.Court
                     
                     if (enableDebugLogs)
                     {
-                        Debug.Log($"[PaddleChangeController] 패들 인덱스 변경: {_currentPaddleIndex} ({GetCurrentPaddleName()})");
+                        bool isLocal = IsLocalPlayer();
+                        string playerType = isLocal ? "로컬" : "원격";
+                        string playerName = photonView != null ? photonView.Owner.NickName : "Local";
+                        Debug.Log($"[PaddleChangeController] {playerType} 플레이어({playerName}) 패들 변경: {previousIndex} → {_currentPaddleIndex} ({GetCurrentPaddleName()})");
                     }
                 }
             }
@@ -86,18 +94,47 @@ namespace DeepongVR.Court
             // 패들 배열 초기화
             paddles = new GameObject[] { paddle_racket, paddle_sword, paddle_glove_left, paddle_glove_right };
             
+            // PhotonView 참조 가져오기
+            photonView = GetComponent<PhotonView>();
+            if (photonView == null)
+            {
+                Debug.LogWarning("[PaddleChangeController] PhotonView가 없습니다. 로컬 전용 모드로 동작합니다.");
+            }
+            
             // 초기 패들 설정 (첫 번째만 활성화)
             CurrentPaddleIndex = 0; // Property를 사용해서 이벤트도 발생
+            
+            if (enableDebugLogs)
+            {
+                bool isLocal = photonView == null || photonView.IsMine;
+                Debug.Log($"[PaddleChangeController] 초기화 완료 - 로컬 플레이어: {isLocal}");
+            }
         }
 
         void OnEnable()
         {
-            SetupInputAction();
+            // 로컬 플레이어일 때만 입력 액션 설정
+            if (IsLocalPlayer())
+            {
+                SetupInputAction();
+            }
         }
 
         void OnDisable()
         {
-            CleanupInputAction();
+            // 로컬 플레이어일 때만 입력 액션 정리
+            if (IsLocalPlayer())
+            {
+                CleanupInputAction();
+            }
+        }
+        
+        /// <summary>
+        /// 현재 플레이어가 로컬 플레이어인지 확인
+        /// </summary>
+        private bool IsLocalPlayer()
+        {
+            return photonView == null || photonView.IsMine;
         }
 
         private void SetupInputAction()
@@ -133,10 +170,23 @@ namespace DeepongVR.Court
         {
             if (context.phase == InputActionPhase.Performed)
             {
+                // 로컬 플레이어만 패들 변경 가능
+                if (!IsLocalPlayer())
+                {
+                    if (enableDebugLogs)
+                    {
+                        Debug.LogWarning("[PaddleChangeController] 원격 플레이어는 직접 패들을 변경할 수 없습니다.");
+                    }
+                    return;
+                }
+                
                 // 다음 패들로 변경
                 ChangeToNextPaddle();
 
-                // 여기에 패들 변경 시 변경한 패들 정보를 Photon으로 넘겨주거나 하는 부분 코드를 작성
+                if (enableDebugLogs)
+                {
+                    Debug.Log("[PaddleChangeController] A 버튼 입력으로 패들 변경됨 - 네트워크 동기화 시작");
+                }
             }
         }
 
@@ -170,32 +220,102 @@ namespace DeepongVR.Court
         /// </summary>
         private void SetActivePaddle(int index)
         {
+            if (enableDebugLogs)
+            {
+                string playerType = IsLocalPlayer() ? "로컬" : "원격";
+                Debug.Log($"[PaddleChangeController] {playerType} 플레이어 패들 변경 시작: 인덱스 {index} ({GetPaddleNameByIndex(index)})");
+            }
+
             // 모든 패들 비활성화
             for (int i = 0; i < paddles.Length; i++)
             {
                 if (paddles[i] != null)
                 {
+                    bool wasActive = paddles[i].activeSelf;
                     paddles[i].SetActive(false);
+                    
+                    if (enableDebugLogs && wasActive)
+                    {
+                        Debug.Log($"[PaddleChangeController] 패들 비활성화: {paddles[i].name}");
+                    }
+                }
+                else if (enableDebugLogs)
+                {
+                    Debug.LogWarning($"[PaddleChangeController] 패들 {i}가 null입니다");
                 }
             }
 
             // 선택된 패들 활성화
+            bool activationSuccess = false;
             switch (index)
             {
                 case 0: // Racket
                     if (paddle_racket != null)
+                    {
                         paddle_racket.SetActive(true);
+                        activationSuccess = true;
+                        if (enableDebugLogs)
+                            Debug.Log($"[PaddleChangeController] Racket 패들 활성화됨: {paddle_racket.name}");
+                    }
+                    else if (enableDebugLogs)
+                    {
+                        Debug.LogError("[PaddleChangeController] paddle_racket이 null입니다!");
+                    }
                     break;
                 case 1: // Sword
                     if (paddle_sword != null)
+                    {
                         paddle_sword.SetActive(true);
+                        activationSuccess = true;
+                        if (enableDebugLogs)
+                            Debug.Log($"[PaddleChangeController] Sword 패들 활성화됨: {paddle_sword.name}");
+                    }
+                    else if (enableDebugLogs)
+                    {
+                        Debug.LogError("[PaddleChangeController] paddle_sword가 null입니다!");
+                    }
                     break;
                 case 2: // Glove (both left and right)
-                    if (paddle_glove_left != null)
+                    if (paddle_glove_left != null && paddle_glove_right != null)
+                    {
                         paddle_glove_left.SetActive(true);
-                    if (paddle_glove_right != null)
                         paddle_glove_right.SetActive(true);
+                        activationSuccess = true;
+                        if (enableDebugLogs)
+                            Debug.Log($"[PaddleChangeController] Glove 패들들 활성화됨: {paddle_glove_left.name}, {paddle_glove_right.name}");
+                    }
+                    else if (enableDebugLogs)
+                    {
+                        if (paddle_glove_left == null)
+                            Debug.LogError("[PaddleChangeController] paddle_glove_left가 null입니다!");
+                        if (paddle_glove_right == null)
+                            Debug.LogError("[PaddleChangeController] paddle_glove_right가 null입니다!");
+                    }
                     break;
+                default:
+                    if (enableDebugLogs)
+                        Debug.LogError($"[PaddleChangeController] 잘못된 패들 인덱스: {index}");
+                    break;
+            }
+
+            if (enableDebugLogs)
+            {
+                string playerType = IsLocalPlayer() ? "로컬" : "원격";
+                Debug.Log($"[PaddleChangeController] {playerType} 플레이어 패들 변경 완료: {(activationSuccess ? "성공" : "실패")}");
+            }
+        }
+
+        /// <summary>
+        /// 인덱스로 패들 이름 가져오기
+        /// </summary>
+        private string GetPaddleNameByIndex(int index)
+        {
+            switch (index)
+            {
+                case 0: return "Racket";
+                case 1: return "Sword";
+                case 2: return "Glove (Both Hands)";
+                default: return "Unknown";
             }
         }
 
