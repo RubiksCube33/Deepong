@@ -2,6 +2,8 @@ using Photon.Pun;
 using UnityEngine;
 using DeepongVR.Court;
 using System.Reflection;
+using System.Linq;
+using System;
 
 /// <summary>
 /// 패들의 위치, 회전, 타입을 네트워크를 통해 동기화합니다.
@@ -79,6 +81,12 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             return;
         }
         
+        // 상세한 구조 진단
+        if (enableDebugLogs)
+        {
+            DiagnoseObjectStructure();
+        }
+        
         // 네트워크 데이터 초기화
         InitializeNetworkData();
         
@@ -111,18 +119,18 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
     {
         Transform playerRoot = transform;
         
-        // 패들 오브젝트들을 이름으로 찾기
+        // 실제 프리팹 이름으로 패들 오브젝트들 찾기
         if (racketTransform == null)
-            racketTransform = FindChildRecursive(playerRoot, "paddle_racket");
+            racketTransform = FindChildRecursive(playerRoot, "Racket");
         
         if (swordTransform == null)
-            swordTransform = FindChildRecursive(playerRoot, "paddle_sword");
+            swordTransform = FindChildRecursive(playerRoot, "Sword");
             
         if (leftGloveTransform == null)
-            leftGloveTransform = FindChildRecursive(playerRoot, "paddle_glove_left");
+            leftGloveTransform = FindChildRecursive(playerRoot, "Gloves_L");
             
         if (rightGloveTransform == null)
-            rightGloveTransform = FindChildRecursive(playerRoot, "paddle_glove_right");
+            rightGloveTransform = FindChildRecursive(playerRoot, "Gloves_R");
         
         // VR 컨트롤러 참조 추가 확인
         CheckVRControllerReferences();
@@ -130,14 +138,14 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
         if (enableDebugLogs)
         {
             Debug.Log($"[PaddleNetworkSync] 패들 Transform 찾기 결과:");
-            Debug.Log($"  Racket: {(racketTransform != null ? racketTransform.name : "null")}");
-            Debug.Log($"  Sword: {(swordTransform != null ? swordTransform.name : "null")}");
-            Debug.Log($"  Left Glove: {(leftGloveTransform != null ? leftGloveTransform.name : "null")}");
-            Debug.Log($"  Right Glove: {(rightGloveTransform != null ? rightGloveTransform.name : "null")}");
+            Debug.Log($"  Racket: {(racketTransform != null ? GetFullPath(racketTransform) : "null")}");
+            Debug.Log($"  Sword: {(swordTransform != null ? GetFullPath(swordTransform) : "null")}");
+            Debug.Log($"  Left Glove: {(leftGloveTransform != null ? GetFullPath(leftGloveTransform) : "null")}");
+            Debug.Log($"  Right Glove: {(rightGloveTransform != null ? GetFullPath(rightGloveTransform) : "null")}");
             Debug.Log($"[PaddleNetworkSync] VR 컨트롤러 참조:");
             Debug.Log($"  VRController: {(vrController != null ? "Found" : "null")}");
-            Debug.Log($"  LeftHand: {(vrController?.LeftHandController != null ? vrController.LeftHandController.name : "null")}");
-            Debug.Log($"  RightHand: {(vrController?.RightHandController != null ? vrController.RightHandController.name : "null")}");
+            Debug.Log($"  LeftHand: {(vrController?.LeftHandController != null ? GetFullPath(vrController.LeftHandController) : "null")}");
+            Debug.Log($"  RightHand: {(vrController?.RightHandController != null ? GetFullPath(vrController.RightHandController) : "null")}");
         }
     }
     
@@ -172,20 +180,163 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             }
         }
         
-        // 컨트롤러 참조 유효성 확인
-        if (vrController != null)
+        // VRHumanoidController를 찾지 못했다면 직접 컨트롤러 Transform 찾기
+        if (vrController == null)
         {
+            Debug.LogWarning("[PaddleNetworkSync] VRHumanoidController를 찾을 수 없어서 직접 컨트롤러를 찾습니다.");
+            FindControllerTransformsDirectly();
+        }
+        else
+        {
+            // 컨트롤러 참조 유효성 확인
             if (vrController.LeftHandController == null || vrController.RightHandController == null)
             {
                 Debug.LogWarning("[PaddleNetworkSync] VRHumanoidController는 찾았지만 손 컨트롤러 참조가 없습니다!");
-                Debug.LogWarning("VRHumanoidController Inspector에서 LeftHandController와 RightHandController를 설정해주세요.");
+                Debug.LogWarning("직접 컨트롤러를 찾아보겠습니다.");
+                FindControllerTransformsDirectly();
+            }
+        }
+    }
+    
+    /// <summary>
+    /// VRHumanoidController 없이 직접 컨트롤러 Transform들을 찾습니다.
+    /// </summary>
+    void FindControllerTransformsDirectly()
+    {
+        Transform playerRoot = transform;
+        
+        // 구조 분석 결과를 바탕으로 경로 찾기
+        // Player_Origin/Camera Offset/Left Controller
+        // Player_Origin/Camera Offset/Right Controller
+        
+        Transform cameraOffset = FindChildRecursive(playerRoot, "Camera Offset");
+        if (cameraOffset != null)
+        {
+            Transform leftController = FindChildRecursive(cameraOffset, "Left Controller");
+            Transform rightController = FindChildRecursive(cameraOffset, "Right Controller");
+            
+            if (enableDebugLogs)
+            {
+                Debug.Log($"[PaddleNetworkSync] 직접 컨트롤러 찾기:");
+                Debug.Log($"  Camera Offset: {(cameraOffset != null ? GetFullPath(cameraOffset) : "null")}");
+                Debug.Log($"  Left Controller: {(leftController != null ? GetFullPath(leftController) : "null")}");
+                Debug.Log($"  Right Controller: {(rightController != null ? GetFullPath(rightController) : "null")}");
+            }
+            
+            // 가상 VRHumanoidController 정보 생성
+            if (vrController == null && (leftController != null || rightController != null))
+            {
+                // 임시로 Transform 정보를 사용 (VRHumanoidController 없이)
+                if (enableDebugLogs)
+                {
+                    Debug.Log("[PaddleNetworkSync] VRHumanoidController 없이 직접 컨트롤러 Transform 사용");
+                }
             }
         }
         else
         {
-            Debug.LogWarning("[PaddleNetworkSync] VRHumanoidController를 찾을 수 없습니다!");
-            Debug.LogWarning("패들 위치 동기화가 제한될 수 있습니다.");
+            Debug.LogWarning("[PaddleNetworkSync] Camera Offset을 찾을 수 없습니다!");
         }
+    }
+    
+    /// <summary>
+    /// 오브젝트 구조를 진단합니다.
+    /// </summary>
+    void DiagnoseObjectStructure()
+    {
+        Debug.Log("=== PaddleNetworkSync 구조 진단 시작 ===");
+        Debug.Log($"현재 오브젝트: {gameObject.name}");
+        Debug.Log($"현재 오브젝트 경로: {GetFullPath(transform)}");
+        
+        // VRHumanoidController 찾기
+        Debug.Log("--- VRHumanoidController 검색 ---");
+        var vrControllers = FindObjectsOfType<VRHumanoidController>();
+        Debug.Log($"씬에 있는 VRHumanoidController 수: {vrControllers.Length}");
+        
+        for (int i = 0; i < vrControllers.Length; i++)
+        {
+            var controller = vrControllers[i];
+            Debug.Log($"VRController {i}: {GetFullPath(controller.transform)}");
+            Debug.Log($"  LeftHandController: {(controller.LeftHandController != null ? GetFullPath(controller.LeftHandController) : "null")}");
+            Debug.Log($"  RightHandController: {(controller.RightHandController != null ? GetFullPath(controller.RightHandController) : "null")}");
+            Debug.Log($"  Headset: {(controller.Headset != null ? GetFullPath(controller.Headset) : "null")}");
+        }
+        
+        // 패들 오브젝트 찾기
+        Debug.Log("--- 패들 오브젝트 검색 ---");
+        string[] paddleNames = {"Racket", "Sword", "Gloves_L", "Gloves_R"};
+        
+        foreach (string paddleName in paddleNames)
+        {
+            GameObject[] foundPaddles = GameObject.FindObjectsOfType<GameObject>()
+                .Where(go => go.name.ToLower().Contains(paddleName.ToLower())).ToArray();
+            
+            Debug.Log($"{paddleName} 검색 결과: {foundPaddles.Length}개");
+            foreach (var paddle in foundPaddles)
+            {
+                Debug.Log($"  - {GetFullPath(paddle.transform)} (Active: {paddle.activeInHierarchy})");
+            }
+        }
+        
+        // PaddleChangeController 찾기
+        Debug.Log("--- PaddleChangeController 검색 ---");
+        var paddleChangeControllers = FindObjectsOfType<DeepongVR.Court.PaddleChangeController>();
+        Debug.Log($"씬에 있는 PaddleChangeController 수: {paddleChangeControllers.Length}");
+        
+        for (int i = 0; i < paddleChangeControllers.Length; i++)
+        {
+            var controller = paddleChangeControllers[i];
+            Debug.Log($"PaddleChangeController {i}: {GetFullPath(controller.transform)}");
+            Debug.Log($"  CurrentPaddleIndex: {controller.CurrentPaddleIndex}");
+            Debug.Log($"  CurrentPaddleName: {controller.CurrentPaddleName}");
+        }
+        
+        Debug.Log("=== 구조 진단 완료 ===");
+    }
+    
+    /// <summary>
+    /// Transform의 전체 경로를 반환합니다.
+    /// </summary>
+    string GetFullPath(Transform transform)
+    {
+        if (transform == null) return "null";
+        
+        string path = transform.name;
+        Transform parent = transform.parent;
+        
+        while (parent != null)
+        {
+            path = parent.name + "/" + path;
+            parent = parent.parent;
+        }
+        
+        return path;
+    }
+    
+    /// <summary>
+    /// 왼쪽 컨트롤러 Transform을 반환합니다.
+    /// </summary>
+    Transform GetLeftControllerTransform()
+    {
+        Transform cameraOffset = FindChildRecursive(transform, "Camera Offset");
+        if (cameraOffset != null)
+        {
+            return FindChildRecursive(cameraOffset, "Left Controller");
+        }
+        return null;
+    }
+    
+    /// <summary>
+    /// 오른쪽 컨트롤러 Transform을 반환합니다.
+    /// </summary>
+    Transform GetRightControllerTransform()
+    {
+        Transform cameraOffset = FindChildRecursive(transform, "Camera Offset");
+        if (cameraOffset != null)
+        {
+            return FindChildRecursive(cameraOffset, "Right Controller");
+        }
+        return null;
     }
     
     /// <summary>
@@ -195,7 +346,8 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
     {
         foreach (Transform child in parent)
         {
-            if (child.name.ToLower().Contains(name.ToLower()))
+            // 정확한 이름 매칭 (대소문자 구분 없음)
+            if (child.name.Equals(name, System.StringComparison.OrdinalIgnoreCase))
                 return child;
                 
             Transform found = FindChildRecursive(child, name);
@@ -251,15 +403,27 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
     /// </summary>
     void UpdateRacketPosition()
     {
+        // VRHumanoidController가 있고 RightHandController가 설정된 경우
         if (vrController != null && vrController.RightHandController != null)
         {
             currentPaddlePosition = vrController.RightHandController.position;
             currentPaddleRotation = vrController.RightHandController.rotation;
         }
-        else if (racketTransform != null)
+        // VRHumanoidController가 없는 경우 직접 Right Controller 찾기
+        else
         {
-            currentPaddlePosition = racketTransform.position;
-            currentPaddleRotation = racketTransform.rotation;
+            Transform rightController = GetRightControllerTransform();
+            if (rightController != null)
+            {
+                currentPaddlePosition = rightController.position;
+                currentPaddleRotation = rightController.rotation;
+            }
+            // 마지막 대안으로 패들 자체 위치 사용
+            else if (racketTransform != null)
+            {
+                currentPaddlePosition = racketTransform.position;
+                currentPaddleRotation = racketTransform.rotation;
+            }
         }
     }
     
@@ -268,15 +432,27 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
     /// </summary>
     void UpdateSwordPosition()
     {
+        // VRHumanoidController가 있고 RightHandController가 설정된 경우
         if (vrController != null && vrController.RightHandController != null)
         {
             currentPaddlePosition = vrController.RightHandController.position;
             currentPaddleRotation = vrController.RightHandController.rotation;
         }
-        else if (swordTransform != null)
+        // VRHumanoidController가 없는 경우 직접 Right Controller 찾기
+        else
         {
-            currentPaddlePosition = swordTransform.position;
-            currentPaddleRotation = swordTransform.rotation;
+            Transform rightController = GetRightControllerTransform();
+            if (rightController != null)
+            {
+                currentPaddlePosition = rightController.position;
+                currentPaddleRotation = rightController.rotation;
+            }
+            // 마지막 대안으로 패들 자체 위치 사용
+            else if (swordTransform != null)
+            {
+                currentPaddlePosition = swordTransform.position;
+                currentPaddleRotation = swordTransform.rotation;
+            }
         }
     }
     
@@ -285,29 +461,37 @@ public class PaddleNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
     /// </summary>
     void UpdateGlovePositions()
     {
-        if (vrController != null)
+        // VRHumanoidController가 있고 양손 컨트롤러가 설정된 경우
+        if (vrController != null && vrController.LeftHandController != null && vrController.RightHandController != null)
         {
-            if (vrController.LeftHandController != null)
-            {
-                currentLeftGlovePosition = vrController.LeftHandController.position;
-                currentLeftGloveRotation = vrController.LeftHandController.rotation;
-            }
-            
-            if (vrController.RightHandController != null)
-            {
-                currentRightGlovePosition = vrController.RightHandController.position;
-                currentRightGloveRotation = vrController.RightHandController.rotation;
-            }
+            currentLeftGlovePosition = vrController.LeftHandController.position;
+            currentLeftGloveRotation = vrController.LeftHandController.rotation;
+            currentRightGlovePosition = vrController.RightHandController.position;
+            currentRightGloveRotation = vrController.RightHandController.rotation;
         }
+        // VRHumanoidController가 없는 경우 직접 컨트롤러 찾기
         else
         {
-            if (leftGloveTransform != null)
+            Transform leftController = GetLeftControllerTransform();
+            Transform rightController = GetRightControllerTransform();
+            
+            if (leftController != null)
+            {
+                currentLeftGlovePosition = leftController.position;
+                currentLeftGloveRotation = leftController.rotation;
+            }
+            else if (leftGloveTransform != null)
             {
                 currentLeftGlovePosition = leftGloveTransform.position;
                 currentLeftGloveRotation = leftGloveTransform.rotation;
             }
             
-            if (rightGloveTransform != null)
+            if (rightController != null)
+            {
+                currentRightGlovePosition = rightController.position;
+                currentRightGloveRotation = rightController.rotation;
+            }
+            else if (rightGloveTransform != null)
             {
                 currentRightGlovePosition = rightGloveTransform.position;
                 currentRightGloveRotation = rightGloveTransform.rotation;
