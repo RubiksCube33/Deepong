@@ -7,6 +7,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 /// <summary>
 /// Controls a humanoid model in VR by mapping XR controller positions to the model's limbs
 /// and moving the character based on headset movement
+/// Robot 에셋(팔다리 없음)과 휴머노이드 모델 모두 지원
 /// </summary>
 public class VRHumanoidController : MonoBehaviour
 {
@@ -21,6 +22,13 @@ public class VRHumanoidController : MonoBehaviour
     [SerializeField] private Transform humanoidHead;
     [SerializeField] private Transform humanoidLeftHand;
     [SerializeField] private Transform humanoidRightHand;
+    
+    [Header("Robot Mode Settings (팔다리 없는 모델용)")]
+    [SerializeField] private bool isRobotMode = false; // Robot 모드 활성화
+    [SerializeField] private GameObject leftHandVisualizer; // 왼손 시각화 오브젝트
+    [SerializeField] private GameObject rightHandVisualizer; // 오른손 시각화 오브젝트
+    [SerializeField] private bool createHandVisualizers = true; // 손 시각화 오브젝트 자동 생성
+    [SerializeField] private float handVisualizerSize = 0.1f; // 손 시각화 크기
     
     [Header("Offset Settings")]
     [SerializeField] private Vector3 rootPositionOffset = Vector3.zero;
@@ -77,6 +85,12 @@ public class VRHumanoidController : MonoBehaviour
     private int animIDFreeFall;
     private int animIDMotionSpeed;
 
+    // 가상 손 위치 (Robot 모드용)
+    public Vector3 VirtualLeftHandPosition { get; private set; }
+    public Vector3 VirtualRightHandPosition { get; private set; }
+    public Quaternion VirtualLeftHandRotation { get; private set; }
+    public Quaternion VirtualRightHandRotation { get; private set; }
+
     // Public properties for easier access
     public Transform XROrigin { get => xrOrigin; set => xrOrigin = value; }
     public Transform LeftHandController { get => leftHandController; set => leftHandController = value; }
@@ -101,6 +115,8 @@ public class VRHumanoidController : MonoBehaviour
     public float ModelScale { get => modelScale; set => modelScale = value; }
     public bool UseIK { get => useIK; set => useIK = value; }
     public float IKWeight { get => ikWeight; set => ikWeight = value; }
+    
+    public bool IsRobotMode { get => isRobotMode; set => isRobotMode = value; }
 
     void Start()
     {
@@ -119,6 +135,15 @@ public class VRHumanoidController : MonoBehaviour
                 characterController.radius = 0.3f;
             }
             
+            // Robot 모드 자동 감지
+            DetectRobotMode();
+            
+            // Robot 모드인 경우 손 시각화 오브젝트 생성
+            if (isRobotMode && createHandVisualizers)
+            {
+                CreateHandVisualizers();
+            }
+            
             // Set up animation parameters
             AssignAnimationIDs();
             
@@ -129,6 +154,78 @@ public class VRHumanoidController : MonoBehaviour
         else
         {
             Debug.LogError("Humanoid root is not assigned. Please assign a humanoid model root transform.");
+        }
+    }
+    
+    /// <summary>
+    /// 자동으로 Robot 모드인지 감지
+    /// </summary>
+    private void DetectRobotMode()
+    {
+        // 손 Transform이 없거나 Humanoid가 아닌 경우 Robot 모드로 설정
+        bool hasHands = humanoidLeftHand != null && humanoidRightHand != null;
+        bool isHumanoid = humanoidAnimator != null && humanoidAnimator.isHuman;
+        
+        if (!hasHands || !isHumanoid)
+        {
+            isRobotMode = true;
+            Debug.Log($"Robot 모드 자동 감지됨: hasHands={hasHands}, isHumanoid={isHumanoid}");
+        }
+    }
+    
+    /// <summary>
+    /// Robot 모드용 손 시각화 오브젝트 생성
+    /// </summary>
+    private void CreateHandVisualizers()
+    {
+        if (leftHandController != null && leftHandVisualizer == null)
+        {
+            leftHandVisualizer = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            leftHandVisualizer.name = "LeftHandVisualizer";
+            leftHandVisualizer.transform.SetParent(transform);
+            leftHandVisualizer.transform.localScale = Vector3.one * handVisualizerSize;
+            
+            // 반투명한 파란색 Material 생성
+            Renderer leftRenderer = leftHandVisualizer.GetComponent<Renderer>();
+            if (leftRenderer != null)
+            {
+                Material leftMat = new Material(Shader.Find("Standard"));
+                leftMat.color = new Color(0f, 0.5f, 1f, 0.7f);
+                leftMat.SetFloat("_Mode", 3); // Transparent mode
+                leftMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                leftMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                leftMat.SetInt("_ZWrite", 0);
+                leftMat.DisableKeyword("_ALPHATEST_ON");
+                leftMat.EnableKeyword("_ALPHABLEND_ON");
+                leftMat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                leftMat.renderQueue = 3000;
+                leftRenderer.material = leftMat;
+            }
+        }
+        
+        if (rightHandController != null && rightHandVisualizer == null)
+        {
+            rightHandVisualizer = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            rightHandVisualizer.name = "RightHandVisualizer";
+            rightHandVisualizer.transform.SetParent(transform);
+            rightHandVisualizer.transform.localScale = Vector3.one * handVisualizerSize;
+            
+            // 반투명한 빨간색 Material 생성
+            Renderer rightRenderer = rightHandVisualizer.GetComponent<Renderer>();
+            if (rightRenderer != null)
+            {
+                Material rightMat = new Material(Shader.Find("Standard"));
+                rightMat.color = new Color(1f, 0.5f, 0f, 0.7f);
+                rightMat.SetFloat("_Mode", 3); // Transparent mode
+                rightMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                rightMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                rightMat.SetInt("_ZWrite", 0);
+                rightMat.DisableKeyword("_ALPHATEST_ON");
+                rightMat.EnableKeyword("_ALPHABLEND_ON");
+                rightMat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                rightMat.renderQueue = 3000;
+                rightRenderer.material = rightMat;
+            }
         }
     }
     
@@ -164,10 +261,18 @@ public class VRHumanoidController : MonoBehaviour
 
         // 그 다음에 머리와 손 위치 업데이트
         UpdateHeadTransform();
-        UpdateHandTransforms();
         
-        // Apply additional IK if needed
-        if (useIK && humanoidAnimator != null)
+        if (isRobotMode)
+        {
+            UpdateVirtualHandPositions(); // Robot 모드: 가상 손 위치 업데이트
+        }
+        else
+        {
+            UpdateHandTransforms(); // 일반 모드: 실제 손 Transform 업데이트
+        }
+        
+        // Apply additional IK if needed (Robot 모드에서는 건너뜀)
+        if (useIK && humanoidAnimator != null && !isRobotMode)
         {
             ApplyIK();
         }
@@ -199,40 +304,22 @@ public class VRHumanoidController : MonoBehaviour
                 // Apply the position directly to ensure consistent height
                 humanoidRoot.position = currentPosition;
             }
-            
-            return;
+            else
+            {
+                humanoidRoot.position = currentPosition;
+            }
         }
-
-        // No headset movement case (unchanged)
-        // 캐릭터 컨트롤러가 없는 경우에만 수동으로 위치 업데이트
-        // 헤드셋 위치 기준으로 로봇 위치 조정 (높이는 initialRootPosition.y 유지)
-        Vector3 targetPosition = xrOrigin.position + rootPositionOffset;
-        targetPosition.y = initialRootPosition.y + heightOffset; 
-        
-        // 헤드셋의 전방 방향을 기준으로 로봇 회전
-        Vector3 headsetForward = headset.forward;
-        headsetForward.y = 0;
-        headsetForward.Normalize();
-        Quaternion targetRotation = Quaternion.LookRotation(headsetForward, Vector3.up);
-        targetRotation *= Quaternion.Euler(rootRotationOffset);
-        
-        // 위치와 회전 적용
-        humanoidRoot.position = targetPosition;
-        humanoidRoot.rotation = targetRotation;
-        
-        // 크기 적용
-        humanoidRoot.localScale = Vector3.one * modelScale;
     }
     
     private void GroundedCheck()
     {
-        if (characterController == null) return;
-        
-        // Set sphere position, with offset
-        Vector3 spherePosition = new Vector3(humanoidRoot.position.x, humanoidRoot.position.y - groundedOffset, humanoidRoot.position.z);
-        grounded = Physics.CheckSphere(spherePosition, groundedRadius, groundLayers, QueryTriggerInteraction.Ignore);
+        // set sphere position, with offset
+        Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - groundedOffset,
+            transform.position.z);
+        grounded = Physics.CheckSphere(spherePosition, groundedRadius, groundLayers,
+            QueryTriggerInteraction.Ignore);
 
-        // Update animator if using character
+        // update animator if using character
         if (humanoidAnimator != null)
         {
             humanoidAnimator.SetBool(animIDGrounded, grounded);
@@ -385,9 +472,48 @@ public class VRHumanoidController : MonoBehaviour
         humanoidHead.rotation = headset.rotation * Quaternion.Euler(headRotationOffset);
     }
     
+    /// <summary>
+    /// Robot 모드: 가상 손 위치 업데이트 (실제 Transform은 없지만 위치 추적)
+    /// </summary>
+    private void UpdateVirtualHandPositions()
+    {
+        // 가상 왼손 위치 업데이트
+        if (leftHandController != null)
+        {
+            Vector3 leftOffset = leftHandController.TransformDirection(leftHandPositionOffset);
+            VirtualLeftHandPosition = leftHandController.position + leftOffset;
+            VirtualLeftHandRotation = leftHandController.rotation * Quaternion.Euler(leftHandRotationOffset);
+            
+            // 시각화 오브젝트 업데이트
+            if (leftHandVisualizer != null)
+            {
+                leftHandVisualizer.transform.position = VirtualLeftHandPosition;
+                leftHandVisualizer.transform.rotation = VirtualLeftHandRotation;
+            }
+        }
+        
+        // 가상 오른손 위치 업데이트
+        if (rightHandController != null)
+        {
+            Vector3 rightOffset = rightHandController.TransformDirection(rightHandPositionOffset);
+            VirtualRightHandPosition = rightHandController.position + rightOffset;
+            VirtualRightHandRotation = rightHandController.rotation * Quaternion.Euler(rightHandRotationOffset);
+            
+            // 시각화 오브젝트 업데이트
+            if (rightHandVisualizer != null)
+            {
+                rightHandVisualizer.transform.position = VirtualRightHandPosition;
+                rightHandVisualizer.transform.rotation = VirtualRightHandRotation;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 일반 모드: 실제 손 Transform 업데이트
+    /// </summary>
     private void UpdateHandTransforms()
     {
-        // Update left hand
+        // Update left hand (null 체크 강화)
         if (humanoidLeftHand != null && leftHandController != null)
         {
             Vector3 leftOffset = leftHandController.TransformDirection(leftHandPositionOffset);
@@ -395,7 +521,7 @@ public class VRHumanoidController : MonoBehaviour
             humanoidLeftHand.rotation = leftHandController.rotation * Quaternion.Euler(leftHandRotationOffset);
         }
         
-        // Update right hand
+        // Update right hand (null 체크 강화)
         if (humanoidRightHand != null && rightHandController != null)
         {
             Vector3 rightOffset = rightHandController.TransformDirection(rightHandPositionOffset);
@@ -404,16 +530,23 @@ public class VRHumanoidController : MonoBehaviour
         }
     }
     
+    /// <summary>
+    /// IK 적용 (휴머노이드 모델에서만 사용)
+    /// </summary>
     private void ApplyIK()
     {
+        // Robot 모드에서는 IK 사용하지 않음
+        if (isRobotMode || humanoidAnimator == null || !humanoidAnimator.isHuman)
+            return;
+            
         // This method would use Unity's Animator IK capabilities to smoothly position limbs
         // Requires a properly rigged humanoid model with an Animator component
         
         // Example implementation (would need to be expanded for a complete solution):
         if (humanoidAnimator != null)
         {
-            // Set the IK position and rotation of the hands
-            if (leftHandController != null)
+            // Set the IK position and rotation of the hands (null 체크 추가)
+            if (leftHandController != null && humanoidLeftHand != null)
             {
                 humanoidAnimator.SetIKPositionWeight(AvatarIKGoal.LeftHand, ikWeight);
                 humanoidAnimator.SetIKRotationWeight(AvatarIKGoal.LeftHand, ikWeight);
@@ -421,7 +554,7 @@ public class VRHumanoidController : MonoBehaviour
                 humanoidAnimator.SetIKRotation(AvatarIKGoal.LeftHand, leftHandController.rotation * Quaternion.Euler(leftHandRotationOffset));
             }
             
-            if (rightHandController != null)
+            if (rightHandController != null && humanoidRightHand != null)
             {
                 humanoidAnimator.SetIKPositionWeight(AvatarIKGoal.RightHand, ikWeight);
                 humanoidAnimator.SetIKRotationWeight(AvatarIKGoal.RightHand, ikWeight);
