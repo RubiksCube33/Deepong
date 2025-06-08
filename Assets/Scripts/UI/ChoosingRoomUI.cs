@@ -29,9 +29,15 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
     public GameObject loadingPanel;
     public TextMeshProUGUI statusText;
     
+    [Header("대기 상태 UI")]
+    public GameObject waitingOverlay;
+    public TextMeshProUGUI waitingText;
+    
     private List<GameObject> roomItemObjects = new List<GameObject>();
     private RoomData selectedRoom = null;
     private Dictionary<string, RoomInfo> cachedRoomList = new Dictionary<string, RoomInfo>();
+    private bool isWaitingForPlayers = false;
+    private RoomData currentJoinedRoom = null;
     
     private void Start()
     {
@@ -367,45 +373,18 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         PhotonNetwork.JoinRoom(room.roomName);
     }
     
-    public override void OnJoinedRoom()
+    private RoomData GetCurrentRoom()
     {
-        Debug.Log($"방 참가 성공: {PhotonNetwork.CurrentRoom.Name}");
-        UpdateStatusText("게임을 시작합니다...");
-        
-        // 사람 수 체크 및 게임 시작
-        RoomData currentRoom = GetCurrentRoom(); // 현재 방 정보를 얻는 메소드 (예시로 추가)
-        if (currentRoom != null)
+        if (PhotonNetwork.InRoom)
         {
-            if (currentRoom.currentPlayers >= currentRoom.maxPlayers)
-            {
-                // 플레이어 수가 최대인 경우 게임 시작
-                SceneManager.LoadScene("CourtScene");
-            }
-            else
-            {
-                // 플레이어가 부족하면 대기 상태
-                ShowWaitingState();
-            }
+            // Photon 방 정보를 RoomData로 변환
+            RoomInfo roomInfo = PhotonNetwork.CurrentRoom;
+            return ConvertRoomInfoToRoomData(roomInfo);
         }
-        else
-        {
-            // 방 정보가 없을 경우 처리
-            Debug.LogError("현재 방 정보가 없습니다.");
-        }
+        return currentJoinedRoom;
     }
     
-    public override void OnJoinRoomFailed(short returnCode, string message)
-    {
-        Debug.LogError($"방 참가 실패: {message} (코드: {returnCode})");
-        
-        if (loadingPanel != null)
-            loadingPanel.SetActive(false);
-            
-        UpdateStatusText($"방 참가 실패: {message}");
-        
-        // 방 목록 새로고침
-        RefreshRoomList();
-    }
+
     
     public override void OnDisconnected(DisconnectCause cause)
     {
@@ -531,7 +510,6 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         ShowError("방이 가득 차서 입장할 수 없습니다!");
     }
 
-    // Photon 콜백 메서드들 추가
     public override void OnJoinedRoom()
     {
         Debug.Log($"방 참가 성공: {PhotonNetwork.CurrentRoom.Name} (현재 플레이어: {PhotonNetwork.CurrentRoom.PlayerCount}/{PhotonNetwork.CurrentRoom.MaxPlayers})");
