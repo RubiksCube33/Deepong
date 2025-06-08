@@ -182,36 +182,48 @@ public class MakingRoomUI : MonoBehaviourPunCallbacks
         // 로컬 방 데이터도 저장
         SaveLocalRoomData(PhotonNetwork.CurrentRoom);
         
-        // 방에서 나와서 로비로 돌아가기
-        Debug.Log("방에서 나가서 로비로 이동 중...");
-        PhotonNetwork.LeaveRoom();
-    }
-    
-    public override void OnLeftRoom()
-    {
-        Debug.Log("방에서 나갔습니다. 로비로 이동 중...");
+        // 로딩 패널 숨기기
+        if (loadingPanel != null)
+            loadingPanel.SetActive(false);
+            
+        // 방 생성 완료
+        isCreatingRoom = false;
         
-        // 로비로 이동 (방 목록을 보기 위해)
-        if (!PhotonNetwork.InLobby)
+        Debug.Log("방 생성 완료. 다른 플레이어를 기다리거나 게임을 시작합니다.");
+        
+        // 플레이어 수 확인
+        CheckPlayersAndStartGame();
+    }
+    
+    private void CheckPlayersAndStartGame()
+    {
+        if (PhotonNetwork.InRoom)
         {
-            PhotonNetwork.JoinLobby();
-        }
-        else
-        {
-            // 이미 로비에 있다면 바로 씬 이동
-            MoveToChoosingRoomScene();
+            int currentPlayers = PhotonNetwork.CurrentRoom.PlayerCount;
+            int maxPlayers = PhotonNetwork.CurrentRoom.MaxPlayers;
+            
+            Debug.Log($"현재 플레이어 수: {currentPlayers}/{maxPlayers}");
+            
+            if (currentPlayers >= maxPlayers)
+            {
+                // 플레이어가 모두 모였으면 게임 시작
+                Debug.Log("플레이어가 모두 모였습니다! 게임을 시작합니다.");
+                SceneManager.LoadScene("CourtScene");
+            }
+            else
+            {
+                // 다른 플레이어를 기다림
+                Debug.Log("다른 플레이어를 기다리는 중...");
+                // 대기 상태 UI 표시 (필요에 따라 구현)
+            }
         }
     }
     
-    public override void OnJoinedLobby()
+    // 다른 플레이어가 방에 입장했을 때 호출
+    public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        Debug.Log("로비에 입장했습니다. ChoosingRoomScene으로 이동합니다.");
-        MoveToChoosingRoomScene();
-    }
-    
-    private void MoveToChoosingRoomScene()
-    {
-        SceneManager.LoadScene("ChoosingRoomScene");
+        Debug.Log($"새 플레이어 입장: {newPlayer.NickName}");
+        CheckPlayersAndStartGame();
     }
     
     public override void OnCreateRoomFailed(short returnCode, string message)
