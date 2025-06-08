@@ -342,15 +342,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49a29eab2630c7048981bbbda1cf7e77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pvCache: {fileID: 0}
-  gameManager: {fileID: 54432432}
-  courtManager: {fileID: 0}
-  roomManager: {fileID: 0}
-  useExistingManagers: 1
-  enableNetworkSync: 1
-  componentsToDisableForRemotePlayers:
-  - VRHumanoidController
-  - XRPlayerArmatureSetup
 --- !u!4 &60469565 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -1253996098385199550, guid: 7a6d8a2a4911faa4a871759e7701c54d, type: 3}
@@ -1957,7 +1948,7 @@ GameObject:
   - component: {fileID: 1445017382}
   m_Layer: 0
   m_Name: WallBack
-  m_TagString: Untagged
+  m_TagString: wallback
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2910,7 +2901,7 @@ GameObject:
   - component: {fileID: 2046703414}
   m_Layer: 0
   m_Name: WallFront
-  m_TagString: Untagged
+  m_TagString: wallfront
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
