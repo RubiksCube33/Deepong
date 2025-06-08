@@ -27,6 +27,9 @@ public class BallController : MonoBehaviourPunCallbacks
     [Header("충돌 시 소리 설정")]
     private AudioSource sfxSource;
     
+    // Trail Renderer 참조
+    private TrailRenderer trailRenderer;
+    
     
     [Header("사운드 재생 방식 선택")]
     [SerializeField] private bool useSoundManager = true; // true: SoundManager 사용, false: 직접 AudioSource 사용
@@ -37,13 +40,30 @@ public class BallController : MonoBehaviourPunCallbacks
     {
         rb = GetComponent<Rigidbody>();
         rend = GetComponent<Renderer>();
+
+        // Trail Renderer 컴포넌트 가져오기 및 비활성화
+        // 처음에 비활성화 한번 명시적으로 시켜주는 이유는, 공이 2P로 가면 어색하게 트레일렌더러가 쭉 생김
+        trailRenderer = GetComponent<TrailRenderer>();
+        trailRenderer.enabled = false;
         
+        // 초기 위치 설정 (1p, 2p에 따라 다르게 설정)
+        if (Random.Range(0, 2) == 0)
+        {
+            transform.position = new Vector3(0.045f, 1.004f, -2.57f);
+        }
+        else
+        {
+            transform.position = new Vector3(0.045f, 1.004f, 2.57f);
+        }
+
         // 현재 위치를 초기 위치로 저장
         initialPosition = transform.position;
+
+        // 다시 트레일렌더러 켜주기
+        trailRenderer.enabled = true;
         
         // AudioSource 컴포넌트 가져오기
         sfxSource = GetComponent<AudioSource>();
-        
         
         // 씬에서 ScoreManager 찾기
         scoreManager = FindObjectOfType<ScoreManager>();
