@@ -17,7 +17,7 @@ public class RoomData
         roomName = name;
         password = pass;
         hasPassword = !string.IsNullOrEmpty(pass);
-        currentPlayers = 1; // 방장 포함
+        currentPlayers = 0;
         maxPlayers = maxPl;
         roomId = System.Guid.NewGuid().ToString();
         createdTime = DateTime.Now;

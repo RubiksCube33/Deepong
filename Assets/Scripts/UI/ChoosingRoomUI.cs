@@ -22,6 +22,10 @@ public class ChoosingRoomUI : MonoBehaviour
     public Button cancelPasswordButton;
     public TextMeshProUGUI passwordErrorText;
     
+    [Header("대기 상태 UI")]
+    public GameObject waitingOverlay;  // 반투명 패널
+    public TextMeshProUGUI waitingText;  // "대기중..." 텍스트
+    
     private List<GameObject> roomItemObjects = new List<GameObject>();
     private RoomData selectedRoom = null;
     
@@ -39,6 +43,9 @@ public class ChoosingRoomUI : MonoBehaviour
             
         if (passwordErrorText != null)
             passwordErrorText.gameObject.SetActive(false);
+        
+        if (waitingOverlay != null)
+            waitingOverlay.SetActive(false);
     }
     
     private void SetupEventListeners()
@@ -134,14 +141,18 @@ public class ChoosingRoomUI : MonoBehaviour
     {
         selectedRoom = room;
         
-        // 바로 방 입장 처리
-        if (room.hasPassword)
+        // 방 상태 확인
+        if (room.currentPlayers >= room.maxPlayers)
         {
-            ShowPasswordPopup();
+            // 방이 가득 참
+            ShowRoomFullMessage();
+            return;
         }
-        else
+        else if (room.currentPlayers < 2)
         {
-            JoinRoom(room);
+            // 2명 미만이면 대기
+            ShowWaitingState();
+            return;
         }
     }
     
@@ -187,7 +198,7 @@ public class ChoosingRoomUI : MonoBehaviour
         HidePasswordPopup();
     }
     
-    private void HidePasswordPopup()
+    public void HidePasswordPopup()
     {
         if (passwordPopup != null)
             passwordPopup.SetActive(false);
@@ -215,4 +226,58 @@ public class ChoosingRoomUI : MonoBehaviour
     {
         SceneManager.LoadScene("WaitingRoomScene");
     }
-} 
+    
+    private void ShowWaitingState()
+    {
+        if (waitingOverlay != null)
+        {
+            waitingOverlay.SetActive(true);
+            if (waitingText != null)
+                waitingText.text = "...waiting for match...";
+            
+            // 실제로는 여기서 서버 폴링이나 이벤트 리스너 시작
+            StartWaitingForPlayers();
+        }
+    }
+    
+    public void HideWaitingState()
+    {
+        if (waitingOverlay != null)
+            waitingOverlay.SetActive(false);
+            
+        // 대기 취소 처리
+        StopWaitingForPlayers();
+    }
+    
+    private void StartWaitingForPlayers()
+    {
+        // 서버에서 방 상태 업데이트를 받을 때까지 대기
+        // 실제 구현에서는 서버 이벤트 리스너나 폴링 시작
+    }
+    
+    private void StopWaitingForPlayers()
+    {
+        // 대기 상태 취소 처리
+    }
+    
+    // 서버에서 방이 가득 찼다는 알림을 받았을 때 호출
+    public void OnRoomReadyToJoin(RoomData room)
+    {
+        HideWaitingState();
+        
+        if (room.hasPassword)
+        {
+            ShowPasswordPopup();
+        }
+        else
+        {
+            JoinRoom(room);
+        }
+    }
+
+    private void ShowRoomFullMessage()
+    {
+        Debug.Log("방이 가득 찼습니다!");
+        // TODO: 방 가득참 팝업 표시하거나 토스트 메시지
+    }
+}
