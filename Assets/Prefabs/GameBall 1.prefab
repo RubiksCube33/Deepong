@@ -154,6 +154,7 @@ MonoBehaviour:
   velocityMultiplier: 0.5
   wallBackTag: wallback
   wallFrontTag: wallfront
+  defaultWallSound: {fileID: 8300000, guid: 4534d9a92e51e7f44b9669d919e7c9bf, type: 3}
   defaultRacketSound: {fileID: 8300000, guid: b5146b0ce3418f04288fc1d4efa6fd3d, type: 3}
   swordSound: {fileID: 8300000, guid: 6d1a39d6e66ba3246b00a2783e174b50, type: 3}
   boxingGloveSound: {fileID: 8300000, guid: c4ace7add97c58148959e0c284a2a1f7, type: 3}
