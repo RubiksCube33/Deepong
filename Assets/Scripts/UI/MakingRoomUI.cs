@@ -18,6 +18,8 @@ public class MakingRoomUI : MonoBehaviourPunCallbacks
     public TextMeshProUGUI errorMessageText;
     public GameObject errorPanel;
     public GameObject loadingPanel; // 로딩 표시용
+    public GameObject waitingOverlay; // 대기 상태 UI
+    public Button cancelButton; // 대기 취소 버튼
     
     [Header("Photon 설정")]
     public string gameVersion = "1.0";
@@ -42,6 +44,11 @@ public class MakingRoomUI : MonoBehaviourPunCallbacks
             
         if (loadingPanel != null)
             loadingPanel.SetActive(false);
+            
+        if (waitingOverlay != null)
+            waitingOverlay.SetActive(false);
+        else
+            TryFindWaitingOverlay();
         
         // 비밀번호 입력 필드는 항상 활성화 상태로 유지
         if (passwordInput != null)
@@ -62,6 +69,9 @@ public class MakingRoomUI : MonoBehaviourPunCallbacks
             
         if (backButton != null)
             backButton.onClick.AddListener(OnBackClicked);
+            
+        if (cancelButton != null)
+            cancelButton.onClick.AddListener(OnCancelWaiting);
     }
     
     private void ConnectToPhoton()
@@ -214,7 +224,7 @@ public class MakingRoomUI : MonoBehaviourPunCallbacks
             {
                 // 다른 플레이어를 기다림
                 Debug.Log("다른 플레이어를 기다리는 중...");
-                // 대기 상태 UI 표시 (필요에 따라 구현)
+                ShowWaitingState();
             }
         }
     }
@@ -223,7 +233,79 @@ public class MakingRoomUI : MonoBehaviourPunCallbacks
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
         Debug.Log($"새 플레이어 입장: {newPlayer.NickName}");
+        HideWaitingState(); // 대기 상태 UI 숨기기
         CheckPlayersAndStartGame();
+    }
+    
+    private void ShowWaitingState()
+    {
+        Debug.Log("대기 상태 UI 표시 시도");
+        
+        if (waitingOverlay != null)
+        {
+            Debug.Log($"WaitingOverlay 찾음: {waitingOverlay.name}");
+            waitingOverlay.SetActive(true);
+            Debug.Log($"WaitingOverlay 활성화 완료 - Active: {waitingOverlay.activeInHierarchy}");
+        }
+        else
+        {
+            Debug.LogError("WaitingOverlay가 할당되지 않았습니다! 자동으로 찾아보겠습니다.");
+            TryFindWaitingOverlay();
+            
+            // 다시 시도
+            if (waitingOverlay != null)
+            {
+                Debug.Log($"자동으로 찾은 WaitingOverlay: {waitingOverlay.name}");
+                waitingOverlay.SetActive(true);
+                Debug.Log($"WaitingOverlay 활성화 완료 - Active: {waitingOverlay.activeInHierarchy}");
+            }
+            else
+            {
+                Debug.LogError("WaitingOverlay를 찾을 수 없습니다! 씬에 'WaitingOverlay' 이름의 GameObject가 있는지 확인해주세요.");
+            }
+        }
+    }
+    
+    private void HideWaitingState()
+    {
+        Debug.Log("대기 상태 UI 숨기기");
+        if (waitingOverlay != null)
+        {
+            waitingOverlay.SetActive(false);
+            Debug.Log("WaitingOverlay 비활성화 완료");
+        }
+    }
+    
+    public void OnCancelWaiting()
+    {
+        Debug.Log("대기 취소 - 방에서 나가기");
+        HideWaitingState();
+        
+        // Photon 방에서 나가기
+        if (PhotonNetwork.InRoom)
+        {
+            PhotonNetwork.LeaveRoom();
+        }
+    }
+    
+    // 방에서 나갔을 때 호출
+    public override void OnLeftRoom()
+    {
+        Debug.Log("방에서 나갔습니다. WaitingRoomScene으로 이동합니다.");
+        SceneManager.LoadScene("WaitingRoomScene");
+    }
+    
+    // 다른 플레이어가 방에서 나갔을 때 호출
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        Debug.Log($"플레이어 퇴장: {otherPlayer.NickName}");
+        
+        // 혼자 남았다면 다시 대기 상태로
+        if (PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom.PlayerCount < maxPlayersPerRoom)
+        {
+            Debug.Log("다시 대기 상태로 전환합니다.");
+            ShowWaitingState();
+        }
     }
     
     public override void OnCreateRoomFailed(short returnCode, string message)
@@ -303,5 +385,47 @@ public class MakingRoomUI : MonoBehaviourPunCallbacks
     {
         if (errorPanel != null)
             errorPanel.SetActive(false);
+    }
+    
+    private void TryFindWaitingOverlay()
+    {
+        Debug.Log("WaitingOverlay 자동 검색 시작");
+        
+        // 씬에서 "WaitingOverlay" 이름으로 찾기
+        GameObject foundOverlay = GameObject.Find("WaitingOverlay");
+        if (foundOverlay != null)
+        {
+            waitingOverlay = foundOverlay;
+            Debug.Log($"WaitingOverlay 자동 검색 성공: {foundOverlay.name}");
+            
+            // CancelButton도 같이 찾기
+            if (cancelButton == null)
+            {
+                Button foundButton = foundOverlay.GetComponentInChildren<Button>();
+                if (foundButton != null && foundButton.name.Contains("Cancel"))
+                {
+                    cancelButton = foundButton;
+                    cancelButton.onClick.AddListener(OnCancelWaiting);
+                    Debug.Log($"CancelButton도 자동으로 찾아서 연결했습니다: {foundButton.name}");
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("'WaitingOverlay' 이름의 GameObject를 찾을 수 없습니다.");
+            
+            // Canvas 하위에서 찾아보기
+            Canvas[] canvases = FindObjectsOfType<Canvas>();
+            foreach (Canvas canvas in canvases)
+            {
+                Transform waitingTransform = canvas.transform.Find("WaitingOverlay");
+                if (waitingTransform != null)
+                {
+                    waitingOverlay = waitingTransform.gameObject;
+                    Debug.Log($"Canvas 하위에서 WaitingOverlay 찾음: {waitingOverlay.name}");
+                    break;
+                }
+            }
+        }
     }
 } 
