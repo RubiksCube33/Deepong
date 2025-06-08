@@ -30,6 +30,10 @@ public class BallController : MonoBehaviourPunCallbacks
     // Trail Renderer 참조
     private TrailRenderer trailRenderer;
     
+    [Header("패들별 타격음 설정")]
+    [SerializeField] private AudioClip defaultRacketSound;   // 기본 라켓 타격음
+    [SerializeField] private AudioClip swordSound;           // 칼 타격음  
+    [SerializeField] private AudioClip boxingGloveSound;     // 복싱 글러브 타격음
     
     [Header("사운드 재생 방식 선택")]
     [SerializeField] private bool useSoundManager = true; // true: SoundManager 사용, false: 직접 AudioSource 사용
@@ -159,17 +163,28 @@ public class BallController : MonoBehaviourPunCallbacks
         // 패들 종류 검출
         else if (collision.gameObject.CompareTag("Paddle_Racket"))
         {
+            // 패들 타입에 따른 사운드 재생
+            PlayPaddleSound(collision.gameObject);
             HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
         }
 
         else if (collision.gameObject.CompareTag("Paddle_Sword"))
         {
+            // 패들 타입에 따른 사운드 재생
+            PlayPaddleSound(collision.gameObject);
             HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
         }
 
         else if (collision.gameObject.CompareTag("Paddle_Glove"))
         {
+            // 패들 타입에 따른 사운드 재생
+            PlayPaddleSound(collision.gameObject);
             HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
+        }
+        else
+        {
+            // 일반 벽이나 다른 오브젝트와의 충돌
+            PlayDirectAudioSource();
         }
         
         // 색상 변경
@@ -182,16 +197,16 @@ public class BallController : MonoBehaviourPunCallbacks
     {
         // VR 컨트롤러의 속도 정보 가져오기
         Rigidbody controllerRb = collision.gameObject.GetComponent<Rigidbody>();
-            if (controllerRb != null)
-            {
-                // 컨트롤러의 속도를 기본 힘에 더함
-                Vector3 controllerVelocity = controllerRb.velocity;
-                forceDirection = (hitDirection + controllerVelocity.normalized) / 2f;
-                forceMagnitude = baseForce + (controllerVelocity.magnitude * velocityMultiplier);
-                rb.velocity = forceDirection * forceMagnitude;
-                
-                Debug.Log($"컨트롤러 속도: {controllerVelocity.magnitude}, 적용된 힘: {forceMagnitude}");
-            } 
+        if (controllerRb != null)
+        {
+            // 컨트롤러의 속도를 기본 힘에 더함
+            Vector3 controllerVelocity = controllerRb.velocity;
+            forceDirection = (hitDirection + controllerVelocity.normalized) / 2f;
+            forceMagnitude = baseForce + (controllerVelocity.magnitude * velocityMultiplier);
+            rb.velocity = forceDirection * forceMagnitude;
+            
+            Debug.Log($"컨트롤러 속도: {controllerVelocity.magnitude}, 적용된 힘: {forceMagnitude}");
+        } 
     }
     
     /// <summary>
@@ -206,6 +221,52 @@ public class BallController : MonoBehaviourPunCallbacks
         else
         {
             Debug.LogWarning("AudioSource 또는 AudioClip이 설정되지 않았습니다.");
+        }
+    }
+    
+    /// <summary>
+    /// 패들 타입에 따라 적절한 타격음을 재생합니다.
+    /// </summary>
+    /// <param name="paddleObject">충돌한 패들 오브젝트</param>
+    private void PlayPaddleSound(GameObject paddleObject)
+    {
+        if (sfxSource == null) return;
+        
+        AudioClip soundToPlay = null;
+        
+        // 패들 오브젝트의 이름이나 태그를 통해 타입 감지
+        string paddleName = paddleObject.name;
+        
+        if (paddleName.Contains("Paddle_Sword") || paddleName.Contains("칼"))
+        {
+            soundToPlay = swordSound;
+        }
+        else if (paddleName.Contains("boxing") || paddleName.Contains("Paddle_Glove") || paddleName.Contains("글러브"))
+        {
+            soundToPlay = boxingGloveSound;
+        }
+        else if (paddleName.Contains("Paddle_Racket") || paddleName.Contains("라켓") || paddleName.Contains("default"))
+        {
+            soundToPlay = defaultRacketSound;
+        }
+        else
+        {
+            // 기본값으로 라켓 사운드 사용
+            soundToPlay = defaultRacketSound;
+        }
+        
+        // 사운드 재생
+        if (soundToPlay != null)
+        {
+            sfxSource.clip = soundToPlay;
+            sfxSource.Play();
+            Debug.Log($"패들 타격음 재생: {soundToPlay.name}");
+        }
+        else
+        {
+            // AudioClip이 설정되지 않은 경우 기본 사운드 재생
+            PlayDirectAudioSource();
+            Debug.LogWarning($"패들 타입 '{paddleName}'에 대한 AudioClip이 설정되지 않았습니다. 기본 사운드를 재생합니다.");
         }
     }
     
