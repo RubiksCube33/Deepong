@@ -1271,6 +1271,10 @@ PrefabInstance:
       value: Gloves_L
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
       propertyPath: m_TagString
       value: Paddle_Glove
       objectReference: {fileID: 0}
@@ -2007,6 +2011,10 @@ PrefabInstance:
     - target: {fileID: 3074471628601745017, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_RaycastMask.m_Bits
       value: 33
+      objectReference: {fileID: 0}
+    - target: {fileID: 4088110610454198647, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5227292470352409039, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_IsActive
