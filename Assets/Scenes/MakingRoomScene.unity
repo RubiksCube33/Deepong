@@ -860,6 +860,7 @@ MonoBehaviour:
   backButton: {fileID: 951676833}
   errorMessageText: {fileID: 583912651}
   errorPanel: {fileID: 957533943}
+  createPhotonRoom: 1
 --- !u!1 &529447969
 GameObject:
   m_ObjectHideFlags: 0

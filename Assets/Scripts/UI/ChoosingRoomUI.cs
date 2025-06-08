@@ -3,8 +3,10 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 using System.Collections.Generic;
+using Photon.Pun;
+using Photon.Realtime;
 
-public class ChoosingRoomUI : MonoBehaviour
+public class ChoosingRoomUI : MonoBehaviourPunCallbacks
 {
     [Header("방 목록 UI")]
     public GameObject roomListPanel;
@@ -28,6 +30,8 @@ public class ChoosingRoomUI : MonoBehaviour
     
     private List<GameObject> roomItemObjects = new List<GameObject>();
     private RoomData selectedRoom = null;
+    private bool isWaitingForPlayers = false;
+    private RoomData currentJoinedRoom = null; // 현재 입장한 방 추적
     
     private void Start()
     {
@@ -148,12 +152,16 @@ public class ChoosingRoomUI : MonoBehaviour
             ShowRoomFullMessage();
             return;
         }
-        else if (room.currentPlayers < 2)
+        
+        // 비밀번호가 있는 방이면 비밀번호 입력 팝업 표시
+        if (room.hasPassword)
         {
-            // 2명 미만이면 대기
-            ShowWaitingState();
+            ShowPasswordPopup();
             return;
         }
+        
+        // 비밀번호가 없는 방이면 바로 참가
+        JoinRoom(room);
     }
     
     private void ShowPasswordPopup()
@@ -215,15 +223,45 @@ public class ChoosingRoomUI : MonoBehaviour
     
     private void JoinRoom(RoomData room)
     {
-        Debug.Log($"방 참가: {room.roomName}");
-        
-        // 실제로는 여기서 네트워킹 처리 후 대기실로 이동
-        // 지금은 UI만 구현하므로 WaitingRoomScene으로 이동
-        SceneManager.LoadScene("WaitingRoomScene");
+        if (room.isPhotonRoom)
+        {
+            // Photon 온라인 방 참가
+            PhotonNetwork.JoinRoom(room.photonRoomName);
+            Debug.Log($"Photon 방 참가 시도: {room.roomName}");
+            currentJoinedRoom = room; // 현재 입장한 방 기록
+        }
+        else
+        {
+            // 로컬 방인 경우 (테스트용)
+            Debug.Log($"로컬 방 참가: {room.roomName} (현재 플레이어: {room.currentPlayers})");
+            
+            // 플레이어 수 증가
+            room.currentPlayers++;
+            currentJoinedRoom = room; // 현재 입장한 방 기록
+            
+            // 플레이어 수에 따른 처리
+            if (room.currentPlayers >= room.maxPlayers)
+            {
+                // 2명이 되면 바로 게임 시작
+                Debug.Log("2명이 모였습니다! 게임을 시작합니다.");
+                SceneManager.LoadScene("CourtScene");
+            }
+            else
+            {
+                // 아직 1명뿐이면 대기 패널 표시
+                Debug.Log("아직 1명뿐입니다. 다른 플레이어를 기다립니다.");
+                ShowWaitingState();
+            }
+            
+            // 방 목록 업데이트
+            RefreshRoomList();
+        }
     }
     
     public void OnBackClicked()
     {
+        // 현재 방에서 나가기 처리
+        LeaveCurrentRoom();
         SceneManager.LoadScene("WaitingRoomScene");
     }
     
@@ -233,9 +271,9 @@ public class ChoosingRoomUI : MonoBehaviour
         {
             waitingOverlay.SetActive(true);
             if (waitingText != null)
-                waitingText.text = "...waiting for match...";
+                waitingText.text = "...Waiting for other player...";
             
-            // 실제로는 여기서 서버 폴링이나 이벤트 리스너 시작
+            // 대기 상태 시작
             StartWaitingForPlayers();
         }
     }
@@ -247,37 +285,136 @@ public class ChoosingRoomUI : MonoBehaviour
             
         // 대기 취소 처리
         StopWaitingForPlayers();
+        
+        // 방에서 나가기 (대기 취소 시)
+        LeaveCurrentRoom();
     }
     
     private void StartWaitingForPlayers()
     {
-        // 서버에서 방 상태 업데이트를 받을 때까지 대기
-        // 실제 구현에서는 서버 이벤트 리스너나 폴링 시작
+        isWaitingForPlayers = true;
+        
+        // Photon 이벤트로 실시간 플레이어 수 확인
+        if (PhotonNetwork.InRoom)
+        {
+            UpdateWaitingText();
+            // 참고: OnJoinedRoom에서 이미 처리하므로 여기서는 중복 체크 안함
+        }
+        else
+        {
+            Debug.Log("플레이어를 기다리는 중...");
+        }
     }
     
     private void StopWaitingForPlayers()
     {
+        isWaitingForPlayers = false;
         // 대기 상태 취소 처리
     }
     
-    // 서버에서 방이 가득 찼다는 알림을 받았을 때 호출
-    public void OnRoomReadyToJoin(RoomData room)
+    private void LeaveCurrentRoom()
     {
-        HideWaitingState();
-        
-        if (room.hasPassword)
+        if (currentJoinedRoom != null)
         {
-            ShowPasswordPopup();
+            if (currentJoinedRoom.isPhotonRoom)
+            {
+                // Photon 방에서 나가기
+                if (PhotonNetwork.InRoom)
+                {
+                    Debug.Log($"Photon 방에서 나갑니다: {currentJoinedRoom.roomName}");
+                    PhotonNetwork.LeaveRoom();
+                }
+            }
+            else
+            {
+                // 로컬 방에서 나가기 (플레이어 수 감소)
+                if (currentJoinedRoom.currentPlayers > 0)
+                {
+                    currentJoinedRoom.currentPlayers--;
+                    Debug.Log($"로컬 방에서 나갑니다: {currentJoinedRoom.roomName} (남은 플레이어: {currentJoinedRoom.currentPlayers})");
+                    
+                    // 방 목록 업데이트
+                    RefreshRoomList();
+                }
+            }
+            
+            currentJoinedRoom = null;
         }
-        else
+    }
+    
+    private void UpdateWaitingText()
+    {
+        if (waitingText != null && PhotonNetwork.InRoom)
         {
-            JoinRoom(room);
+            int currentPlayers = PhotonNetwork.CurrentRoom.PlayerCount;
+            int maxPlayers = PhotonNetwork.CurrentRoom.MaxPlayers;
+            waitingText.text = $"...Waiting for other player...\n({currentPlayers}/{maxPlayers})";
         }
     }
 
     private void ShowRoomFullMessage()
     {
         Debug.Log("방이 가득 찼습니다!");
-        // TODO: 방 가득참 팝업 표시하거나 토스트 메시지
+        ShowError("방이 가득 차서 입장할 수 없습니다!");
+    }
+
+    // Photon 콜백 메서드들 추가
+    public override void OnJoinedRoom()
+    {
+        Debug.Log($"방 참가 성공: {PhotonNetwork.CurrentRoom.Name} (현재 플레이어: {PhotonNetwork.CurrentRoom.PlayerCount}/{PhotonNetwork.CurrentRoom.MaxPlayers})");
+        
+        // 플레이어 수에 따른 로직
+        if (PhotonNetwork.CurrentRoom.PlayerCount >= 2)
+        {
+            // 2명이 되면 바로 게임 시작
+            Debug.Log("2명이 모였습니다! 게임을 시작합니다.");
+            HideWaitingState(); // 대기 패널 숨기기
+            SceneManager.LoadScene("CourtScene");
+        }
+        else
+        {
+            // 1명이면 대기 패널 표시 (현재 화면에서 대기)
+            Debug.Log("아직 1명뿐입니다. 다른 플레이어를 기다립니다.");
+            ShowWaitingState(); // 대기 패널 표시
+        }
+    }
+
+    public override void OnJoinRoomFailed(short returnCode, string message)
+    {
+        HideWaitingState();
+        ShowError($"방 참가 실패: {message}");
+        Debug.LogError($"방 참가 실패: {message} (코드: {returnCode})");
+    }
+    
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        Debug.Log($"새 플레이어 입장: {newPlayer.NickName} (총 플레이어: {PhotonNetwork.CurrentRoom.PlayerCount})");
+        
+        // 2명이 되면 게임 시작 (대기실에서 실행되는 로직)
+        if (PhotonNetwork.CurrentRoom.PlayerCount >= 2)
+        {
+            Debug.Log("2명이 모였습니다! 게임을 시작합니다.");
+            SceneManager.LoadScene("CourtScene");
+        }
+    }
+    
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        Debug.Log($"플레이어 퇴장: {otherPlayer.NickName} (남은 플레이어: {PhotonNetwork.CurrentRoom.PlayerCount})");
+        
+        if (isWaitingForPlayers)
+        {
+            UpdateWaitingText();
+        }
+    }
+    
+    private void ShowError(string message)
+    {
+        if (passwordErrorText != null)
+        {
+            passwordErrorText.text = message;
+            passwordErrorText.gameObject.SetActive(true);
+        }
+        Debug.LogError(message);
     }
 }
