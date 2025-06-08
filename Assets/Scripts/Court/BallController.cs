@@ -31,6 +31,7 @@ public class BallController : MonoBehaviourPunCallbacks
     private TrailRenderer trailRenderer;
     
     [Header("패들별 타격음 설정")]
+    [SerializeField] private AudioClip defaultWallSound;
     [SerializeField] private AudioClip defaultRacketSound;   // 기본 라켓 타격음
     [SerializeField] private AudioClip swordSound;           // 칼 타격음  
     [SerializeField] private AudioClip boxingGloveSound;     // 복싱 글러브 타격음
@@ -217,6 +218,7 @@ public class BallController : MonoBehaviourPunCallbacks
         if (sfxSource != null)
         {
             sfxSource.Play();
+            //sfxSource.clip = defaultWallSound;
         }
         else
         {
@@ -233,40 +235,26 @@ public class BallController : MonoBehaviourPunCallbacks
         if (sfxSource == null) return;
         
         AudioClip soundToPlay = null;
-        
-        // 패들 오브젝트의 이름이나 태그를 통해 타입 감지
         string paddleName = paddleObject.name;
         
-        if (paddleName.Contains("Paddle_Sword") || paddleName.Contains("칼"))
+        if (paddleName.Contains("Sword") || paddleName.Contains("칼"))
         {
             soundToPlay = swordSound;
         }
-        else if (paddleName.Contains("boxing") || paddleName.Contains("Paddle_Glove") || paddleName.Contains("글러브"))
+        else if (paddleName.Contains("boxing") || paddleName.Contains("Gloves_R") || paddleName.Contains("글러브"))
         {
             soundToPlay = boxingGloveSound;
         }
-        else if (paddleName.Contains("Paddle_Racket") || paddleName.Contains("라켓") || paddleName.Contains("default"))
+        else if (paddleName.Contains("Racket") || paddleName.Contains("라켓") || paddleName.Contains("default"))
         {
-            soundToPlay = defaultRacketSound;
-        }
-        else
-        {
-            // 기본값으로 라켓 사운드 사용
             soundToPlay = defaultRacketSound;
         }
         
-        // 사운드 재생
+        // PlayOneShot 사용 - 기존 AudioSource.clip을 건드리지 않음
         if (soundToPlay != null)
         {
-            sfxSource.clip = soundToPlay;
-            sfxSource.Play();
-            Debug.Log($"패들 타격음 재생: {soundToPlay.name}");
-        }
-        else
-        {
-            // AudioClip이 설정되지 않은 경우 기본 사운드 재생
-            PlayDirectAudioSource();
-            Debug.LogWarning($"패들 타입 '{paddleName}'에 대한 AudioClip이 설정되지 않았습니다. 기본 사운드를 재생합니다.");
+            sfxSource.PlayOneShot(soundToPlay);
+            Debug.Log($"패들 타격음 재생 (OneShot): {soundToPlay.name}");
         }
     }
     
