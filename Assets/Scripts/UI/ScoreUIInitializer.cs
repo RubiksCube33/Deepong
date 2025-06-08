@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using Photon.Pun;
+using UnityEngine.SceneManagement;
 
 public class ScoreUIInitializer : MonoBehaviour
 {
@@ -46,6 +47,10 @@ public class ScoreUIInitializer : MonoBehaviour
         // 결과 패널 초기 비활성화
         if (resultPanel != null)
             resultPanel.SetActive(false);
+        
+        // 버튼 이벤트 리스너 추가
+        if (mainMenuButton != null)
+            mainMenuButton.onClick.AddListener(GoToMainMenu);
 
         // 자동 찾기 수행
         PerformAutoFind();
@@ -205,5 +210,18 @@ public class ScoreUIInitializer : MonoBehaviour
         }
 
         return isValid;
+    }
+
+    // 메인 메뉴로 이동하는 메서드
+    private void GoToMainMenu()
+    {
+        // 네트워크 연결 해제 (Photon 사용 시)
+        if (PhotonNetwork.IsConnected)
+        {
+            PhotonNetwork.LeaveRoom();
+        }
+        
+        // 메인 메뉴 씬으로 이동 (실제 씬 이름으로 변경 필요)
+        SceneManager.LoadScene("MainMenuScene");
     }
 }
