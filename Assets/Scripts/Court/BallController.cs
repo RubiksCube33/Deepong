@@ -60,7 +60,6 @@ public class BallController : MonoBehaviourPunCallbacks
         Vector3 forceDirection = hitDirection;
         float forceMagnitude = baseForce;
         
-        
         PlayDirectAudioSource();
 
         // 점수 벽과의 충돌 감지
@@ -127,11 +126,32 @@ public class BallController : MonoBehaviourPunCallbacks
             }
         }
         
-        // VR 컨트롤러 검출
-        else if (collision.gameObject.CompareTag("VRController"))
+        // 패들 종류 검출
+        else if (collision.gameObject.CompareTag("Paddle_Racket"))
         {
-            // VR 컨트롤러의 속도 정보 가져오기
-            Rigidbody controllerRb = collision.gameObject.GetComponent<Rigidbody>();
+            HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
+        }
+
+        else if (collision.gameObject.CompareTag("Paddle_Sword"))
+        {
+            HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
+        }
+
+        else if (collision.gameObject.CompareTag("Paddle_Glove"))
+        {
+            HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
+        }
+        
+        // 색상 변경
+        Color newColor = new Color(Random.value, Random.value, Random.value);
+        rend.material.color = newColor;
+    }
+    
+    //공 충돌 움직임 처리 함수
+    private void HitBallByPaddle(Collision collision, ContactPoint contact, Vector3 hitDirection, Vector3 forceDirection, float forceMagnitude)
+    {
+        // VR 컨트롤러의 속도 정보 가져오기
+        Rigidbody controllerRb = collision.gameObject.GetComponent<Rigidbody>();
             if (controllerRb != null)
             {
                 // 컨트롤러의 속도를 기본 힘에 더함
@@ -141,14 +161,8 @@ public class BallController : MonoBehaviourPunCallbacks
                 rb.velocity = forceDirection * forceMagnitude;
                 
                 Debug.Log($"컨트롤러 속도: {controllerVelocity.magnitude}, 적용된 힘: {forceMagnitude}");
-            }
-        }
-        
-        // 색상 변경
-        Color newColor = new Color(Random.value, Random.value, Random.value);
-        rend.material.color = newColor;
+            } 
     }
-    
     
     /// <summary>
     /// 직접 AudioSource를 사용하여 사운드를 재생합니다.
