@@ -50,6 +50,7 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         if (passwordErrorText != null)
             passwordErrorText.gameObject.SetActive(false);
             
+        // 초기에는 로딩 상태만 표시
         if (statusPanel != null)
             statusPanel.SetActive(true);
             
@@ -121,9 +122,6 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         Debug.Log($"로비에 참가했습니다. 현재 로비: {PhotonNetwork.CurrentLobby}");
         UpdateStatusText("방 목록을 불러오는 중...");
         
-        if (statusPanel != null)
-            statusPanel.SetActive(false);
-            
         // 방 목록을 즉시 갱신 요청
         Debug.Log("방 목록 갱신 요청 중...");
         
@@ -182,10 +180,13 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         if (cachedRoomList.Count == 0)
         {
             UpdateStatusText("사용 가능한 방이 없습니다.");
+            // 방이 없어도 로딩 상태는 종료
+            HideLoadingState();
             return;
         }
         
-        UpdateStatusText($"{cachedRoomList.Count}개의 방을 찾았습니다.");
+        // 방 목록 로딩 완료 - 로딩 상태 숨기기
+        HideLoadingState();
         
         foreach (var room in cachedRoomList.Values)
         {
@@ -397,6 +398,15 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         Debug.Log($"[ChoosingRoomUI] {message}");
     }
     
+    private void HideLoadingState()
+    {
+        if (statusPanel != null)
+        {
+            statusPanel.SetActive(false);
+            Debug.Log("로딩 상태 숨김 - 방 목록 표시 완료");
+        }
+    }
+    
     public void OnBackClicked()
     {
         // Photon 방에서 나가기 (만약 방에 있다면)
@@ -415,13 +425,19 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
     
     private void ShowWaitingState()
     {
-        if (statusPanel != null)
+        // 실제로 방에 입장한 상태에서만 대기 화면 표시
+        if (PhotonNetwork.InRoom && statusPanel != null)
         {
             statusPanel.SetActive(true);
             UpdateStatusText("다른 플레이어를 기다리는 중...");
             
             // 대기 상태 시작
             StartWaitingForPlayers();
+            Debug.Log("대기 상태 표시 - 방에 입장함");
+        }
+        else
+        {
+            Debug.Log("대기 상태 표시 안함 - 방에 입장하지 않음");
         }
     }
     
