@@ -25,13 +25,9 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
     public Button cancelPasswordButton;
     public TextMeshProUGUI passwordErrorText;
     
-    [Header("로딩/상태 UI")]
-    public GameObject loadingPanel;
+    [Header("상태/대기 UI")]
+    public GameObject statusPanel;
     public TextMeshProUGUI statusText;
-    
-    [Header("대기 상태 UI")]
-    public GameObject waitingOverlay;
-    public TextMeshProUGUI waitingText;
     
     private List<GameObject> roomItemObjects = new List<GameObject>();
     private RoomData selectedRoom = null;
@@ -54,8 +50,8 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         if (passwordErrorText != null)
             passwordErrorText.gameObject.SetActive(false);
             
-        if (loadingPanel != null)
-            loadingPanel.SetActive(true);
+        if (statusPanel != null)
+            statusPanel.SetActive(true);
             
         UpdateStatusText("서버에 연결 중...");
     }
@@ -125,8 +121,8 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         Debug.Log($"로비에 참가했습니다. 현재 로비: {PhotonNetwork.CurrentLobby}");
         UpdateStatusText("방 목록을 불러오는 중...");
         
-        if (loadingPanel != null)
-            loadingPanel.SetActive(false);
+        if (statusPanel != null)
+            statusPanel.SetActive(false);
             
         // 방 목록을 즉시 갱신 요청
         Debug.Log("방 목록 갱신 요청 중...");
@@ -364,8 +360,8 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
             return;
         }
         
-        if (loadingPanel != null)
-            loadingPanel.SetActive(true);
+        if (statusPanel != null)
+            statusPanel.SetActive(true);
             
         UpdateStatusText($"'{room.roomName}' 방에 참가 중...");
         
@@ -419,11 +415,10 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
     
     private void ShowWaitingState()
     {
-        if (waitingOverlay != null)
+        if (statusPanel != null)
         {
-            waitingOverlay.SetActive(true);
-            if (waitingText != null)
-                waitingText.text = "...Waiting for other player...";
+            statusPanel.SetActive(true);
+            UpdateStatusText("다른 플레이어를 기다리는 중...");
             
             // 대기 상태 시작
             StartWaitingForPlayers();
@@ -432,8 +427,8 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
     
     public void HideWaitingState()
     {
-        if (waitingOverlay != null)
-            waitingOverlay.SetActive(false);
+        if (statusPanel != null)
+            statusPanel.SetActive(false);
             
         // 대기 취소 처리
         StopWaitingForPlayers();
@@ -496,11 +491,11 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
     
     private void UpdateWaitingText()
     {
-        if (waitingText != null && PhotonNetwork.InRoom)
+        if (statusText != null && PhotonNetwork.InRoom)
         {
             int currentPlayers = PhotonNetwork.CurrentRoom.PlayerCount;
             int maxPlayers = PhotonNetwork.CurrentRoom.MaxPlayers;
-            waitingText.text = $"...Waiting for other player...\n({currentPlayers}/{maxPlayers})";
+            UpdateStatusText($"다른 플레이어를 기다리는 중...\n({currentPlayers}/{maxPlayers})");
         }
     }
 
