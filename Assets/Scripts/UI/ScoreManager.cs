@@ -90,10 +90,23 @@ public class ScoreView : MonoBehaviour
 
     public void UpdateScoreText(int myScore, int opponentScore, bool isPlayer1)
     {
-        // 3D 텍스트 업데이트 - 간단하게 하나의 텍스트만 사용
         if (scoreText3D != null)
         {
-            string scoreDisplay = $"{myScore} : {opponentScore}";
+            string myScoreText = myScore.ToString();
+            string opponentScoreText = opponentScore.ToString();
+            
+            // 10점에 도달한 점수를 빨간색으로 표시
+            if (myScore >= 10)
+            {
+                myScoreText = $"<color=red>{myScore}</color>";
+            }
+            
+            if (opponentScore >= 10)
+            {
+                opponentScoreText = $"<color=red>{opponentScore}</color>";
+            }
+            
+            string scoreDisplay = $"{myScoreText} : {opponentScoreText}";
             scoreText3D.text = scoreDisplay;
         }
     }
