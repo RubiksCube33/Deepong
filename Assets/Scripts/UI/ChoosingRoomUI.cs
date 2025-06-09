@@ -5,6 +5,7 @@ using TMPro;
 using System.Collections.Generic;
 using Photon.Pun;
 using Photon.Realtime;
+using System.Collections;
 
 public class ChoosingRoomUI : MonoBehaviourPunCallbacks
 {
@@ -531,7 +532,9 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
             // 2명이 되면 바로 게임 시작
             Debug.Log("2명이 모였습니다! 게임을 시작합니다.");
             HideWaitingState(); // 대기 패널 숨기기
-            SceneManager.LoadScene("CourtScene");
+            
+            // PlayerOriginManager 초기화를 위한 지연 추가
+            StartCoroutine(LoadCourtSceneWithDelay());
         }
         else
         {
@@ -556,7 +559,9 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         if (PhotonNetwork.CurrentRoom.PlayerCount >= 2)
         {
             Debug.Log("2명이 모였습니다! 게임을 시작합니다.");
-            SceneManager.LoadScene("CourtScene");
+            
+            // PlayerOriginManager 초기화를 위한 지연 추가
+            StartCoroutine(LoadCourtSceneWithDelay());
         }
     }
     
@@ -578,5 +583,18 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
             passwordErrorText.gameObject.SetActive(true);
         }
         Debug.LogError(message);
+    }
+
+    /// <summary>
+    /// CourtScene 로드 시 PlayerOriginManager 초기화를 위한 지연을 추가합니다.
+    /// </summary>
+    private System.Collections.IEnumerator LoadCourtSceneWithDelay()
+    {
+        // 네트워크 상태가 안정화될 시간 제공
+        UpdateStatusText("게임을 시작합니다...");
+        yield return new WaitForSeconds(1.0f);
+        
+        Debug.Log("CourtScene으로 이동합니다. PlayerOriginManager가 플레이어 할당을 처리할 것입니다.");
+        SceneManager.LoadScene("CourtScene");
     }
 }
