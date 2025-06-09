@@ -1,3 +1,4 @@
+using System.Collections;
 using Photon.Pun;
 using UnityEngine;
 
@@ -92,10 +93,11 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
         // 초기값 설정
         InitializeNetworkValues();
         
-        // 원격 플레이어용 컨트롤러 시각화 오브젝트 생성
+        // 원격 플레이어용 컨트롤러 시각화 오브젝트 생성 (지연 생성)
         if (!photonView.IsMine && createControllerVisualizers)
         {
-            CreateControllerVisualizers();
+            // 약간의 지연을 두고 생성 (다른 컴포넌트들이 초기화된 후)
+            StartCoroutine(CreateControllerVisualizersDelayed());
         }
     }
     
@@ -502,6 +504,15 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             DestroyImmediate(rightControllerVisualizer);
             rightControllerVisualizer = null;
         }
+    }
+    
+    /// <summary>
+    /// 지연된 컨트롤러 시각화 오브젝트 생성
+    /// </summary>
+    IEnumerator CreateControllerVisualizersDelayed()
+    {
+        yield return new WaitForSeconds(0.5f); // 0.5초 대기
+        CreateControllerVisualizers();
     }
     
     void OnDestroy()
