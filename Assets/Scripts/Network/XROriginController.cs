@@ -14,6 +14,7 @@ public class XROriginController : MonoBehaviourPunCallbacks
     [SerializeField] private MonoBehaviour xrOriginComponent; // XROrigin 컴포넌트
     [SerializeField] private CharacterController characterController;
     [SerializeField] private MonoBehaviour inputActionManager; // InputActionManager 또는 유사한 컴포넌트
+    [SerializeField] private AudioListener audioListener; // Audio Listener 컴포넌트
     
     [Header("입력 제어 설정")]
     [SerializeField] private bool isLocalPlayerControlled = false;
@@ -21,6 +22,7 @@ public class XROriginController : MonoBehaviourPunCallbacks
     // XR 컴포넌트들의 원래 상태 저장
     private bool originalCharacterControllerState;
     private bool originalInputActionManagerState;
+    private bool originalAudioListenerState;
     
     void Awake()
     {
@@ -56,12 +58,28 @@ public class XROriginController : MonoBehaviourPunCallbacks
             }
         }
         
+        // Audio Listener 찾기
+        if (audioListener == null)
+        {
+            // 자신에게서 찾기
+            audioListener = GetComponent<AudioListener>();
+            
+            // 자신에게 없으면 자식 오브젝트들에서 찾기 (Main Camera 등)
+            if (audioListener == null)
+            {
+                audioListener = GetComponentInChildren<AudioListener>();
+            }
+        }
+        
         // 원래 상태 저장
         if (characterController != null)
             originalCharacterControllerState = characterController.enabled;
             
         if (inputActionManager != null)
             originalInputActionManagerState = inputActionManager.enabled;
+            
+        if (audioListener != null)
+            originalAudioListenerState = audioListener.enabled;
     }
     
     void Start()
@@ -87,6 +105,13 @@ public class XROriginController : MonoBehaviourPunCallbacks
         if (inputActionManager != null)
         {
             inputActionManager.enabled = enableInput;
+        }
+        
+        // Audio Listener 제어 - 로컬 플레이어만 활성화
+        if (audioListener != null)
+        {
+            audioListener.enabled = enableInput;
+            Debug.Log($"XROriginController: {gameObject.name}의 Audio Listener = {enableInput}");
         }
         
         // XR 컨트롤러들 찾아서 설정
@@ -216,5 +241,8 @@ public class XROriginController : MonoBehaviourPunCallbacks
             
         if (inputActionManager != null)
             inputActionManager.enabled = originalInputActionManagerState;
+            
+        if (audioListener != null)
+            audioListener.enabled = originalAudioListenerState;
     }
 } 

@@ -21,6 +21,11 @@ public class PlayerOriginManager : MonoBehaviourPunCallbacks
     [Header("디버그 설정")]
     [SerializeField] private bool showDebugInfo = true;
     
+    [Header("위치 설정")]
+    [SerializeField] private bool useGameManagerSpawnPoints = true;
+    [SerializeField] private Transform customPlayer1SpawnPoint;
+    [SerializeField] private Transform customPlayer2SpawnPoint;
+    
     // 현재 로컬 플레이어가 제어하는 오리진
     private GameObject localPlayerOrigin;
     private GameObject remotePlayerOrigin;
@@ -133,7 +138,7 @@ public class PlayerOriginManager : MonoBehaviourPunCallbacks
     }
     
     /// <summary>
-    /// 로컬 플레이어가 제어할 오리진을 설정합니다.
+    /// 로컬 플레이어의 오리진을 설정합니다.
     /// </summary>
     void SetupLocalPlayerOrigin()
     {
@@ -141,6 +146,9 @@ public class PlayerOriginManager : MonoBehaviourPunCallbacks
         
         // XR Origin 컴포넌트들이 활성화되도록 설정
         localPlayerOrigin.SetActive(true);
+        
+        // 위치 설정 (GameManager 스폰 포인트 활용)
+        SetPlayerOriginPosition(localPlayerOrigin, PhotonNetwork.IsMasterClient);
         
         // XROriginController 컴포넌트 추가/설정
         XROriginController xrOriginController = localPlayerOrigin.GetComponent<XROriginController>();
@@ -180,8 +188,11 @@ public class PlayerOriginManager : MonoBehaviourPunCallbacks
         // 로컬 플레이어이므로 입력 활성화
         xrOriginController.SetInputControl(true);
         
+        // 로컬 플레이어는 Audio Listener 활성화
+        EnableAudioListener(localPlayerOrigin);
+        
         if (showDebugInfo)
-            Debug.Log($"PlayerOriginManager: 로컬 플레이어 오리진 설정 완료 ({localPlayerOrigin.name})");
+            Debug.Log($"PlayerOriginManager: 로컬 플레이어 오리진 설정 완료 ({localPlayerOrigin.name}) - 위치: {localPlayerOrigin.transform.position}");
     }
     
     /// <summary>
@@ -193,6 +204,9 @@ public class PlayerOriginManager : MonoBehaviourPunCallbacks
         
         // 원격 플레이어 오리진도 활성화 (네트워크 동기화로 표시용)
         remotePlayerOrigin.SetActive(true);
+        
+        // 위치 설정 (GameManager 스폰 포인트 활용)
+        SetPlayerOriginPosition(remotePlayerOrigin, !PhotonNetwork.IsMasterClient);
         
         // XROriginController 컴포넌트 추가/설정
         XROriginController xrOriginController = remotePlayerOrigin.GetComponent<XROriginController>();
@@ -218,10 +232,75 @@ public class PlayerOriginManager : MonoBehaviourPunCallbacks
         // 원격 플레이어용 설정 - 입력 비활성화
         xrOriginController.SetInputControl(false);
         
+        // 원격 플레이어는 Audio Listener 비활성화
+        DisableAudioListener(remotePlayerOrigin);
+        
         // ViewID는 할당하지 않음 (원격 플레이어가 할당할 것)
         
         if (showDebugInfo)
-            Debug.Log($"PlayerOriginManager: 원격 플레이어 오리진 설정 완료 ({remotePlayerOrigin.name})");
+            Debug.Log($"PlayerOriginManager: 원격 플레이어 오리진 설정 완료 ({remotePlayerOrigin.name}) - 위치: {remotePlayerOrigin.transform.position}");
+    }
+    
+    /// <summary>
+    /// 플레이어 오리진의 위치를 설정합니다.
+    /// </summary>
+    /// <param name="playerOrigin">설정할 플레이어 오리진</param>
+    /// <param name="isPlayer1">1P인지 여부 (true: 1P, false: 2P)</param>
+    void SetPlayerOriginPosition(GameObject playerOrigin, bool isPlayer1)
+    {
+        Transform spawnPoint = null;
+        
+        if (useGameManagerSpawnPoints)
+        {
+            // GameManager에서 스폰 포인트 가져오기
+            var gameManager = FindObjectOfType<GameManager>();
+            if (gameManager != null)
+            {
+                if (isPlayer1)
+                {
+                    spawnPoint = gameManager.player1SpawnPoint;
+                }
+                else
+                {
+                    spawnPoint = gameManager.player2SpawnPoint;
+                }
+                
+                if (showDebugInfo)
+                    Debug.Log($"PlayerOriginManager: GameManager에서 스폰 포인트를 찾았습니다 ({(isPlayer1 ? "Player1" : "Player2")})");
+            }
+            else
+            {
+                Debug.LogWarning("PlayerOriginManager: GameManager를 찾을 수 없습니다. 사용자 지정 스폰 포인트를 사용합니다.");
+            }
+        }
+        
+        // GameManager 스폰 포인트가 없으면 사용자 지정 스폰 포인트 사용
+        if (spawnPoint == null)
+        {
+            spawnPoint = isPlayer1 ? customPlayer1SpawnPoint : customPlayer2SpawnPoint;
+        }
+        
+        // 스폰 포인트가 설정되어 있으면 위치와 회전 적용
+        if (spawnPoint != null)
+        {
+            playerOrigin.transform.position = spawnPoint.position;
+            playerOrigin.transform.rotation = spawnPoint.rotation;
+            
+            if (showDebugInfo)
+                Debug.Log($"PlayerOriginManager: {playerOrigin.name}을 {spawnPoint.name} 위치로 이동했습니다. 위치: {spawnPoint.position}, 회전: {spawnPoint.rotation.eulerAngles}");
+        }
+        else
+        {
+            // 기본 위치 설정 (스폰 포인트가 없는 경우)
+            Vector3 defaultPosition = isPlayer1 ? new Vector3(-1.31f, 1f, -5.81f) : new Vector3(-0.98f, 1f, 10.207f);
+            Vector3 defaultRotation = isPlayer1 ? Vector3.zero : new Vector3(0f, 180f, 0f);
+            
+            playerOrigin.transform.position = defaultPosition;
+            playerOrigin.transform.rotation = Quaternion.Euler(defaultRotation);
+            
+            if (showDebugInfo)
+                Debug.Log($"PlayerOriginManager: {playerOrigin.name}을 기본 위치로 설정했습니다. 위치: {defaultPosition}, 회전: {defaultRotation}");
+        }
     }
     
     /// <summary>
@@ -292,6 +371,9 @@ public class PlayerOriginManager : MonoBehaviourPunCallbacks
                 break;
             }
         }
+        
+        // Audio Listener 비활성화 (중요: 원격 플레이어는 오디오를 듣지 않음)
+        DisableAudioListener(remotePlayerOrigin);
     }
     
     /// <summary>
@@ -315,6 +397,64 @@ public class PlayerOriginManager : MonoBehaviourPunCallbacks
                 comp.enabled = true;
                 break;
             }
+        }
+        
+        // Audio Listener는 여전히 비활성화 상태 유지 (로컬 플레이어만 오디오 담당)
+        DisableAudioListener(remotePlayerOrigin);
+    }
+    
+    /// <summary>
+    /// 지정된 오리진의 Audio Listener를 비활성화합니다.
+    /// </summary>
+    /// <param name="playerOrigin">Audio Listener를 비활성화할 플레이어 오리진</param>
+    void DisableAudioListener(GameObject playerOrigin)
+    {
+        if (playerOrigin == null) return;
+        
+        // 오리진 자체에서 Audio Listener 찾기
+        AudioListener audioListener = playerOrigin.GetComponent<AudioListener>();
+        if (audioListener != null)
+        {
+            audioListener.enabled = false;
+            if (showDebugInfo)
+                Debug.Log($"PlayerOriginManager: {playerOrigin.name}의 Audio Listener를 비활성화했습니다.");
+        }
+        
+        // 자식 오브젝트들에서 Audio Listener 찾기 (Main Camera 등)
+        AudioListener[] childListeners = playerOrigin.GetComponentsInChildren<AudioListener>();
+        foreach (AudioListener listener in childListeners)
+        {
+            listener.enabled = false;
+            if (showDebugInfo)
+                Debug.Log($"PlayerOriginManager: {playerOrigin.name}의 자식 {listener.gameObject.name}에서 Audio Listener를 비활성화했습니다.");
+        }
+    }
+    
+    /// <summary>
+    /// 지정된 오리진의 Audio Listener를 활성화합니다.
+    /// </summary>
+    /// <param name="playerOrigin">Audio Listener를 활성화할 플레이어 오리진</param>
+    void EnableAudioListener(GameObject playerOrigin)
+    {
+        if (playerOrigin == null) return;
+        
+        // 오리진 자체에서 Audio Listener 찾기
+        AudioListener audioListener = playerOrigin.GetComponent<AudioListener>();
+        if (audioListener != null)
+        {
+            audioListener.enabled = true;
+            if (showDebugInfo)
+                Debug.Log($"PlayerOriginManager: {playerOrigin.name}의 Audio Listener를 활성화했습니다.");
+        }
+        
+        // 자식 오브젝트들에서 Audio Listener 찾기 (Main Camera 등)
+        AudioListener[] childListeners = playerOrigin.GetComponentsInChildren<AudioListener>();
+        foreach (AudioListener listener in childListeners)
+        {
+            listener.enabled = true;
+            if (showDebugInfo)
+                Debug.Log($"PlayerOriginManager: {playerOrigin.name}의 자식 {listener.gameObject.name}에서 Audio Listener를 활성화했습니다.");
+            break; // 하나만 활성화하면 충분
         }
     }
     
@@ -350,5 +490,63 @@ public class PlayerOriginManager : MonoBehaviourPunCallbacks
     {
         FindPlayerOrigins();
         Debug.Log("PlayerOriginManager: 수동으로 플레이어 오리진을 검색했습니다.");
+    }
+    
+    /// <summary>
+    /// 플레이어 오리진 위치를 수동으로 설정하는 메서드
+    /// </summary>
+    [ContextMenu("Set Player Origins Position")]
+    void SetPlayerOriginsPositionManually()
+    {
+        if (localPlayerOrigin != null)
+        {
+            SetPlayerOriginPosition(localPlayerOrigin, PhotonNetwork.IsMasterClient);
+        }
+        
+        if (remotePlayerOrigin != null)
+        {
+            SetPlayerOriginPosition(remotePlayerOrigin, !PhotonNetwork.IsMasterClient);
+        }
+        
+        Debug.Log("PlayerOriginManager: 수동으로 플레이어 오리진 위치를 설정했습니다.");
+    }
+    
+    /// <summary>
+    /// 현재 플레이어 오리진 상태를 로그로 출력
+    /// </summary>
+    [ContextMenu("Debug Player Origins")]
+    void DebugPlayerOrigins()
+    {
+        Debug.Log("=== PlayerOriginManager 디버그 정보 ===");
+        Debug.Log($"네트워크 연결: {PhotonNetwork.IsConnected}");
+        Debug.Log($"방장 여부: {(PhotonNetwork.IsConnected ? PhotonNetwork.IsMasterClient.ToString() : "연결 안됨")}");
+        Debug.Log($"오리진 할당 상태: {isOriginAssigned}");
+        Debug.Log($"로컬 오리진: {(localPlayerOrigin != null ? $"{localPlayerOrigin.name} - 위치: {localPlayerOrigin.transform.position}" : "null")}");
+        Debug.Log($"원격 오리진: {(remotePlayerOrigin != null ? $"{remotePlayerOrigin.name} - 위치: {remotePlayerOrigin.transform.position}" : "null")}");
+        
+        // Audio Listener 상태 확인
+        if (localPlayerOrigin != null)
+        {
+            AudioListener[] localListeners = localPlayerOrigin.GetComponentsInChildren<AudioListener>();
+            Debug.Log($"로컬 오리진 Audio Listeners: {localListeners.Length}개 - 활성화된 것: {System.Array.FindAll(localListeners, l => l.enabled).Length}개");
+        }
+        
+        if (remotePlayerOrigin != null)
+        {
+            AudioListener[] remoteListeners = remotePlayerOrigin.GetComponentsInChildren<AudioListener>();
+            Debug.Log($"원격 오리진 Audio Listeners: {remoteListeners.Length}개 - 활성화된 것: {System.Array.FindAll(remoteListeners, l => l.enabled).Length}개");
+        }
+        
+        // GameManager 스폰 포인트 확인
+        var gameManager = FindObjectOfType<GameManager>();
+        if (gameManager != null)
+        {
+            Debug.Log($"GameManager 발견: Player1 스폰 포인트: {(gameManager.player1SpawnPoint != null ? gameManager.player1SpawnPoint.position.ToString() : "null")}");
+            Debug.Log($"Player2 스폰 포인트: {(gameManager.player2SpawnPoint != null ? gameManager.player2SpawnPoint.position.ToString() : "null")}");
+        }
+        else
+        {
+            Debug.Log("GameManager를 찾을 수 없습니다.");
+        }
     }
 } 
