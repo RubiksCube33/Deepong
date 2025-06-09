@@ -22,10 +22,23 @@ public class GameManager : MonoBehaviourPunCallbacks
         // 네트워크 환경인지 확인
         if (PhotonNetwork.IsConnected)
         {
-            Debug.Log("네트워크 멀티플레이어 모드 - NetworkPlayerManager가 플레이어 스폰을 담당합니다.");
-            // 네트워크 환경에서는 NetworkPlayerManager가 플레이어 관리를 담당
-            // GameManager는 게임 로직에만 집중
-            return;
+            Debug.Log("네트워크 멀티플레이어 모드");
+            
+            // PlayerOriginManager가 있는지 확인
+            PlayerOriginManager playerOriginManager = FindObjectOfType<PlayerOriginManager>();
+            if (playerOriginManager != null)
+            {
+                Debug.Log("PlayerOriginManager를 발견했습니다. VR 멀티플레이어 모드로 동작합니다.");
+                // PlayerOriginManager가 플레이어 관리를 담당하므로 GameManager는 대기
+                return;
+            }
+            else
+            {
+                Debug.Log("PlayerOriginManager를 찾을 수 없습니다. 기존 네트워크 방식을 사용합니다.");
+                // 기존 네트워크 로직 실행
+                SpawnNetworkPlayers();
+                return;
+            }
         }
         
         // 싱글플레이어 또는 로컬 멀티플레이어 모드
