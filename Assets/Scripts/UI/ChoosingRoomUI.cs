@@ -25,13 +25,15 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
     public Button cancelPasswordButton;
     public TextMeshProUGUI passwordErrorText;
     
-    [Header("로딩/상태 UI")]
-    public GameObject loadingPanel;
+    [Header("상태/대기 UI")]
+    public GameObject statusPanel;
     public TextMeshProUGUI statusText;
     
     private List<GameObject> roomItemObjects = new List<GameObject>();
     private RoomData selectedRoom = null;
     private Dictionary<string, RoomInfo> cachedRoomList = new Dictionary<string, RoomInfo>();
+    private bool isWaitingForPlayers = false;
+    private RoomData currentJoinedRoom = null;
     
     private void Start()
     {
@@ -48,8 +50,9 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         if (passwordErrorText != null)
             passwordErrorText.gameObject.SetActive(false);
             
-        if (loadingPanel != null)
-            loadingPanel.SetActive(true);
+        // 초기에는 로딩 상태만 표시
+        if (statusPanel != null)
+            statusPanel.SetActive(true);
             
         UpdateStatusText("서버에 연결 중...");
     }
@@ -119,9 +122,6 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         Debug.Log($"로비에 참가했습니다. 현재 로비: {PhotonNetwork.CurrentLobby}");
         UpdateStatusText("방 목록을 불러오는 중...");
         
-        if (loadingPanel != null)
-            loadingPanel.SetActive(false);
-            
         // 방 목록을 즉시 갱신 요청
         Debug.Log("방 목록 갱신 요청 중...");
         
@@ -180,10 +180,13 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         if (cachedRoomList.Count == 0)
         {
             UpdateStatusText("사용 가능한 방이 없습니다.");
+            // 방이 없어도 로딩 상태는 종료
+            HideLoadingState();
             return;
         }
         
-        UpdateStatusText($"{cachedRoomList.Count}개의 방을 찾았습니다.");
+        // 방 목록 로딩 완료 - 로딩 상태 숨기기
+        HideLoadingState();
         
         foreach (var room in cachedRoomList.Values)
         {
@@ -358,8 +361,8 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
             return;
         }
         
-        if (loadingPanel != null)
-            loadingPanel.SetActive(true);
+        if (statusPanel != null)
+            statusPanel.SetActive(true);
             
         UpdateStatusText($"'{room.roomName}' 방에 참가 중...");
         
@@ -367,45 +370,18 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         PhotonNetwork.JoinRoom(room.roomName);
     }
     
-    public override void OnJoinedRoom()
+    private RoomData GetCurrentRoom()
     {
-        Debug.Log($"방 참가 성공: {PhotonNetwork.CurrentRoom.Name}");
-        UpdateStatusText("게임을 시작합니다...");
-        
-        // 사람 수 체크 및 게임 시작
-        RoomData currentRoom = GetCurrentRoom(); // 현재 방 정보를 얻는 메소드 (예시로 추가)
-        if (currentRoom != null)
+        if (PhotonNetwork.InRoom)
         {
-            if (currentRoom.currentPlayers >= currentRoom.maxPlayers)
-            {
-                // 플레이어 수가 최대인 경우 게임 시작
-                SceneManager.LoadScene("CourtScene");
-            }
-            else
-            {
-                // 플레이어가 부족하면 대기 상태
-                ShowWaitingState();
-            }
+            // Photon 방 정보를 RoomData로 변환
+            RoomInfo roomInfo = PhotonNetwork.CurrentRoom;
+            return ConvertRoomInfoToRoomData(roomInfo);
         }
-        else
-        {
-            // 방 정보가 없을 경우 처리
-            Debug.LogError("현재 방 정보가 없습니다.");
-        }
+        return currentJoinedRoom;
     }
     
-    public override void OnJoinRoomFailed(short returnCode, string message)
-    {
-        Debug.LogError($"방 참가 실패: {message} (코드: {returnCode})");
-        
-        if (loadingPanel != null)
-            loadingPanel.SetActive(false);
-            
-        UpdateStatusText($"방 참가 실패: {message}");
-        
-        // 방 목록 새로고침
-        RefreshRoomList();
-    }
+
     
     public override void OnDisconnected(DisconnectCause cause)
     {
@@ -420,6 +396,15 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
             statusText.text = message;
         }
         Debug.Log($"[ChoosingRoomUI] {message}");
+    }
+    
+    private void HideLoadingState()
+    {
+        if (statusPanel != null)
+        {
+            statusPanel.SetActive(false);
+            Debug.Log("로딩 상태 숨김 - 방 목록 표시 완료");
+        }
     }
     
     public void OnBackClicked()
@@ -440,21 +425,26 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
     
     private void ShowWaitingState()
     {
-        if (waitingOverlay != null)
+        // 실제로 방에 입장한 상태에서만 대기 화면 표시
+        if (PhotonNetwork.InRoom && statusPanel != null)
         {
-            waitingOverlay.SetActive(true);
-            if (waitingText != null)
-                waitingText.text = "...Waiting for other player...";
+            statusPanel.SetActive(true);
+            UpdateStatusText("다른 플레이어를 기다리는 중...");
             
             // 대기 상태 시작
             StartWaitingForPlayers();
+            Debug.Log("대기 상태 표시 - 방에 입장함");
+        }
+        else
+        {
+            Debug.Log("대기 상태 표시 안함 - 방에 입장하지 않음");
         }
     }
     
     public void HideWaitingState()
     {
-        if (waitingOverlay != null)
-            waitingOverlay.SetActive(false);
+        if (statusPanel != null)
+            statusPanel.SetActive(false);
             
         // 대기 취소 처리
         StopWaitingForPlayers();
@@ -517,11 +507,11 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
     
     private void UpdateWaitingText()
     {
-        if (waitingText != null && PhotonNetwork.InRoom)
+        if (statusText != null && PhotonNetwork.InRoom)
         {
             int currentPlayers = PhotonNetwork.CurrentRoom.PlayerCount;
             int maxPlayers = PhotonNetwork.CurrentRoom.MaxPlayers;
-            waitingText.text = $"...Waiting for other player...\n({currentPlayers}/{maxPlayers})";
+            UpdateStatusText($"다른 플레이어를 기다리는 중...\n({currentPlayers}/{maxPlayers})");
         }
     }
 
@@ -531,7 +521,6 @@ public class ChoosingRoomUI : MonoBehaviourPunCallbacks
         ShowError("방이 가득 차서 입장할 수 없습니다!");
     }
 
-    // Photon 콜백 메서드들 추가
     public override void OnJoinedRoom()
     {
         Debug.Log($"방 참가 성공: {PhotonNetwork.CurrentRoom.Name} (현재 플레이어: {PhotonNetwork.CurrentRoom.PlayerCount}/{PhotonNetwork.CurrentRoom.MaxPlayers})");
