@@ -1668,20 +1668,40 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1653235544838964820, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
+      propertyPath: m_SortingOrder
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1653235544838964820, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: -876546973899608171, guid: f76e25eb7d1f15c45861d051396086e7, type: 3}
+    - target: {fileID: 1653235544838964820, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
       propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[0].time
-      value: 0.01052475
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1653235544838964820, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
       propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[1].time
-      value: 0.9463268
+      value: 0.9582897
       objectReference: {fileID: 0}
     - target: {fileID: 1653235544838964820, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
       propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[0].value
-      value: 0.29760742
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1653235544838964820, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
       propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[1].value
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1653235544838964820, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
+      propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[0].inSlope
+      value: 0.5385742
+      objectReference: {fileID: 0}
+    - target: {fileID: 1653235544838964820, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
+      propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[0].outSlope
+      value: 0.5385742
+      objectReference: {fileID: 0}
+    - target: {fileID: 1653235544838964820, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
+      propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[0].outWeight
+      value: 0.18016025
       objectReference: {fileID: 0}
     - target: {fileID: 4096290590159216971, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
       propertyPath: m_Name
