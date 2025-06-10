@@ -267,6 +267,8 @@ GameObject:
   - component: {fileID: 54432434}
   - component: {fileID: 54432433}
   - component: {fileID: 54432432}
+  - component: {fileID: 54432435}
+  - component: {fileID: 54432436}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -291,7 +293,6 @@ MonoBehaviour:
   playerPrefab: {fileID: 919132149155446097, guid: 7a6d8a2a4911faa4a871759e7701c54d, type: 3}
   player1Object: {fileID: 0}
   player2Object: {fileID: 0}
-  networkPlayerSpawner: {fileID: 0}
 --- !u!114 &54432433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -324,6 +325,36 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &54432435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 54432431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf65d7dee1397bd4f877cfaa21f7d970, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerSpawnManager: {fileID: 0}
+  gameStartDelay: 2
+  autoStartGame: 1
+  roomUI: {fileID: 0}
+--- !u!114 &54432436
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 54432431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5544228c390e7ff439170dd5dc8b5594, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  p1SpawnPoint: {fileID: 2018754991}
+  p2SpawnPoint: {fileID: 781620754}
 --- !u!1 &140310910
 GameObject:
   m_ObjectHideFlags: 0
