@@ -2493,7 +2493,6 @@ MonoBehaviour:
   ObservedComponents:
   - {fileID: 3029060727881293274}
   - {fileID: 370576797782343338}
-  - {fileID: 6886742489961923346}
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
@@ -2509,18 +2508,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17d6a829af5b17f40ab75386f286d2a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerRoot: {fileID: 7170186760365188371}
-  headTransform: {fileID: 8383160764107258959}
-  leftHandTransform: {fileID: 8383160765636418605}
-  rightHandTransform: {fileID: 8383160763933646028}
+  playerRoot: {fileID: 0}
+  headTransform: {fileID: 0}
+  leftHandTransform: {fileID: 0}
+  rightHandTransform: {fileID: 0}
   useVirtualHands: 0
   positionLerpRate: 10
   rotationLerpRate: 10
   teleportThreshold: 5
   playerAnimator: {fileID: 0}
   syncAnimationParams: 1
-  leftControllerVisualizer: {fileID: 8383160765636418610}
-  rightControllerVisualizer: {fileID: 8383160763933646029}
+  leftControllerVisualizer: {fileID: 0}
+  rightControllerVisualizer: {fileID: 0}
   createControllerVisualizers: 1
 --- !u!95 &2172136958268180755
 Animator:
@@ -2532,7 +2531,7 @@ Animator:
   m_GameObject: {fileID: 7170186760365188368}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 40db3173a05ae3242b1c182a09b0a183, type: 2}
+  m_Controller: {fileID: 0}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -2576,11 +2575,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b47af3ee90085e47a1fc963d40aba0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  leftController: {fileID: 8383160765636418605}
-  rightController: {fileID: 8383160763933646028}
+  leftController: {fileID: 0}
+  rightController: {fileID: 0}
   headset: {fileID: 0}
-  leftControllerVisualizer: {fileID: 5855004828551673849}
-  rightControllerVisualizer: {fileID: 3075572919240565732}
+  leftControllerVisualizer: {fileID: 0}
+  rightControllerVisualizer: {fileID: 0}
   createVisualizersForRemotePlayers: 1
   leftControllerMaterial: {fileID: 0}
   rightControllerMaterial: {fileID: 0}
