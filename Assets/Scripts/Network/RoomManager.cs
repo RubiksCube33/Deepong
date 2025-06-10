@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
+using UnityEngine.SceneManagement;
 
 public class RoomManager : MonoBehaviourPunCallbacks
 {
@@ -16,8 +17,13 @@ public class RoomManager : MonoBehaviourPunCallbacks
     [Header("UI 요소")]
     public GameObject roomUI; // 방 UI
     
+    [Header("네트워크 스폰 설정")]
+    public bool useNetworkPlayerSpawner = true; // NetworkPlayerSpawner 사용 여부
+    public string[] courtSceneNames = { "CourtScene", "Court_Testing" }; // 코트 씬 이름들
+    
     private GameObject localPlayerInstance; // 로컬 플레이어 인스턴스
     private bool isGameStarted = false; // 게임 시작 여부
+    private NetworkPlayerSpawner networkPlayerSpawner; // 네트워크 플레이어 스포너
     
     void Awake()
     {
@@ -44,8 +50,36 @@ public class RoomManager : MonoBehaviourPunCallbacks
         // 플레이어가 모두 입장했는지 확인
         CheckAllPlayersJoined();
         
-        // 플레이어 인스턴스 생성
-        InstantiateLocalPlayer();
+        // 현재 씬이 코트 씬인지 확인
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        bool isCourtScene = IsCourtScene(currentSceneName);
+        
+        if (isCourtScene && useNetworkPlayerSpawner)
+        {
+            Debug.Log($"[RoomManager] 코트 씬에서 NetworkPlayerSpawner를 사용합니다: {currentSceneName}");
+            // NetworkPlayerSpawner가 자동으로 플레이어를 스폰할 것임
+        }
+        else
+        {
+            Debug.Log($"[RoomManager] 일반 씬에서 기존 스폰 방식을 사용합니다: {currentSceneName}");
+            // 플레이어 인스턴스 생성
+            InstantiateLocalPlayer();
+        }
+    }
+    
+    /// <summary>
+    /// 현재 씬이 코트 씬인지 확인
+    /// </summary>
+    bool IsCourtScene(string sceneName)
+    {
+        foreach (string courtScene in courtSceneNames)
+        {
+            if (sceneName.Equals(courtScene, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+        return false;
     }
     
     // 다른 플레이어가 방에 입장했을 때 호출
