@@ -16,8 +16,40 @@ public class CourtManager : MonoBehaviourPunCallbacks
     [SerializeField] private GameObject player1;
     [SerializeField] private GameObject player2;
     
+    [Header("네트워크 플레이어 스폰")]
+    [SerializeField] private NetworkPlayerSpawner networkPlayerSpawner; // 네트워크 플레이어 스포너
+    [SerializeField] private bool enableNetworkSpawn = true; // 네트워크 스폰 활성화
+    
     void Start()
     {
+        // 네트워크 환경 확인
+        if (PhotonNetwork.IsConnected && enableNetworkSpawn)
+        {
+            Debug.Log("[CourtManager] 네트워크 모드 - NetworkPlayerSpawner를 사용합니다.");
+            
+            // NetworkPlayerSpawner 확인 및 생성
+            if (networkPlayerSpawner == null)
+            {
+                networkPlayerSpawner = FindObjectOfType<NetworkPlayerSpawner>();
+                
+                if (networkPlayerSpawner == null)
+                {
+                    // NetworkPlayerSpawner가 없으면 새로 생성
+                    GameObject spawnerObject = new GameObject("NetworkPlayerSpawner");
+                    networkPlayerSpawner = spawnerObject.AddComponent<NetworkPlayerSpawner>();
+                    Debug.Log("[CourtManager] NetworkPlayerSpawner가 자동으로 생성되었습니다.");
+                }
+            }
+            
+            // 네트워크 스폰 위치를 NetworkPlayerSpawner에 설정
+            SetupNetworkSpawnPoints();
+            
+            return;
+        }
+        
+        // 로컬 모드 - 기존 로직 사용
+        Debug.Log("[CourtManager] 로컬 모드 - 기존 플레이어 오브젝트를 사용합니다.");
+        
         // 포지션이 지정되지 않은 경우 기본 위치 생성
         if (player1Position == null || player2Position == null)
         {
@@ -34,8 +66,56 @@ public class CourtManager : MonoBehaviourPunCallbacks
         PositionPlayers();
     }
     
+    /// <summary>
+    /// 네트워크 스폰 포인트를 NetworkPlayerSpawner에 설정
+    /// </summary>
+    void SetupNetworkSpawnPoints()
+    {
+        if (networkPlayerSpawner == null) return;
+        
+        // 포지션이 지정되지 않은 경우 기본 위치 생성
+        if (player1Position == null || player2Position == null)
+        {
+            CreatePositionMarkers();
+        }
+        
+        // NetworkPlayerSpawner의 공개 메서드를 사용하여 스폰 위치 설정
+        if (player1Position != null && player2Position != null)
+        {
+            // 위치 설정
+            networkPlayerSpawner.SetSpawnPositions(player1Position.position, player2Position.position);
+            
+            // 회전 설정
+            networkPlayerSpawner.SetSpawnRotations(
+                player1Position.rotation.eulerAngles, 
+                player2Position.rotation.eulerAngles
+            );
+            
+            Debug.Log($"[CourtManager] 네트워크 스폰 위치 설정 완료");
+            Debug.Log($"[CourtManager] Player1: {player1Position.position}, Player2: {player2Position.position}");
+        }
+    }
+    
     void CreatePositionMarkers()
     {
+        // 먼저 씬에서 p1, p2 오브젝트를 찾아보기
+        GameObject p1Object = GameObject.Find("p1");
+        GameObject p2Object = GameObject.Find("p2");
+        
+        if (p1Object != null && p2Object != null)
+        {
+            // 씬에 p1, p2가 있으면 그 Transform을 사용
+            player1Position = p1Object.transform;
+            player2Position = p2Object.transform;
+            
+            Debug.Log($"[CourtManager] 씬의 p1, p2 오브젝트를 위치 마커로 사용");
+            Debug.Log($"[CourtManager] p1 위치: {player1Position.position}, p2 위치: {player2Position.position}");
+            return;
+        }
+        
+        // p1, p2가 없으면 기본 위치 마커 생성
+        Debug.Log("[CourtManager] 씬에 p1, p2 오브젝트가 없어 기본 위치 마커를 생성합니다.");
+        
         // 코트 위치 마커 생성
         GameObject markersHolder = new GameObject("PositionMarkers");
         
