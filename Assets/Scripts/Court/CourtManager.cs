@@ -18,16 +18,6 @@ public class CourtManager : MonoBehaviourPunCallbacks
     
     void Start()
     {
-        // 네트워크 환경에서는 NetworkPlayerManager가 플레이어 스폰을 담당
-        if (PhotonNetwork.IsConnected)
-        {
-            Debug.Log("네트워크 멀티플레이어 모드 - CourtManager는 대기합니다.");
-            return;
-        }
-        
-        // 로컬 모드에서만 실행
-        Debug.Log("로컬 게임 모드 - CourtManager가 플레이어 위치를 설정합니다.");
-        
         // 포지션이 지정되지 않은 경우 기본 위치 생성
         if (player1Position == null || player2Position == null)
         {

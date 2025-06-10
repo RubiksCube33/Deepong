@@ -44,18 +44,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
         // 플레이어가 모두 입장했는지 확인
         CheckAllPlayersJoined();
         
-        // PlayerOriginManager가 있는지 확인하고, 없으면 기존 방식 사용
-        PlayerOriginManager originManager = FindObjectOfType<PlayerOriginManager>();
-        if (originManager == null)
-        {
-            Debug.Log("PlayerOriginManager를 찾을 수 없어 기존 스폰 방식을 사용합니다.");
-            // 플레이어 인스턴스 생성 (기존 방식)
-            InstantiateLocalPlayer();
-        }
-        else
-        {
-            Debug.Log("PlayerOriginManager가 플레이어 오리진 할당을 처리합니다.");
-        }
+        // 플레이어 인스턴스 생성
+        InstantiateLocalPlayer();
     }
     
     // 다른 플레이어가 방에 입장했을 때 호출
