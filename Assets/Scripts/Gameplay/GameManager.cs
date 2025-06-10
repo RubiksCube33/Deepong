@@ -14,6 +14,9 @@ public class GameManager : MonoBehaviourPunCallbacks
     [Header("현재 씬의 플레이어 오브젝트")]
     public GameObject player1Object; // 플레이어 1 오브젝트 (실린더)
     public GameObject player2Object; // 플레이어 2 오브젝트 (실린더)
+    
+    [Header("네트워크 플레이어 스폰")]
+    public NetworkPlayerSpawner networkPlayerSpawner; // 네트워크 플레이어 스포너
 
     void Start()
     {
@@ -22,9 +25,34 @@ public class GameManager : MonoBehaviourPunCallbacks
         // 네트워크 환경인지 확인
         if (PhotonNetwork.IsConnected)
         {
-            Debug.Log("네트워크 멀티플레이어 모드 - NetworkPlayerManager가 플레이어 스폰을 담당합니다.");
-            // 네트워크 환경에서는 NetworkPlayerManager가 플레이어 관리를 담당
-            // GameManager는 게임 로직에만 집중
+            Debug.Log("네트워크 멀티플레이어 모드 - NetworkPlayerSpawner가 플레이어 스폰을 담당합니다.");
+            
+            // NetworkPlayerSpawner 확인 및 생성
+            if (networkPlayerSpawner == null)
+            {
+                networkPlayerSpawner = FindObjectOfType<NetworkPlayerSpawner>();
+                
+                if (networkPlayerSpawner == null)
+                {
+                    // NetworkPlayerSpawner가 없으면 새로 생성
+                    GameObject spawnerObject = new GameObject("NetworkPlayerSpawner");
+                    networkPlayerSpawner = spawnerObject.AddComponent<NetworkPlayerSpawner>();
+                    Debug.Log("NetworkPlayerSpawner가 자동으로 생성되었습니다.");
+                }
+            }
+            
+            // 네트워크 환경에서는 기존 플레이어 오브젝트들을 비활성화
+            if (player1Object != null)
+            {
+                player1Object.SetActive(false);
+                Debug.Log("기존 Player1 오브젝트 비활성화됨");
+            }
+            if (player2Object != null)
+            {
+                player2Object.SetActive(false);
+                Debug.Log("기존 Player2 오브젝트 비활성화됨");
+            }
+            
             return;
         }
         
@@ -67,6 +95,24 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     void CreateDefaultSpawnPoints()
     {
+        // 먼저 씬에서 p1, p2 오브젝트를 찾아보기
+        GameObject p1Object = GameObject.Find("p1");
+        GameObject p2Object = GameObject.Find("p2");
+        
+        if (p1Object != null && p2Object != null)
+        {
+            // 씬에 p1, p2가 있으면 그 Transform을 사용
+            player1SpawnPoint = p1Object.transform;
+            player2SpawnPoint = p2Object.transform;
+            
+            Debug.Log($"GameManager - 씬의 p1, p2 오브젝트를 스폰 포인트로 사용");
+            Debug.Log($"GameManager - p1 위치: {player1SpawnPoint.position}, p2 위치: {player2SpawnPoint.position}");
+            return;
+        }
+        
+        // p1, p2가 없으면 기본 스폰 포인트 생성
+        Debug.Log("GameManager - 씬에 p1, p2 오브젝트가 없어 기본 스폰 포인트를 생성합니다.");
+        
         // 기본 스폰 포인트 생성 - 이미지에 보여진 정확한 위치로 설정
         GameObject spawnPointsHolder = new GameObject("SpawnPoints");
         
