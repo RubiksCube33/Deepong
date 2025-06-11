@@ -167,8 +167,8 @@ public class BallController : MonoBehaviourPunCallbacks
             // 패들 타입에 따른 사운드 재생
             PlayPaddleSound(collision.gameObject);
             
-            // 로컬 플레이어의 패들일 때만 물리 연산 실행
-            if (IsLocalPlayerPaddle(collision.gameObject))
+            // Ball의 소유권자(마스터 클라이언트)만 물리 연산 실행
+            if (!PhotonNetwork.IsConnected || photonView.IsMine)
             {
                 HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
             }
@@ -179,8 +179,8 @@ public class BallController : MonoBehaviourPunCallbacks
             // 패들 타입에 따른 사운드 재생
             PlayPaddleSound(collision.gameObject);
             
-            // 로컬 플레이어의 패들일 때만 물리 연산 실행
-            if (IsLocalPlayerPaddle(collision.gameObject))
+            // Ball의 소유권자(마스터 클라이언트)만 물리 연산 실행
+            if (!PhotonNetwork.IsConnected || photonView.IsMine)
             {
                 HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
             }
@@ -191,8 +191,8 @@ public class BallController : MonoBehaviourPunCallbacks
             // 패들 타입에 따른 사운드 재생
             PlayPaddleSound(collision.gameObject);
             
-            // 로컬 플레이어의 패들일 때만 물리 연산 실행
-            if (IsLocalPlayerPaddle(collision.gameObject))
+            // Ball의 소유권자(마스터 클라이언트)만 물리 연산 실행
+            if (!PhotonNetwork.IsConnected || photonView.IsMine)
             {
                 HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
             }
@@ -221,42 +221,7 @@ public class BallController : MonoBehaviourPunCallbacks
         } 
     }
     
-    /// <summary>
-    /// 패들이 로컬 플레이어의 것인지 확인합니다.
-    /// </summary>
-    /// <param name="paddleObject">확인할 패들 오브젝트</param>
-    /// <returns>로컬 플레이어의 패들이면 true, 상대방 패들이면 false</returns>
-    private bool IsLocalPlayerPaddle(GameObject paddleObject)
-    {
-        // 네트워크 연결이 없으면 항상 로컬 플레이어로 처리 (싱글플레이어)
-        if (!PhotonNetwork.IsConnected)
-            return true;
-            
-        // 패들의 PhotonView 찾기 (패들 자체에 있을 수도 있고, 부모에 있을 수도 있음)
-        PhotonView paddlePhotonView = paddleObject.GetComponent<PhotonView>();
-        
-        // 패들 자체에 PhotonView가 없으면 부모들을 확인
-        if (paddlePhotonView == null)
-        {
-            Transform current = paddleObject.transform;
-            while (current.parent != null && paddlePhotonView == null)
-            {
-                current = current.parent;
-                paddlePhotonView = current.GetComponent<PhotonView>();
-            }
-        }
-        
-        // PhotonView가 있으면 IsMine으로 확인, 없으면 로컬로 처리
-        if (paddlePhotonView != null)
-        {
-            return paddlePhotonView.IsMine;
-        }
-        
-        // PhotonView를 찾을 수 없으면 로컬 플레이어로 처리 (안전장치)
-        Debug.LogWarning($"패들 {paddleObject.name}에서 PhotonView를 찾을 수 없습니다. 로컬 플레이어로 처리합니다.");
-        return true;
-    }
-    
+
     /// <summary>
     /// 직접 AudioSource를 사용하여 사운드를 재생합니다.
     /// </summary>
