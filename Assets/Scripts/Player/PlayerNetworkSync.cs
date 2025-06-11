@@ -193,10 +193,11 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
 
     void Update()
     {
-        // 내가 소유한 플레이어가 아니고, 네트워크 데이터를 받은 경우에만 동기화
+        // 내가 소유한 플레이어가 아니고, 네트워크 데이터를 받은 경우
         if (!photonView.IsMine && hasReceivedData)
         {
-            SyncTransforms();
+            // 현재는 수신한 데이터를 Transform에 적용하지 않음 (변수에만 저장)
+            // SyncTransforms(); // 비활성화
             
             if (syncAnimationParams && playerAnimator != null)
             {
@@ -362,10 +363,12 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
                 stream.SendNext(Quaternion.identity);
             }
             
-            // 디버깅: 컨트롤러 위치 전송 확인 (5초마다)
+            // 디버깅: 내 XR Origin 데이터 전송 확인 (5초마다)
             if (Time.time % 5f < Time.deltaTime)
             {
-                Debug.Log($"[{photonView.Owner.NickName}] VR 컨트롤러 위치 전송: L={leftPos}, R={rightPos}");
+                Vector3 headPos = headTransform != null ? headTransform.position : Vector3.zero;
+                Debug.Log($"[전송] {photonView.Owner.NickName}의 XR Origin 데이터 전송 중 - Head: {headPos}, L: {leftPos}, R: {rightPos}");
+                Debug.Log($"[전송] {photonView.Owner.NickName}는 자신의 XR Origin 데이터만 전송합니다");
             }
             
             // 애니메이션 파라미터들 (안전하게 전송)
@@ -384,7 +387,7 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
         }
         else
         {
-            // 다른 클라이언트로부터 애니메이션 정보를 수신
+            // 다른 클라이언트로부터 XR Origin 데이터를 수신 (변수에만 저장)
             
             // 플레이어 루트 위치/회전 수신
             networkRootPosition = (Vector3)stream.ReceiveNext();
@@ -394,7 +397,7 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             networkHeadPosition = (Vector3)stream.ReceiveNext();
             networkHeadRotation = (Quaternion)stream.ReceiveNext();
             
-            // 손 위치/회전 수신 (Robot 모드와 상관없이 항상 수신)
+            // 손 위치/회전 수신
             networkLeftHandPosition = (Vector3)stream.ReceiveNext();
             networkLeftHandRotation = (Quaternion)stream.ReceiveNext();
             networkRightHandPosition = (Vector3)stream.ReceiveNext();
@@ -406,6 +409,13 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             networkGrounded = (bool)stream.ReceiveNext();
             
             hasReceivedData = true;
+            
+            // 디버깅: 누구의 데이터를 받았는지 확인 (5초마다)
+            if (Time.time % 5f < Time.deltaTime)
+            {
+                Debug.Log($"[수신] {photonView.Owner.NickName}의 XR Origin 데이터 수신됨 - Head: {networkHeadPosition}, L: {networkLeftHandPosition}, R: {networkRightHandPosition}");
+                Debug.Log($"[수신] 현재 내 XR Origin 수신한 데이터는 Transform에 적용되지 않음 (변수에만 저장됨)");
+            }
         }
     }
     
@@ -509,4 +519,26 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
         // 오브젝트가 파괴될 때 시각화 오브젝트들도 정리
         DestroyControllerVisualizers();
     }
+    
+    #region Public Getters for Network Data
+    
+    /// <summary>
+    /// 네트워크로부터 수신한 상대방의 XR Origin 데이터에 접근하기 위한 Getter들
+    /// 실제 Transform에는 적용되지 않고 변수 값으로만 저장됨
+    /// </summary>
+    
+    public bool HasReceivedNetworkData => hasReceivedData;
+    public Vector3 NetworkRootPosition => networkRootPosition;
+    public Quaternion NetworkRootRotation => networkRootRotation;
+    public Vector3 NetworkHeadPosition => networkHeadPosition;
+    public Quaternion NetworkHeadRotation => networkHeadRotation;
+    public Vector3 NetworkLeftHandPosition => networkLeftHandPosition;
+    public Quaternion NetworkLeftHandRotation => networkLeftHandRotation;
+    public Vector3 NetworkRightHandPosition => networkRightHandPosition;
+    public Quaternion NetworkRightHandRotation => networkRightHandRotation;
+    public float NetworkSpeed => networkSpeed;
+    public float NetworkMotionSpeed => networkMotionSpeed;
+    public bool NetworkGrounded => networkGrounded;
+    
+    #endregion
 } 
