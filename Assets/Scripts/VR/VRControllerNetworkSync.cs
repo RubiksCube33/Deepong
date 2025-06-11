@@ -77,7 +77,6 @@ namespace DeepongVR.Network
         private InputAction rightSecondaryAction;
         
         // 컴포넌트 참조
-        private VRHumanoidController vrController;
         private PaddleChangeController paddleController;
         
         // 햅틱 플레이어
@@ -91,8 +90,6 @@ namespace DeepongVR.Network
 
         void Awake()
         {
-            // 컴포넌트 참조 가져오기
-            vrController = GetComponent<VRHumanoidController>();
             
             // PaddleChangeController를 더 확실하게 찾기
             paddleController = GetComponent<PaddleChangeController>();
@@ -111,15 +108,7 @@ namespace DeepongVR.Network
             {
                 Debug.LogWarning($"[VRControllerNetworkSync] PaddleChangeController를 찾을 수 없습니다! (플레이어: {playerName})");
             }
-            
-            // VRHumanoidController에서 컨트롤러 참조 가져오기
-            if (vrController != null)
-            {
-                leftController = vrController.LeftHandController;
-                rightController = vrController.RightHandController;
-                headset = vrController.Headset;
-            }
-            
+
             // XR 컨트롤러 참조 찾기
             FindXRControllers();
             
@@ -241,12 +230,6 @@ namespace DeepongVR.Network
 
         private void InitializeRemotePlayer()
         {
-            // 원격 플레이어의 입력 관련 컴포넌트 비활성화
-            if (vrController != null)
-            {
-                vrController.enabled = false;
-            }
-            
             // 원격 플레이어의 패들 컨트롤러는 활성화 상태로 유지하되, 입력만 비활성화
             if (paddleController != null)
             {

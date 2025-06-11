@@ -44,9 +44,7 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
     
     // 초기화 플래그
     private bool hasReceivedData = false;
-    
-    // VR 컨트롤러 참조 (Robot 모드용)
-    private VRHumanoidController vrController;
+
     
     // 원격 플레이어 VR 컨트롤러 시각화
     [Header("원격 플레이어 시각화")]
@@ -62,32 +60,6 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             
         if (playerAnimator == null)
             playerAnimator = GetComponent<Animator>();
-            
-        // VRHumanoidController가 있다면 해당 컴포넌트에서 Transform 참조들을 가져오기
-        vrController = GetComponent<VRHumanoidController>();
-        if (vrController != null)
-        {
-            // 머리는 XR 헤드셋 Transform 사용 (실제 VR 위치)
-            if (headTransform == null)
-                headTransform = vrController.Headset;
-                
-            // 손은 XR 컨트롤러 Transform 사용 (실제 VR 컨트롤러 위치)
-            if (leftHandTransform == null)
-                leftHandTransform = vrController.LeftHandController;
-            if (rightHandTransform == null)
-                rightHandTransform = vrController.RightHandController;
-                
-            // VR 멀티플레이어 환경에서는 항상 실제 컨트롤러 위치 사용
-            // Robot 모드는 원격 플레이어 시각화용으로만 사용
-            useVirtualHands = false; // VR 컨트롤러 동기화를 위해 false로 고정
-            
-            Debug.Log($"VR 컨트롤러 참조 설정 완료: Head={headTransform?.name}, LeftHand={leftHandTransform?.name}, RightHand={rightHandTransform?.name}, VirtualHands={useVirtualHands}");
-        }
-        else
-        {
-            // VRHumanoidController가 없는 경우 XR Origin에서 직접 찾기
-            FindXRControllerReferences();
-        }
         
         // 초기값 설정
         InitializeNetworkValues();
@@ -166,29 +138,6 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             networkHeadPosition = headTransform.position;
             networkHeadRotation = headTransform.rotation;
         }
-        
-        // Robot 모드인 경우 가상 손 위치 사용, 아니면 실제 Transform 사용
-        if (useVirtualHands && vrController != null)
-        {
-            networkLeftHandPosition = vrController.VirtualLeftHandPosition;
-            networkLeftHandRotation = vrController.VirtualLeftHandRotation;
-            networkRightHandPosition = vrController.VirtualRightHandPosition;
-            networkRightHandRotation = vrController.VirtualRightHandRotation;
-        }
-        else
-        {
-            if (leftHandTransform != null)
-            {
-                networkLeftHandPosition = leftHandTransform.position;
-                networkLeftHandRotation = leftHandTransform.rotation;
-            }
-            
-            if (rightHandTransform != null)
-            {
-                networkRightHandPosition = rightHandTransform.position;
-                networkRightHandRotation = rightHandTransform.rotation;
-            }
-        }
     }
 
     void Update()
@@ -255,23 +204,6 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
                                                                        deltaTime * positionLerpRate);
             rightControllerVisualizer.transform.rotation = Quaternion.Lerp(rightControllerVisualizer.transform.rotation, networkRightHandRotation, 
                                                                           deltaTime * rotationLerpRate);
-        }
-        
-        // Humanoid 손 Transform도 업데이트 (IK나 애니메이션용)
-        if (vrController != null && vrController.HumanoidLeftHand != null)
-        {
-            vrController.HumanoidLeftHand.position = Vector3.Lerp(vrController.HumanoidLeftHand.position, networkLeftHandPosition, 
-                                                                 deltaTime * positionLerpRate);
-            vrController.HumanoidLeftHand.rotation = Quaternion.Lerp(vrController.HumanoidLeftHand.rotation, networkLeftHandRotation, 
-                                                                    deltaTime * rotationLerpRate);
-        }
-        
-        if (vrController != null && vrController.HumanoidRightHand != null)
-        {
-            vrController.HumanoidRightHand.position = Vector3.Lerp(vrController.HumanoidRightHand.position, networkRightHandPosition, 
-                                                                  deltaTime * positionLerpRate);
-            vrController.HumanoidRightHand.rotation = Quaternion.Lerp(vrController.HumanoidRightHand.rotation, networkRightHandRotation, 
-                                                                     deltaTime * rotationLerpRate);
         }
     }
     

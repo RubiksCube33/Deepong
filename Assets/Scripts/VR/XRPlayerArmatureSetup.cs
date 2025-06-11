@@ -33,7 +33,6 @@ public class XRPlayerArmatureSetup : MonoBehaviour
     [SerializeField] private bool hideHeadMesh = true;
     
     private GameObject instantiatedArmature;
-    private VRHumanoidController humanoidController;
     private Animator armatureAnimator;
     
     void Start()
@@ -119,13 +118,6 @@ public class XRPlayerArmatureSetup : MonoBehaviour
         instantiatedArmature.transform.localRotation = Quaternion.Euler(rotationOffset);
         instantiatedArmature.transform.localScale = Vector3.one * scaleFactor;
         
-        // Add VRHumanoidController component if not already present
-        humanoidController = instantiatedArmature.GetComponent<VRHumanoidController>();
-        if (humanoidController == null)
-        {
-            humanoidController = instantiatedArmature.AddComponent<VRHumanoidController>();
-        }
-        
         // Get the animator
         armatureAnimator = instantiatedArmature.GetComponent<Animator>();
         if (armatureAnimator == null)
@@ -136,9 +128,6 @@ public class XRPlayerArmatureSetup : MonoBehaviour
         
         // Find the key transforms if not manually assigned
         FindKeyTransforms();
-        
-        // Set up the VRHumanoidController
-        SetupHumanoidController();
         
         // Hide head mesh if requested (to avoid seeing it from the inside when in VR)
         if (hideHeadMesh && headTransform != null)
@@ -206,21 +195,11 @@ public class XRPlayerArmatureSetup : MonoBehaviour
         instantiatedArmature.transform.localRotation = Quaternion.Euler(rotationOffset);
         instantiatedArmature.transform.localScale = Vector3.one * scaleFactor;
         
-        // Add VRHumanoidController component if not already present
-        humanoidController = instantiatedArmature.GetComponent<VRHumanoidController>();
-        if (humanoidController == null)
-        {
-            //humanoidController = instantiatedArmature.AddComponent<VRHumanoidController>();
-        }
-        
         // Get the animator
         armatureAnimator = instantiatedArmature.GetComponent<Animator>();
         
         // Find the key transforms if not manually assigned
         FindKeyTransforms();
-        
-        // Set up the VRHumanoidController
-        SetupHumanoidController();
         
         // Hide head mesh if requested (to avoid seeing it from the inside when in VR)
         if (hideHeadMesh && headTransform != null)
@@ -261,25 +240,6 @@ public class XRPlayerArmatureSetup : MonoBehaviour
     /// <summary>
     /// Sets up the VRHumanoidController with the correct references
     /// </summary>
-    private void SetupHumanoidController()
-    {
-        if (humanoidController != null)
-        {
-            // Use properties instead of reflection
-            humanoidController.XROrigin = xrOrigin;
-            humanoidController.Headset = headCamera;
-            humanoidController.LeftHandController = leftController;
-            humanoidController.RightHandController = rightController;
-            
-            humanoidController.HumanoidRoot = instantiatedArmature.transform;
-            humanoidController.HumanoidHead = headTransform;
-            humanoidController.HumanoidLeftHand = leftHandTransform;
-            humanoidController.HumanoidRightHand = rightHandTransform;
-            
-            // Set default offsets if needed
-            humanoidController.ModelScale = scaleFactor;
-        }
-    }
     
     /// <summary>
     /// Toggles the visibility of the head mesh
