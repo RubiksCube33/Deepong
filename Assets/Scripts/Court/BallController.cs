@@ -166,42 +166,31 @@ public class BallController : MonoBehaviourPunCallbacks
         {
             // 패들 타입에 따른 사운드 재생
             PlayPaddleSound(collision.gameObject);
-            
-            // Ball의 소유권자(마스터 클라이언트)만 물리 연산 실행
-            if (!PhotonNetwork.IsConnected || photonView.IsMine)
-            {
-                HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
-            }
+            HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
         }
 
         else if (collision.gameObject.CompareTag("Paddle_Sword"))
         {
             // 패들 타입에 따른 사운드 재생
             PlayPaddleSound(collision.gameObject);
-            
-            // Ball의 소유권자(마스터 클라이언트)만 물리 연산 실행
-            if (!PhotonNetwork.IsConnected || photonView.IsMine)
-            {
-                HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
-            }
+            HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
         }
 
         else if (collision.gameObject.CompareTag("Paddle_Glove"))
         {
             // 패들 타입에 따른 사운드 재생
             PlayPaddleSound(collision.gameObject);
-            
-            // Ball의 소유권자(마스터 클라이언트)만 물리 연산 실행
-            if (!PhotonNetwork.IsConnected || photonView.IsMine)
-            {
-                HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
-            }
+            HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
         }
         else
         {
             // 일반 벽이나 다른 오브젝트와의 충돌
             PlayDirectAudioSource();
         }
+        
+        // 색상 변경
+        Color newColor = new Color(Random.value, Random.value, Random.value);
+        rend.material.color = newColor;
     }
     
     //공 충돌 움직임 처리 함수
@@ -221,7 +210,6 @@ public class BallController : MonoBehaviourPunCallbacks
         } 
     }
     
-
     /// <summary>
     /// 직접 AudioSource를 사용하여 사운드를 재생합니다.
     /// </summary>
