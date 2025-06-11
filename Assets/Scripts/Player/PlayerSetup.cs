@@ -143,11 +143,7 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
         }
         
         // XR 관련 컴포넌트 비활성화
-        XRPlayerArmatureSetup xrSetup = GetComponent<XRPlayerArmatureSetup>();
-        if (xrSetup != null)
-        {
-            xrSetup.enabled = false;
-        }
+        //XRPlayerArmatureSetup xrSetup = GetComponent<XRPlayerArmatureSetup>();
         
         // 카메라와 오디오 리스너 비활성화
         Camera[] cameras = GetComponentsInChildren<Camera>();

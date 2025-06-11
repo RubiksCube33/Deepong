@@ -210,7 +210,7 @@ public class XRPlayerArmatureSetup : MonoBehaviour
         humanoidController = instantiatedArmature.GetComponent<VRHumanoidController>();
         if (humanoidController == null)
         {
-            humanoidController = instantiatedArmature.AddComponent<VRHumanoidController>();
+            //humanoidController = instantiatedArmature.AddComponent<VRHumanoidController>();
         }
         
         // Get the animator
