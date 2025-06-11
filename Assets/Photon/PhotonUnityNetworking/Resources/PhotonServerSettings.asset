@@ -54,6 +54,18 @@ MonoBehaviour:
   - OnButtonEvent
   - TriggerHapticFeedbackRPC
   - OnPaddleChanged
+  - RPC_ForceSpawn
+  - AddScore
+  - EndGame
+  - OnGameStarted
+  - ResetGameState
+  - SetPlayerInfo
+  - StartGame
+  - OnRemotePlayerInstantiated
+  - UpdatePlayerInfo
+  - OnRemotePlayerSpawn
+  - OnMovementUpdate
+  - OnRemotePlayerSpawnRequested
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

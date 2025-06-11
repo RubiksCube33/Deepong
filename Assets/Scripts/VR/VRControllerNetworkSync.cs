@@ -11,7 +11,8 @@ namespace DeepongVR.Network
 {
     /// <summary>
     /// VR 컨트롤러의 움직임, 버튼 상태, 햅틱 피드백을 네트워크로 동기화합니다.
-    /// 양손 컨트롤러의 위치/회전, 버튼 입력, 패들 상태 등을 실시간으로 전송합니다.
+    /// 양손 컨트롤러의 위치/회전, 버튼 입력을 실시간으로 전송합니다.
+    /// 패들 동기화는 PaddleChangeController가 독립적으로 처리합니다.
     /// </summary>
     [RequireComponent(typeof(PhotonView))]
     public class VRControllerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
@@ -56,9 +57,6 @@ namespace DeepongVR.Network
         private bool networkRightPrimary;
         private bool networkRightSecondary;
         
-        // 패들 상태
-        private int networkPaddleIndex = 0;
-        
         // 로컬 이전 상태 (변화 감지용)
         private Vector3 lastLeftPos;
         private Quaternion lastLeftRot;
@@ -78,7 +76,6 @@ namespace DeepongVR.Network
         
         // 컴포넌트 참조
         private VRHumanoidController vrController;
-        private PaddleChangeController paddleController;
         
         // 햅틱 플레이어
         private XRBaseController leftXRController;
@@ -94,23 +91,8 @@ namespace DeepongVR.Network
             // 컴포넌트 참조 가져오기
             vrController = GetComponent<VRHumanoidController>();
             
-            // PaddleChangeController를 더 확실하게 찾기
-            paddleController = GetComponent<PaddleChangeController>();
-            if (paddleController == null)
-            {
-                paddleController = GetComponentInChildren<PaddleChangeController>();
-            }
-            
             string playerName = (photonView.Owner != null) ? photonView.Owner.NickName : "Unknown";
-            
-            if (paddleController != null)
-            {
-                Debug.Log($"[VRControllerNetworkSync] PaddleChangeController 찾음: {paddleController.gameObject.name} (플레이어: {playerName})");
-            }
-            else
-            {
-                Debug.LogWarning($"[VRControllerNetworkSync] PaddleChangeController를 찾을 수 없습니다! (플레이어: {playerName})");
-            }
+            Debug.Log($"[VRControllerNetworkSync] 초기화 중... (플레이어: {playerName})");
             
             // VRHumanoidController에서 컨트롤러 참조 가져오기
             if (vrController != null)
@@ -143,24 +125,29 @@ namespace DeepongVR.Network
             }
         }
 
+        void OnEnable()
+        {
+            if (photonView.IsMine)
+            {
+                EnableInputActions();
+            }
+        }
+
+        void OnDisable()
+        {
+            DisableInputActions();
+        }
+
         void Update()
         {
             if (photonView.IsMine)
             {
-                // 로컬 플레이어: 입력 처리
                 HandleLocalInput();
             }
             else
             {
-                // 원격 플레이어: 동기화된 데이터로 업데이트
-                UpdateRemotePlayer();
+                HandleRemotePlayerUpdates();
             }
-        }
-
-        void OnDestroy()
-        {
-            CleanupInputActions();
-            DestroyControllerVisualizers();
         }
 
         #endregion
@@ -169,55 +156,21 @@ namespace DeepongVR.Network
 
         private void FindXRControllers()
         {
-            // XR 컨트롤러 컴포넌트 찾기
-            if (leftController != null)
+            XRBaseController[] controllers = FindObjectsOfType<XRBaseController>();
+            
+            foreach (var controller in controllers)
             {
-                leftXRController = leftController.GetComponent<XRBaseController>();
+                if (controller.name.ToLower().Contains("left"))
+                {
+                    leftXRController = controller;
+                }
+                else if (controller.name.ToLower().Contains("right"))
+                {
+                    rightXRController = controller;
+                }
             }
             
-            if (rightController != null)
-            {
-                rightXRController = rightController.GetComponent<XRBaseController>();
-            }
-        }
-
-        private void SetupInputActions()
-        {
-            // 왼손 컨트롤러 입력 액션 설정
-            leftTriggerAction = new InputAction(binding: "<XRController>{LeftHand}/triggerPressed");
-            leftGripAction = new InputAction(binding: "<XRController>{LeftHand}/gripPressed");
-            leftPrimaryAction = new InputAction(binding: "<XRController>{LeftHand}/primaryButton");
-            leftSecondaryAction = new InputAction(binding: "<XRController>{LeftHand}/secondaryButton");
-            
-            // 오른손 컨트롤러 입력 액션 설정
-            rightTriggerAction = new InputAction(binding: "<XRController>{RightHand}/triggerPressed");
-            rightGripAction = new InputAction(binding: "<XRController>{RightHand}/gripPressed");
-            rightPrimaryAction = new InputAction(binding: "<XRController>{RightHand}/primaryButton");
-            rightSecondaryAction = new InputAction(binding: "<XRController>{RightHand}/secondaryButton");
-            
-            // 액션 활성화
-            leftTriggerAction.Enable();
-            leftGripAction.Enable();
-            leftPrimaryAction.Enable();
-            leftSecondaryAction.Enable();
-            rightTriggerAction.Enable();
-            rightGripAction.Enable();
-            rightPrimaryAction.Enable();
-            rightSecondaryAction.Enable();
-            
-            Debug.Log("[VRControllerNetworkSync] 입력 액션 설정 완료");
-        }
-
-        private void CleanupInputActions()
-        {
-            leftTriggerAction?.Dispose();
-            leftGripAction?.Dispose();
-            leftPrimaryAction?.Dispose();
-            leftSecondaryAction?.Dispose();
-            rightTriggerAction?.Dispose();
-            rightGripAction?.Dispose();
-            rightPrimaryAction?.Dispose();
-            rightSecondaryAction?.Dispose();
+            Debug.Log($"[VRControllerNetworkSync] XR 컨트롤러 참조 완료 - Left: {(leftXRController != null ? "찾음" : "없음")}, Right: {(rightXRController != null ? "찾음" : "없음")}");
         }
 
         private void InitializeLocalPlayer()
@@ -247,16 +200,7 @@ namespace DeepongVR.Network
                 vrController.enabled = false;
             }
             
-            // 원격 플레이어의 패들 컨트롤러는 활성화 상태로 유지하되, 입력만 비활성화
-            if (paddleController != null)
-            {
-                // PaddleChangeController의 입력 처리를 비활성화하는 것이 아니라
-                // 네트워크에서 받은 데이터로만 패들을 변경하도록 함
-                // paddleController.enabled = false; // 이 줄을 제거
-                Debug.Log("[VRControllerNetworkSync] 원격 플레이어 패들 컨트롤러는 활성화 상태 유지");
-            }
-            
-            Debug.Log("[VRControllerNetworkSync] 원격 플레이어 초기화 완료");
+            Debug.Log("[VRControllerNetworkSync] 원격 플레이어 초기화 완료 - VR 입력 비활성화됨");
         }
 
         #endregion
@@ -270,184 +214,168 @@ namespace DeepongVR.Network
             {
                 UpdateButtonStates();
             }
-            
-            // 패들 상태 업데이트
-            if (paddleController != null)
-            {
-                int currentPaddleIndex = paddleController.CurrentPaddleIndex;
-                if (currentPaddleIndex != networkPaddleIndex)
-                {
-                    Debug.Log($"[VRControllerNetworkSync] 로컬 패들 변경 감지: {networkPaddleIndex} → {currentPaddleIndex}");
-                    networkPaddleIndex = currentPaddleIndex;
-                    
-                    // RPC로 다른 플레이어들에게 패들 변경 전송
-                    photonView.RPC("OnPaddleChanged", RpcTarget.Others, currentPaddleIndex);
-                }
-            }
         }
 
         private void UpdateButtonStates()
         {
-            // 왼손 버튼 상태
-            bool currentLeftTrigger = leftTriggerAction.ReadValue<float>() > 0.5f;
-            bool currentLeftGrip = leftGripAction.ReadValue<float>() > 0.5f;
-            bool currentLeftPrimary = leftPrimaryAction.ReadValue<float>() > 0.5f;
-            bool currentLeftSecondary = leftSecondaryAction.ReadValue<float>() > 0.5f;
+            // 왼손 버튼 상태 업데이트
+            bool newLeftTrigger = (leftTriggerAction?.ReadValue<float>() ?? 0f) > 0.5f;
+            bool newLeftGrip = (leftGripAction?.ReadValue<float>() ?? 0f) > 0.5f;
+            bool newLeftPrimary = leftPrimaryAction?.IsPressed() ?? false;
+            bool newLeftSecondary = leftSecondaryAction?.IsPressed() ?? false;
             
-            // 오른손 버튼 상태
-            bool currentRightTrigger = rightTriggerAction.ReadValue<float>() > 0.5f;
-            bool currentRightGrip = rightGripAction.ReadValue<float>() > 0.5f;
-            bool currentRightPrimary = rightPrimaryAction.ReadValue<float>() > 0.5f;
-            bool currentRightSecondary = rightSecondaryAction.ReadValue<float>() > 0.5f;
+            // 오른손 버튼 상태 업데이트
+            bool newRightTrigger = (rightTriggerAction?.ReadValue<float>() ?? 0f) > 0.5f;
+            bool newRightGrip = (rightGripAction?.ReadValue<float>() ?? 0f) > 0.5f;
+            bool newRightPrimary = rightPrimaryAction?.IsPressed() ?? false;
+            bool newRightSecondary = rightSecondaryAction?.IsPressed() ?? false;
             
-            // 버튼 상태 변화 감지 및 이벤트 전송
-            if (currentLeftTrigger != networkLeftTrigger)
-            {
-                networkLeftTrigger = currentLeftTrigger;
-                if (currentLeftTrigger) SendButtonEvent("LeftTrigger", true);
-            }
-            
-            if (currentRightTrigger != networkRightTrigger)
-            {
-                networkRightTrigger = currentRightTrigger;
-                if (currentRightTrigger) SendButtonEvent("RightTrigger", true);
-            }
-            
-            // 다른 버튼들도 동일하게 처리
-            networkLeftGrip = currentLeftGrip;
-            networkLeftPrimary = currentLeftPrimary;
-            networkLeftSecondary = currentLeftSecondary;
-            networkRightGrip = currentRightGrip;
-            networkRightPrimary = currentRightPrimary;
-            networkRightSecondary = currentRightSecondary;
+            // 변경 감지 및 RPC 전송
+            CheckButtonChange(ref networkLeftTrigger, newLeftTrigger, "LeftTrigger");
+            CheckButtonChange(ref networkLeftGrip, newLeftGrip, "LeftGrip");
+            CheckButtonChange(ref networkLeftPrimary, newLeftPrimary, "LeftPrimary");
+            CheckButtonChange(ref networkLeftSecondary, newLeftSecondary, "LeftSecondary");
+            CheckButtonChange(ref networkRightTrigger, newRightTrigger, "RightTrigger");
+            CheckButtonChange(ref networkRightGrip, newRightGrip, "RightGrip");
+            CheckButtonChange(ref networkRightPrimary, newRightPrimary, "RightPrimary");
+            CheckButtonChange(ref networkRightSecondary, newRightSecondary, "RightSecondary");
         }
 
-        private void SendButtonEvent(string buttonName, bool pressed)
+        private void CheckButtonChange(ref bool currentState, bool newState, string buttonName)
         {
-            // 버튼 이벤트를 RPC로 전송
-            photonView.RPC("OnButtonEvent", RpcTarget.Others, buttonName, pressed);
+            if (currentState != newState)
+            {
+                currentState = newState;
+                
+                // RPC로 버튼 이벤트 전송
+                photonView.RPC("OnButtonEvent", RpcTarget.Others, buttonName, newState);
+            }
         }
 
         #endregion
 
         #region 원격 플레이어 처리
 
-        private void UpdateRemotePlayer()
+        private void HandleRemotePlayerUpdates()
         {
             if (!hasReceivedInitialData) return;
             
-            float deltaTime = Time.deltaTime;
-            
-            // 왼손 컨트롤러 업데이트
-            if (leftControllerVisualizer != null)
-            {
-                UpdateControllerVisualizer(leftControllerVisualizer, networkLeftPos, networkLeftRot, deltaTime);
-            }
-            
-            // 오른손 컨트롤러 업데이트
-            if (rightControllerVisualizer != null)
-            {
-                UpdateControllerVisualizer(rightControllerVisualizer, networkRightPos, networkRightRot, deltaTime);
-            }
+            // 위치/회전 보간
+            UpdateControllerPositions();
         }
 
-        private void UpdateControllerVisualizer(GameObject visualizer, Vector3 targetPos, Quaternion targetRot, float deltaTime)
+        private void UpdateControllerPositions()
         {
-            Transform transform = visualizer.transform;
-            
-            // 순간이동 임계값 확인
-            float distance = Vector3.Distance(transform.position, targetPos);
-            if (distance > teleportThreshold)
+            if (leftControllerVisualizer != null)
             {
-                // 거리가 너무 크면 순간이동
-                transform.position = targetPos;
-                transform.rotation = targetRot;
+                float distance = Vector3.Distance(leftControllerVisualizer.transform.position, networkLeftPos);
+                
+                if (distance > teleportThreshold)
+                {
+                    // 순간이동
+                    leftControllerVisualizer.transform.position = networkLeftPos;
+                    leftControllerVisualizer.transform.rotation = networkLeftRot;
+                }
+                else
+                {
+                    // 부드러운 보간
+                    leftControllerVisualizer.transform.position = Vector3.Lerp(
+                        leftControllerVisualizer.transform.position, 
+                        networkLeftPos, 
+                        positionLerpRate * Time.deltaTime
+                    );
+                    leftControllerVisualizer.transform.rotation = Quaternion.Lerp(
+                        leftControllerVisualizer.transform.rotation, 
+                        networkLeftRot, 
+                        rotationLerpRate * Time.deltaTime
+                    );
+                }
             }
-            else
+            
+            if (rightControllerVisualizer != null)
             {
-                // 부드러운 보간
-                transform.position = Vector3.Lerp(transform.position, targetPos, deltaTime * positionLerpRate);
-                transform.rotation = Quaternion.Lerp(transform.rotation, targetRot, deltaTime * rotationLerpRate);
+                float distance = Vector3.Distance(rightControllerVisualizer.transform.position, networkRightPos);
+                
+                if (distance > teleportThreshold)
+                {
+                    // 순간이동
+                    rightControllerVisualizer.transform.position = networkRightPos;
+                    rightControllerVisualizer.transform.rotation = networkRightRot;
+                }
+                else
+                {
+                    // 부드러운 보간
+                    rightControllerVisualizer.transform.position = Vector3.Lerp(
+                        rightControllerVisualizer.transform.position, 
+                        networkRightPos, 
+                        positionLerpRate * Time.deltaTime
+                    );
+                    rightControllerVisualizer.transform.rotation = Quaternion.Lerp(
+                        rightControllerVisualizer.transform.rotation, 
+                        networkRightRot, 
+                        rotationLerpRate * Time.deltaTime
+                    );
+                }
             }
         }
 
         #endregion
 
-        #region 시각화 오브젝트
+        #region 입력 액션 설정
 
-        private void CreateControllerVisualizers()
+        private void SetupInputActions()
         {
-            // 왼손 컨트롤러 시각화 오브젝트
-            if (leftControllerVisualizer == null)
-            {
-                leftControllerVisualizer = CreateControllerVisualizer("LeftController", Color.red);
-            }
+            // 왼손 입력 액션
+            leftTriggerAction = new InputAction(binding: "<XRController>{LeftHand}/trigger");
+            leftGripAction = new InputAction(binding: "<XRController>{LeftHand}/grip");
+            leftPrimaryAction = new InputAction(binding: "<XRController>{LeftHand}/primaryButton");
+            leftSecondaryAction = new InputAction(binding: "<XRController>{LeftHand}/secondaryButton");
             
-            // 오른손 컨트롤러 시각화 오브젝트
-            if (rightControllerVisualizer == null)
-            {
-                rightControllerVisualizer = CreateControllerVisualizer("RightController", Color.blue);
-            }
+            // 오른손 입력 액션
+            rightTriggerAction = new InputAction(binding: "<XRController>{RightHand}/trigger");
+            rightGripAction = new InputAction(binding: "<XRController>{RightHand}/grip");
+            rightPrimaryAction = new InputAction(binding: "<XRController>{RightHand}/primaryButton");
+            rightSecondaryAction = new InputAction(binding: "<XRController>{RightHand}/secondaryButton");
             
-            Debug.Log($"[VRControllerNetworkSync] {photonView.Owner.NickName}의 컨트롤러 시각화 오브젝트 생성 완료");
+            Debug.Log("[VRControllerNetworkSync] 입력 액션 설정 완료");
         }
 
-        private GameObject CreateControllerVisualizer(string name, Color color)
+        private void EnableInputActions()
         {
-            GameObject visualizer = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            visualizer.name = $"{photonView.Owner.NickName}_{name}";
-            visualizer.transform.localScale = new Vector3(0.05f, 0.1f, 0.05f);
-            
-            // 머티리얼 설정
-            Renderer renderer = visualizer.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                Material mat = new Material(Shader.Find("Standard"));
-                mat.color = color;
-                mat.SetFloat("_Metallic", 0.3f);
-                mat.SetFloat("_Smoothness", 0.7f);
-                renderer.material = mat;
-            }
-            
-            // 콜라이더 제거 (시각화용)
-            Collider collider = visualizer.GetComponent<Collider>();
-            if (collider != null)
-            {
-                DestroyImmediate(collider);
-            }
-            
-            return visualizer;
+            leftTriggerAction?.Enable();
+            leftGripAction?.Enable();
+            leftPrimaryAction?.Enable();
+            leftSecondaryAction?.Enable();
+            rightTriggerAction?.Enable();
+            rightGripAction?.Enable();
+            rightPrimaryAction?.Enable();
+            rightSecondaryAction?.Enable();
         }
 
-        private void DestroyControllerVisualizers()
+        private void DisableInputActions()
         {
-            if (leftControllerVisualizer != null)
-            {
-                DestroyImmediate(leftControllerVisualizer);
-                leftControllerVisualizer = null;
-            }
-            
-            if (rightControllerVisualizer != null)
-            {
-                DestroyImmediate(rightControllerVisualizer);
-                rightControllerVisualizer = null;
-            }
+            leftTriggerAction?.Disable();
+            leftGripAction?.Disable();
+            leftPrimaryAction?.Disable();
+            leftSecondaryAction?.Disable();
+            rightTriggerAction?.Disable();
+            rightGripAction?.Disable();
+            rightPrimaryAction?.Disable();
+            rightSecondaryAction?.Disable();
         }
 
         #endregion
 
-        #region 네트워크 동기화 (IPunObservable)
+        #region 네트워크 동기화
 
         public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
         {
             if (stream.IsWriting)
             {
-                // 데이터 전송
                 SendControllerData(stream);
             }
             else
             {
-                // 데이터 수신
                 ReceiveControllerData(stream);
             }
         }
@@ -497,9 +425,6 @@ namespace DeepongVR.Network
             {
                 stream.SendNext((byte)0);
             }
-            
-            // 패들 인덱스
-            stream.SendNext(networkPaddleIndex);
         }
 
         private void ReceiveControllerData(PhotonStream stream)
@@ -522,16 +447,6 @@ namespace DeepongVR.Network
             networkRightGrip = (buttonStates & 32) != 0;
             networkRightPrimary = (buttonStates & 64) != 0;
             networkRightSecondary = (buttonStates & 128) != 0;
-            
-            // 패들 인덱스
-            int receivedPaddleIndex = (int)stream.ReceiveNext();
-            
-            // 패들 변경 감지만 하고 실제 적용은 RPC로 처리
-            if (receivedPaddleIndex != networkPaddleIndex)
-            {
-                Debug.Log($"[VRControllerNetworkSync] 패들 인덱스 업데이트: {networkPaddleIndex} → {receivedPaddleIndex}");
-                networkPaddleIndex = receivedPaddleIndex;
-            }
             
             hasReceivedInitialData = true;
         }
@@ -561,25 +476,25 @@ namespace DeepongVR.Network
         }
 
         [PunRPC]
-        void OnPaddleChanged(int newPaddleIndex)
+        void OnPaddleChangedRPC(int newPaddleIndex)
         {
-            // 원격 플레이어의 패들 변경 처리
-            if (paddleController != null)
+            // 자식 오브젝트의 PaddleChangeController를 찾아서 패들 변경 적용
+            PaddleChangeController[] paddleControllers = GetComponentsInChildren<PaddleChangeController>();
+            
+            if (paddleControllers.Length > 0)
             {
-                if (paddleController.enabled)
+                foreach (var controller in paddleControllers)
                 {
-                    int previousIndex = paddleController.CurrentPaddleIndex;
-                    paddleController.CurrentPaddleIndex = newPaddleIndex;
-                    Debug.Log($"[VRControllerNetworkSync] 원격 플레이어 패들 적용 완료: {previousIndex} → {paddleController.CurrentPaddleIndex}");
-                }
-                else
-                {
-                    Debug.LogWarning("[VRControllerNetworkSync] PaddleController가 비활성화되어 있어 패들 변경을 적용할 수 없음");
+                    if (controller != null)
+                    {
+                        controller.ApplyRemotePaddleChange(newPaddleIndex);
+                        Debug.Log($"[VRControllerNetworkSync] 패들 변경 RPC 적용 완료: {controller.gameObject.name} → 인덱스 {newPaddleIndex}");
+                    }
                 }
             }
             else
             {
-                Debug.LogWarning("[VRControllerNetworkSync] PaddleController 참조가 없어 패들 변경을 적용할 수 없음");
+                Debug.LogWarning("[VRControllerNetworkSync] PaddleChangeController를 찾을 수 없어 패들 변경을 적용할 수 없습니다.");
             }
         }
 
@@ -589,43 +504,85 @@ namespace DeepongVR.Network
 
         private void TriggerHapticFeedback(string buttonName)
         {
-            // 버튼에 따른 햅틱 피드백 (시각적 표현)
-            if (buttonName.Contains("Left") && leftControllerVisualizer != null)
+            float intensity = 0.5f;
+            float duration = 0.1f;
+            
+            if (buttonName.Contains("Left") && leftXRController != null)
             {
-                StartCoroutine(FlashController(leftControllerVisualizer));
+                leftXRController.SendHapticImpulse(intensity, duration);
             }
-            else if (buttonName.Contains("Right") && rightControllerVisualizer != null)
+            else if (buttonName.Contains("Right") && rightXRController != null)
             {
-                StartCoroutine(FlashController(rightControllerVisualizer));
-            }
-        }
-
-        private IEnumerator FlashController(GameObject controller)
-        {
-            Renderer renderer = controller.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                Color originalColor = renderer.material.color;
-                renderer.material.color = Color.white;
-                yield return new WaitForSeconds(0.1f);
-                renderer.material.color = originalColor;
+                rightXRController.SendHapticImpulse(intensity, duration);
             }
         }
 
-        /// <summary>
-        /// 로컬 햅틱 피드백을 네트워크로 전송
-        /// </summary>
-        public void SendHapticFeedback(string controllerName, float intensity = 0.5f, float duration = 0.1f)
+        public void SendHapticFeedback(string controllerName, float intensity, float duration)
         {
-            if (photonView.IsMine && syncHapticFeedback)
+            if (photonView.IsMine)
             {
+                // 로컬 햅틱 피드백
+                TriggerHapticFeedback(controllerName);
+                
+                // 원격 플레이어들에게 전송
                 photonView.RPC("TriggerHapticFeedbackRPC", RpcTarget.Others, controllerName, intensity, duration);
             }
         }
 
         #endregion
 
-        #region 공용 메서드
+        #region 시각화 오브젝트
+
+        private void CreateControllerVisualizers()
+        {
+            // 왼손 컨트롤러 시각화
+            if (leftControllerVisualizer == null)
+            {
+                leftControllerVisualizer = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                leftControllerVisualizer.name = $"{photonView.Owner.NickName}_LeftController";
+                leftControllerVisualizer.transform.localScale = new Vector3(0.1f, 0.1f, 0.15f);
+                
+                Renderer leftRenderer = leftControllerVisualizer.GetComponent<Renderer>();
+                if (leftRenderer != null)
+                {
+                    Material leftMat = new Material(Shader.Find("Standard"));
+                    leftMat.color = Color.red;
+                    leftMat.SetFloat("_Metallic", 0.5f);
+                    leftMat.SetFloat("_Smoothness", 0.8f);
+                    leftRenderer.material = leftMat;
+                }
+                
+                Collider leftCollider = leftControllerVisualizer.GetComponent<Collider>();
+                if (leftCollider != null) DestroyImmediate(leftCollider);
+            }
+            
+            // 오른손 컨트롤러 시각화
+            if (rightControllerVisualizer == null)
+            {
+                rightControllerVisualizer = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                rightControllerVisualizer.name = $"{photonView.Owner.NickName}_RightController";
+                rightControllerVisualizer.transform.localScale = new Vector3(0.1f, 0.1f, 0.15f);
+                
+                Renderer rightRenderer = rightControllerVisualizer.GetComponent<Renderer>();
+                if (rightRenderer != null)
+                {
+                    Material rightMat = new Material(Shader.Find("Standard"));
+                    rightMat.color = Color.blue;
+                    rightMat.SetFloat("_Metallic", 0.5f);
+                    rightMat.SetFloat("_Smoothness", 0.8f);
+                    rightRenderer.material = rightMat;
+                }
+                
+                Collider rightCollider = rightControllerVisualizer.GetComponent<Collider>();
+                if (rightCollider != null) DestroyImmediate(rightCollider);
+            }
+            
+            Debug.Log($"[VRControllerNetworkSync] 원격 플레이어 {photonView.Owner.NickName}의 컨트롤러 시각화 오브젝트 생성 완료");
+        }
+
+        #endregion
+
+        #region 공개 메서드
 
         /// <summary>
         /// 원격 플레이어의 컨트롤러 위치 가져오기
@@ -636,15 +593,7 @@ namespace DeepongVR.Network
         }
 
         /// <summary>
-        /// 원격 플레이어의 컨트롤러 회전 가져오기
-        /// </summary>
-        public Quaternion GetRemoteControllerRotation(bool isLeftHand)
-        {
-            return isLeftHand ? networkLeftRot : networkRightRot;
-        }
-
-        /// <summary>
-        /// 원격 플레이어의 버튼 상태 가져오기
+        /// 원격 플레이어의 버튼 상태 확인
         /// </summary>
         public bool GetRemoteButtonState(string buttonName)
         {
@@ -660,6 +609,31 @@ namespace DeepongVR.Network
                 case "rightsecondary": return networkRightSecondary;
                 default: return false;
             }
+        }
+
+        #endregion
+
+        #region 정리
+
+        void OnDestroy()
+        {
+            // 입력 액션 정리
+            DisableInputActions();
+            
+            leftTriggerAction?.Dispose();
+            leftGripAction?.Dispose();
+            leftPrimaryAction?.Dispose();
+            leftSecondaryAction?.Dispose();
+            rightTriggerAction?.Dispose();
+            rightGripAction?.Dispose();
+            rightPrimaryAction?.Dispose();
+            rightSecondaryAction?.Dispose();
+            
+            // 시각화 오브젝트 정리
+            if (leftControllerVisualizer != null)
+                DestroyImmediate(leftControllerVisualizer);
+            if (rightControllerVisualizer != null)
+                DestroyImmediate(rightControllerVisualizer);
         }
 
         #endregion
