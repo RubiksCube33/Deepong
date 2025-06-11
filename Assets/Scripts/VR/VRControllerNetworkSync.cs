@@ -145,9 +145,6 @@ namespace DeepongVR.Network
 
         void Update()
         {
-            // 컴포넌트가 비활성화된 경우 아무것도 하지 않음
-            if (!enabled) return;
-            
             if (photonView.IsMine)
             {
                 // 로컬 플레이어: 입력 처리
@@ -268,9 +265,6 @@ namespace DeepongVR.Network
 
         private void HandleLocalInput()
         {
-            // 컴포넌트가 비활성화되었거나 로컬 플레이어가 아닌 경우 입력 처리 안함
-            if (!enabled || !photonView.IsMine) return;
-            
             // 버튼 상태 업데이트
             if (syncButtonStates)
             {
@@ -294,9 +288,6 @@ namespace DeepongVR.Network
 
         private void UpdateButtonStates()
         {
-            // 입력 액션이 null인 경우 (원격 플레이어이거나 비활성화된 경우) 리턴
-            if (leftTriggerAction == null || rightTriggerAction == null) return;
-            
             // 왼손 버튼 상태
             bool currentLeftTrigger = leftTriggerAction.ReadValue<float>() > 0.5f;
             bool currentLeftGrip = leftGripAction.ReadValue<float>() > 0.5f;
