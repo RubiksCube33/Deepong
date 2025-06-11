@@ -1714,7 +1714,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b942f14849ad4a93a36420c58283f39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hapticPlayer: {fileID: 0}
+  hapticPlayer: {fileID: 5657960956093155682}
   baseHapticIntensity: 0.3
   baseHapticDuration: 0.1
   maxVelocityScale: 5
