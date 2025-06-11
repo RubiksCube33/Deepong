@@ -12,9 +12,9 @@ public class GameManager : MonoBehaviourPunCallbacks
     public GameObject playerPrefab; // 플레이어 프리팹 (실린더)
 
     [Header("현재 씬의 플레이어 오브젝트")]
-    public GameObject player1Object; // 플레이어 1 오브젝트 (실린더)
-    public GameObject player2Object; // 플레이어 2 오브젝트 (실린더)
-
+    public GameObject myXROrigin; // 내 xr 오리진
+    public GameObject enemyObject; // 상대방 표시 오브젝트
+    
     void Start()
     {
         Debug.Log("GameManager 시작됨");
@@ -39,20 +39,20 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
 
         // Inspector에서 플레이어 오브젝트가 제대로 할당되었는지 먼저 확인
-        Debug.Log($"Inspector 할당 상태 - Player1: {(player1Object != null ? player1Object.name : "null")}, Player2: {(player2Object != null ? player2Object.name : "null")}");
+        Debug.Log($"Inspector 할당 상태 - Player1: {(myXROrigin != null ? myXROrigin.name : "null")}, Player2: {(enemyObject != null ? enemyObject.name : "null")}");
         
         // 플레이어 오브젝트 찾기
         FindPlayerObjects();
         
         // 한 번 더 확인 후 위치 설정
-        if (player1Object != null && player2Object != null)
+        if (myXROrigin != null && enemyObject != null)
         {
             // 잘못된 오브젝트가 할당되었는지 검증
-            if (player1Object.name.ToLower().Contains("eye") || player2Object.name.ToLower().Contains("eye"))
+            if (myXROrigin.name.ToLower().Contains("eye") || enemyObject.name.ToLower().Contains("eye"))
             {
                 Debug.LogError("잘못된 오브젝트가 할당되었습니다! Inspector에서 올바른 플레이어 오브젝트를 할당해주세요.");
-                player1Object = null;
-                player2Object = null;
+                myXROrigin = null;
+                enemyObject = null;
                 return;
             }
             
@@ -90,19 +90,19 @@ public class GameManager : MonoBehaviourPunCallbacks
     void FindPlayerObjects()
     {
         // Inspector에서 직접 할당된 경우 그것을 우선 사용
-        if (player1Object != null && player2Object != null)
+        if (myXROrigin != null && enemyObject != null)
         {
             Debug.Log("Inspector에서 할당된 플레이어 오브젝트를 사용합니다.");
             return;
         }
 
         // 정확한 이름으로 먼저 찾기 시도
-        player1Object = GameObject.Find("player1");  // 실제 오브젝트 이름에 맞게 수정
-        player2Object = GameObject.Find("Player2");  // 실제 오브젝트 이름에 맞게 수정
+        myXROrigin = GameObject.Find("player1");  // 실제 오브젝트 이름에 맞게 수정
+        enemyObject = GameObject.Find("Player2");  // 실제 오브젝트 이름에 맞게 수정
         
-        if (player1Object != null && player2Object != null)
+        if (myXROrigin != null && enemyObject != null)
         {
-            Debug.Log($"정확한 이름으로 플레이어 오브젝트를 찾았습니다: {player1Object.name}, {player2Object.name}");
+            Debug.Log($"정확한 이름으로 플레이어 오브젝트를 찾았습니다: {myXROrigin.name}, {enemyObject.name}");
             return;
         }
         
@@ -121,9 +121,9 @@ public class GameManager : MonoBehaviourPunCallbacks
         
         if (validPlayers.Count >= 2)
         {
-            player1Object = validPlayers[0];
-            player2Object = validPlayers[1];
-            Debug.Log($"Player 태그로 플레이어 오브젝트를 찾았습니다: {player1Object.name}, {player2Object.name}");
+            myXROrigin = validPlayers[0];
+            enemyObject = validPlayers[1];
+            Debug.Log($"Player 태그로 플레이어 오브젝트를 찾았습니다: {myXROrigin.name}, {enemyObject.name}");
             return;
         }
         
@@ -149,14 +149,14 @@ public class GameManager : MonoBehaviourPunCallbacks
         
         if (potentialPlayers.Count >= 2)
         {
-            player1Object = potentialPlayers[0];
-            player2Object = potentialPlayers[1];
-            Debug.Log($"검색으로 플레이어 오브젝트를 찾았습니다: {player1Object.name}, {player2Object.name}");
+            myXROrigin = potentialPlayers[0];
+            enemyObject = potentialPlayers[1];
+            Debug.Log($"검색으로 플레이어 오브젝트를 찾았습니다: {myXROrigin.name}, {enemyObject.name}");
         }
         else if (potentialPlayers.Count == 1)
         {
             Debug.LogWarning($"플레이어 오브젝트를 하나만 찾았습니다: {potentialPlayers[0].name}");
-            player1Object = potentialPlayers[0];
+            myXROrigin = potentialPlayers[0];
         }
         else
         {
@@ -166,27 +166,27 @@ public class GameManager : MonoBehaviourPunCallbacks
     
     void PositionPlayers()
     {
-        if (player1Object != null && player2Object != null)
+        if (myXROrigin != null && enemyObject != null)
         {
-            Debug.Log($"플레이어 위치 및 회전 설정 시작 - Player1: {player1Object.name}, Player2: {player2Object.name}");
-            Debug.Log($"현재 Player1 위치: {player1Object.transform.position}, 회전: {player1Object.transform.rotation.eulerAngles}");
-            Debug.Log($"현재 Player2 위치: {player2Object.transform.position}, 회전: {player2Object.transform.rotation.eulerAngles}");
+            Debug.Log($"플레이어 위치 및 회전 설정 시작 - Player1: {myXROrigin.name}, Player2: {enemyObject.name}");
+            Debug.Log($"현재 Player1 위치: {myXROrigin.transform.position}, 회전: {myXROrigin.transform.rotation.eulerAngles}");
+            Debug.Log($"현재 Player2 위치: {enemyObject.transform.position}, 회전: {enemyObject.transform.rotation.eulerAngles}");
             Debug.Log($"목표 Player1 위치: {player1SpawnPoint.position}, 회전: {player1SpawnPoint.rotation.eulerAngles}");
             Debug.Log($"목표 Player2 위치: {player2SpawnPoint.position}, 회전: {player2SpawnPoint.rotation.eulerAngles}");
             
             // 플레이어 1과 2를 각각의 스폰 포인트로 이동 및 회전
-            player1Object.transform.position = player1SpawnPoint.position;
-            player1Object.transform.rotation = player1SpawnPoint.rotation;
+            myXROrigin.transform.position = player1SpawnPoint.position;
+            myXROrigin.transform.rotation = player1SpawnPoint.rotation;
             
-            player2Object.transform.position = player2SpawnPoint.position;
-            player2Object.transform.rotation = player2SpawnPoint.rotation;
+            enemyObject.transform.position = player2SpawnPoint.position;
+            enemyObject.transform.rotation = player2SpawnPoint.rotation;
             
-            Debug.Log($"플레이어 위치 및 회전 설정 완료 - Player1: {player1Object.transform.position}, 회전: {player1Object.transform.rotation.eulerAngles}");
-            Debug.Log($"Player2: {player2Object.transform.position}, 회전: {player2Object.transform.rotation.eulerAngles}");
+            Debug.Log($"플레이어 위치 및 회전 설정 완료 - Player1: {myXROrigin.transform.position}, 회전: {myXROrigin.transform.rotation.eulerAngles}");
+            Debug.Log($"Player2: {enemyObject.transform.position}, 회전: {enemyObject.transform.rotation.eulerAngles}");
         }
         else
         {
-            Debug.LogError($"플레이어 오브젝트가 설정되지 않았습니다! Player1: {(player1Object != null ? player1Object.name : "null")}, Player2: {(player2Object != null ? player2Object.name : "null")}");
+            Debug.LogError($"플레이어 오브젝트가 설정되지 않았습니다! Player1: {(myXROrigin != null ? myXROrigin.name : "null")}, Player2: {(enemyObject != null ? enemyObject.name : "null")}");
         }
     }
     
@@ -220,7 +220,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     void FindAndSetPlayerObjects()
     {
         FindPlayerObjects();
-        Debug.Log($"플레이어 오브젝트 검색 완료 - Player1: {(player1Object != null ? player1Object.name : "찾을 수 없음")}, Player2: {(player2Object != null ? player2Object.name : "찾을 수 없음")}");
+        Debug.Log($"플레이어 오브젝트 검색 완료 - Player1: {(myXROrigin != null ? myXROrigin.name : "찾을 수 없음")}, Player2: {(enemyObject != null ? enemyObject.name : "찾을 수 없음")}");
     }
     
     [ContextMenu("Reset Player Positions and Rotations")]
@@ -234,14 +234,14 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         if (Application.isPlaying) return;
         
-        if (player1Object != null && player1Object.name.ToLower().Contains("eye"))
+        if (myXROrigin != null && myXROrigin.name.ToLower().Contains("eye"))
         {
-            Debug.LogWarning($"Player 1 Object로 '{player1Object.name}'이 할당되어 있습니다. 이것은 올바른 플레이어 오브젝트가 아닐 수 있습니다.");
+            Debug.LogWarning($"Player 1 Object로 '{myXROrigin.name}'이 할당되어 있습니다. 이것은 올바른 플레이어 오브젝트가 아닐 수 있습니다.");
         }
         
-        if (player2Object != null && player2Object.name.ToLower().Contains("eye"))
+        if (enemyObject != null && enemyObject.name.ToLower().Contains("eye"))
         {
-            Debug.LogWarning($"Player 2 Object로 '{player2Object.name}'이 할당되어 있습니다. 이것은 올바른 플레이어 오브젝트가 아닐 수 있습니다.");
+            Debug.LogWarning($"Player 2 Object로 '{enemyObject.name}'이 할당되어 있습니다. 이것은 올바른 플레이어 오브젝트가 아닐 수 있습니다.");
         }
     }
 }

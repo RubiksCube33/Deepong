@@ -289,8 +289,8 @@ MonoBehaviour:
   player1SpawnPoint: {fileID: 2018754991}
   player2SpawnPoint: {fileID: 781620754}
   playerPrefab: {fileID: 919132149155446097, guid: 7a6d8a2a4911faa4a871759e7701c54d, type: 3}
-  player1Object: {fileID: 820992683}
-  player2Object: {fileID: 974632598}
+  myXROrigin: {fileID: 820992683}
+  enemyObject: {fileID: 974632598}
 --- !u!114 &54432433
 MonoBehaviour:
   m_ObjectHideFlags: 0
