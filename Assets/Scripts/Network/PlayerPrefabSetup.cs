@@ -19,6 +19,7 @@ public class PlayerPrefabSetup : MonoBehaviour
     [SerializeField] private bool hasPlayerSetup = false;
     [SerializeField] private bool hasPlayerNetworkSync = false;
     [SerializeField] private bool hasPlayerAnimationSync = false;
+    [SerializeField] private bool hasVRMovementController = false;
     
     void Awake()
     {
@@ -47,6 +48,9 @@ public class PlayerPrefabSetup : MonoBehaviour
         
         // PlayerAnimationSync 컴포넌트 추가/설정
         SetupPlayerAnimationSync();
+        
+        // VRMovementController 컴포넌트 추가/설정
+        SetupVRMovementController();
         
         // 컴포넌트 상태 업데이트
         CheckComponents();
@@ -147,6 +151,19 @@ public class PlayerPrefabSetup : MonoBehaviour
     }
     
     /// <summary>
+    /// VRMovementController 컴포넌트 설정
+    /// </summary>
+    void SetupVRMovementController()
+    {
+        VRMovementController vRMovementController = GetComponent<VRMovementController>();
+        if (vRMovementController == null)
+        {
+            vRMovementController = gameObject.AddComponent<VRMovementController>();
+            Debug.Log("VRMovementController 컴포넌트 추가됨");
+        }
+    }
+    
+    /// <summary>
     /// 현재 컴포넌트 상태 확인
     /// </summary>
     [ContextMenu("Check Components")]
@@ -156,9 +173,10 @@ public class PlayerPrefabSetup : MonoBehaviour
         hasPlayerSetup = GetComponent<PlayerSetup>() != null;
         hasPlayerNetworkSync = GetComponent<PlayerNetworkSync>() != null;
         hasPlayerAnimationSync = GetComponent<PlayerAnimationSync>() != null;
+        hasVRMovementController = GetComponent<VRMovementController>() != null;
         
         Debug.Log($"컴포넌트 상태 - PhotonView: {hasPhotonView}, PlayerSetup: {hasPlayerSetup}, " +
-                 $"NetworkSync: {hasPlayerNetworkSync}, AnimationSync: {hasPlayerAnimationSync}");
+                 $"NetworkSync: {hasPlayerNetworkSync}, AnimationSync: {hasPlayerAnimationSync}, VRMovementController: {hasVRMovementController}");
     }
     
     /// <summary>
@@ -166,7 +184,7 @@ public class PlayerPrefabSetup : MonoBehaviour
     /// </summary>
     public bool IsNetworkReady()
     {
-        return hasPhotonView && hasPlayerSetup && hasPlayerNetworkSync;
+        return hasPhotonView && hasPlayerSetup && hasPlayerNetworkSync && hasVRMovementController;
     }
 
 #if UNITY_EDITOR
