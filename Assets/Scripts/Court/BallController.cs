@@ -167,11 +167,8 @@ public class BallController : MonoBehaviourPunCallbacks
             // 패들 타입에 따른 사운드 재생
             PlayPaddleSound(collision.gameObject);
             
-            // Ball의 소유권자(마스터 클라이언트)만 물리 연산 실행
-            if (!PhotonNetwork.IsConnected || photonView.IsMine)
-            {
-                HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
-            }
+            // 내 패들이면 소유권 가져오고 반사 처리
+            HandleMyPaddleHit(collision, contact, hitDirection, forceDirection, forceMagnitude);
         }
 
         else if (collision.gameObject.CompareTag("Paddle_Sword"))
@@ -179,11 +176,8 @@ public class BallController : MonoBehaviourPunCallbacks
             // 패들 타입에 따른 사운드 재생
             PlayPaddleSound(collision.gameObject);
             
-            // Ball의 소유권자(마스터 클라이언트)만 물리 연산 실행
-            if (!PhotonNetwork.IsConnected || photonView.IsMine)
-            {
-                HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
-            }
+            // 내 패들이면 소유권 가져오고 반사 처리
+            HandleMyPaddleHit(collision, contact, hitDirection, forceDirection, forceMagnitude);
         }
 
         else if (collision.gameObject.CompareTag("Paddle_Glove"))
@@ -191,11 +185,8 @@ public class BallController : MonoBehaviourPunCallbacks
             // 패들 타입에 따른 사운드 재생
             PlayPaddleSound(collision.gameObject);
             
-            // Ball의 소유권자(마스터 클라이언트)만 물리 연산 실행
-            if (!PhotonNetwork.IsConnected || photonView.IsMine)
-            {
-                HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
-            }
+            // 내 패들이면 소유권 가져오고 반사 처리
+            HandleMyPaddleHit(collision, contact, hitDirection, forceDirection, forceMagnitude);
         }
         else
         {
@@ -222,6 +213,52 @@ public class BallController : MonoBehaviourPunCallbacks
     }
     
 
+    /// <summary>
+    /// 내 패들에 공이 닿으면 소유권 가져오고 반사 처리
+    /// </summary>
+    private void HandleMyPaddleHit(Collision collision, ContactPoint contact, Vector3 hitDirection, Vector3 forceDirection, float forceMagnitude)
+    {
+        // 싱글플레이어면 바로 처리
+        if (!PhotonNetwork.IsConnected)
+        {
+            HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
+            return;
+        }
+        
+        // 패들 소유자 찾기
+        PhotonView paddleOwner = GetPaddleOwner(collision.gameObject);
+        
+        // 내 패들이면 소유권 가져오고 반사 처리
+        if (paddleOwner != null && paddleOwner.IsMine)
+        {
+            // 소유권 가져오기
+            photonView.TransferOwnership(PhotonNetwork.LocalPlayer);
+            
+            // 반사 처리
+            HitBallByPaddle(collision, contact, hitDirection, forceDirection, forceMagnitude);
+        }
+    }
+    
+    /// <summary>
+    /// 패들의 소유자 찾기
+    /// </summary>
+    private PhotonView GetPaddleOwner(GameObject paddleObject)
+    {
+        PhotonView paddlePhotonView = paddleObject.GetComponent<PhotonView>();
+        
+        if (paddlePhotonView == null)
+        {
+            Transform current = paddleObject.transform;
+            while (current.parent != null && paddlePhotonView == null)
+            {
+                current = current.parent;
+                paddlePhotonView = current.GetComponent<PhotonView>();
+            }
+        }
+        
+        return paddlePhotonView;
+    }
+    
     /// <summary>
     /// 직접 AudioSource를 사용하여 사운드를 재생합니다.
     /// </summary>
