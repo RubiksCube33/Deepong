@@ -51,8 +51,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         // Inspector에서 플레이어 오브젝트가 제대로 할당되었는지 먼저 확인
         Debug.Log($"Inspector 할당 상태 - Player1: {(myXROrigin != null ? myXROrigin.name : "null")}, Player2: {(enemyObject != null ? enemyObject.name : "null")}");
         
-        // 플레이어 오브젝트 찾기
-        FindPlayerObjects();
+        // 플레이어 오브젝트 찾기 하지 않음
+        //FindPlayerObjects();
         
         // 한 번 더 확인 후 위치 설정
         if (myXROrigin != null && enemyObject != null)

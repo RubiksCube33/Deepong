@@ -201,7 +201,7 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
             
             if (syncAnimationParams && playerAnimator != null)
             {
-                SyncAnimationParameters();
+                //SyncAnimationParameters();
             }
         }
     }
