@@ -104,45 +104,63 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
     /// </summary>
     void FindXRControllerReferences()
     {
-        // XR Origin 찾기
+        // XR Origin 찾기 (여러 방법 시도)
         Transform xrOrigin = transform.root;
         
-        // Camera Offset 찾기
-        Transform cameraOffset = xrOrigin.Find("Camera Offset");
-        if (cameraOffset == null)
+        // Camera Offset 찾기 (다양한 경로 시도)
+        Transform cameraOffset = null;
+        string[] cameraOffsetPaths = {
+            "Camera Offset",
+            "XR Origin/Camera Offset", 
+            "XR Origin (XR Rig)/Camera Offset",
+            "XR Rig/Camera Offset"
+        };
+        
+        foreach (string path in cameraOffsetPaths)
         {
-            // 다른 이름으로 시도
-            cameraOffset = xrOrigin.Find("XR Origin/Camera Offset");
+            cameraOffset = xrOrigin.Find(path);
+            if (cameraOffset != null) break;
         }
         
         if (cameraOffset != null)
         {
-            // 헤드셋 찾기
+            // 헤드셋 찾기 (다양한 이름 시도)
             if (headTransform == null)
             {
-                headTransform = cameraOffset.Find("Main Camera");
-                if (headTransform == null)
-                    headTransform = cameraOffset.Find("CenterEyeAnchor");
+                string[] headNames = { "Main Camera", "CenterEyeAnchor", "Head", "Camera" };
+                foreach (string name in headNames)
+                {
+                    headTransform = cameraOffset.Find(name);
+                    if (headTransform != null) break;
+                }
             }
             
-            // 왼쪽 컨트롤러 찾기
+            // 왼쪽 컨트롤러 찾기 (다양한 이름 시도)
             if (leftHandTransform == null)
             {
-                leftHandTransform = cameraOffset.Find("LeftHand Controller");
-                if (leftHandTransform == null)
-                    leftHandTransform = cameraOffset.Find("Left Controller");
-                if (leftHandTransform == null)
-                    leftHandTransform = cameraOffset.Find("LeftHandAnchor");
+                string[] leftNames = { 
+                    "LeftHand Controller", "Left Controller", "LeftHandAnchor", 
+                    "Left Hand", "LeftController", "Controller (left)"
+                };
+                foreach (string name in leftNames)
+                {
+                    leftHandTransform = cameraOffset.Find(name);
+                    if (leftHandTransform != null) break;
+                }
             }
             
-            // 오른쪽 컨트롤러 찾기
+            // 오른쪽 컨트롤러 찾기 (다양한 이름 시도)
             if (rightHandTransform == null)
             {
-                rightHandTransform = cameraOffset.Find("RightHand Controller");
-                if (rightHandTransform == null)
-                    rightHandTransform = cameraOffset.Find("Right Controller");
-                if (rightHandTransform == null)
-                    rightHandTransform = cameraOffset.Find("RightHandAnchor");
+                string[] rightNames = { 
+                    "RightHand Controller", "Right Controller", "RightHandAnchor", 
+                    "Right Hand", "RightController", "Controller (right)"
+                };
+                foreach (string name in rightNames)
+                {
+                    rightHandTransform = cameraOffset.Find(name);
+                    if (rightHandTransform != null) break;
+                }
             }
             
             Debug.Log($"XR 컨트롤러 직접 참조 설정: Head={headTransform?.name}, LeftHand={leftHandTransform?.name}, RightHand={rightHandTransform?.name}");
@@ -150,7 +168,46 @@ public class PlayerNetworkSync : MonoBehaviourPunCallbacks, IPunObservable
         else
         {
             Debug.LogWarning("Camera Offset을 찾을 수 없습니다. VR 컨트롤러 동기화가 제한됩니다.");
+            
+            // 대안: 전체 하이어라키에서 검색
+            FindControllersByTag();
         }
+    }
+    
+    /// <summary>
+    /// 태그나 컴포넌트로 VR 컨트롤러를 찾는 대안 방법
+    /// </summary>
+    void FindControllersByTag()
+    {
+        // XR Controller 컴포넌트로 찾기
+        var controllers = FindObjectsOfType<UnityEngine.XR.Interaction.Toolkit.XRController>();
+        foreach (var controller in controllers)
+        {
+            if (controller.name.ToLower().Contains("left") && leftHandTransform == null)
+            {
+                leftHandTransform = controller.transform;
+            }
+            else if (controller.name.ToLower().Contains("right") && rightHandTransform == null)
+            {
+                rightHandTransform = controller.transform;
+            }
+        }
+        
+        // 카메라로 헤드 찾기
+        if (headTransform == null)
+        {
+            Camera[] cameras = FindObjectsOfType<Camera>();
+            foreach (var cam in cameras)
+            {
+                if (cam.name.ToLower().Contains("main") || cam.name.ToLower().Contains("center"))
+                {
+                    headTransform = cam.transform;
+                    break;
+                }
+            }
+        }
+        
+        Debug.Log($"대안 방법으로 컨트롤러 찾기 완료: Head={headTransform?.name}, LeftHand={leftHandTransform?.name}, RightHand={rightHandTransform?.name}");
     }
     
     void InitializeNetworkValues()
