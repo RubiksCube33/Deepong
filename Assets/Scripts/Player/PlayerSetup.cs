@@ -1,277 +1,67 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+
+using UnityEngine.InputSystem;
+using Unity.XR.CoreUtils;
 using Photon.Pun;
-using Photon.Realtime;
+using System.Collections;
 
 /// <summary>
-/// 네트워크 멀티플레이어에서 플레이어의 기본 설정을 담당합니다.
-/// PlayerSpawnManager와 함께 사용되어 로컬/원격 플레이어를 구분하여 설정합니다.
-/// Robot 에셋(팔다리 없음)과 휴머노이드 모델 모두 지원
+/// Player_Origin.prefab의 VR 컴포넌트들을 로컬/원격 플레이어에 따라 적절히 활성화/비활성화하는 스크립트
+/// 프리팹에서 이미 대부분의 컴포넌트들이 비활성화되어 있으므로, 로컬 플레이어일 때만 필요한 것들을 활성화합니다.
 /// </summary>
-[RequireComponent(typeof(PhotonView))]
-public class PlayerSetup : MonoBehaviourPunCallbacks
+public class PlayerSetup : MonoBehaviourPun, IPunObservable
 {
-    [Header("플레이어 타입")]
-    public bool isLocalPlayer = false; // 로컬 플레이어 여부 (PlayerSpawnManager에서 설정)
-    public bool isPlayerOne = false; // true면 player1, false면 player2
+    [Header("Debug")]
+    public bool enableDebugLogs = true;
     
-    [Header("VR 설정")]
-    [SerializeField] private bool isVRPlayer = true; // VR 플레이어인지 여부
-    [SerializeField] private GameObject vrComponents; // VR 관련 컴포넌트들의 부모 오브젝트
+    // 주요 컴포넌트들
+    private MonoBehaviour xrOrigin;
+    private CharacterController characterController;
+    private MonoBehaviour xrInputModalityManager;
+    private MonoBehaviour inputActionManager;
     
-    [Header("Robot Mode 설정")]
-    [SerializeField] private bool isRobotMode = false; // Robot 모드 여부 (자동 감지)
-
-    private Rigidbody rb;
-    private PlayerNetworkSync networkSync;
-    private VRHumanoidController vrController;
-    private Animator playerAnimator;
-
-    void Awake()
-    {
-        rb = GetComponent<Rigidbody>();
-        networkSync = GetComponent<PlayerNetworkSync>();
-        vrController = GetComponent<VRHumanoidController>();
-        playerAnimator = GetComponent<Animator>();
-        
-        // Robot 모드 자동 감지
-        DetectRobotMode();
-    }
+    // 컨트롤러 관련
+    private GameObject leftController;
+    private GameObject rightController;
+    private Camera mainCamera;
     
-    /// <summary>
-    /// Robot 모드 자동 감지
-    /// </summary>
-    private void DetectRobotMode()
-    {
-        // VRHumanoidController에서 Robot 모드 확인
-        if (vrController != null)
-        {
-            isRobotMode = vrController.IsRobotMode;
-        }
-        else
-        {
-            // VRHumanoidController가 없는 경우, Animator로 판단
-            isRobotMode = playerAnimator == null || !playerAnimator.isHuman;
-        }
-        
-        Debug.Log($"PlayerSetup - Robot 모드 감지됨: {isRobotMode}");
-    }
-
+    // 다른 스크립트들과의 호환성을 위한 속성들
+    public bool IsPlayerOne { get; private set; }
+    
     void Start()
     {
-        // 네트워크 플레이어 설정
-        SetupNetworkPlayer();
-    }
-
-    void SetupNetworkPlayer()
-    {
-        // 네트워크에 연결된 경우
-        if (PhotonNetwork.IsConnected)
-        {
-            // PhotonView.IsMine으로 로컬/원격 플레이어 구분
-            isLocalPlayer = photonView.IsMine;
-            
-            // 액터 번호에 따라 플레이어 위치 결정 (1번이 player1, 2번이 player2)
-            isPlayerOne = photonView.Owner.ActorNumber == 1;
-            
-            // 로컬 플레이어와 원격 플레이어 설정
-            if (isLocalPlayer)
-            {
-                SetupLocalPlayer();
-            }
-            else
-            {
-                SetupRemotePlayer();
-            }
-        }
+        StartCoroutine(DelayedNetworkSetup());
     }
     
-    void SetupLocalPlayer()
+    private IEnumerator DelayedNetworkSetup()
     {
-        // 로컬 플레이어 설정
-        Debug.Log($"로컬 플레이어 설정: {gameObject.name} (Actor: {photonView.Owner.ActorNumber}) - Robot 모드: {isRobotMode}");
+        // PhotonView 소유권이 확실히 설정될 때까지 대기
+        yield return new WaitForSeconds(0.5f);
         
-        // VR 컴포넌트들이 활성화되어 있는지 확인
-        if (isVRPlayer && vrController != null)
-        {
-            vrController.enabled = true;
-            
-            // Robot 모드 설정 동기화
-            if (isRobotMode)
-            {
-                vrController.IsRobotMode = true;
-                Debug.Log("VRHumanoidController가 Robot 모드로 설정되었습니다.");
-            }
-        }
+        // 네트워크 소유권 재확인
+        yield return new WaitUntil(() => photonView != null && photonView.Owner != null);
         
-        // XR Rig 활성화
-        EnableXRRig(true);
-        
-        // 네트워크 동기화 컴포넌트 설정
-        if (networkSync == null)
-        {
-            networkSync = gameObject.AddComponent<PlayerNetworkSync>();
-        }
-        
-        // PlayerAnimationSync 컴포넌트 확인 및 설정
-        PlayerAnimationSync animSync = GetComponent<PlayerAnimationSync>();
-        if (animSync == null && playerAnimator != null)
-        {
-            animSync = gameObject.AddComponent<PlayerAnimationSync>();
-        }
-        
-        Debug.Log("로컬 플레이어 설정 완료 - 모든 입력 및 XR 컴포넌트 활성화");
+        SetupPlayer();
     }
     
-    void SetupRemotePlayer()
+    private void SetupPlayer()
     {
-        // 원격 플레이어 설정
-        Debug.Log($"원격 플레이어 설정: {gameObject.name} (Actor: {photonView.Owner.ActorNumber}) - Robot 모드: {isRobotMode}");
+        bool isLocalPlayer = photonView.IsMine;
         
-        // VR 입력 관련 컴포넌트들 비활성화 (Robot 모드에서도 동일)
-        if (vrController != null)
+        // 플레이어 번호 설정 (액터 번호 기반)
+        IsPlayerOne = photonView.Owner.ActorNumber == 1;
+        
+        if (enableDebugLogs)
         {
-            // VR 컨트롤러는 비활성화하지만 Robot 모드 설정은 유지
-            vrController.enabled = false;
-            
-            if (isRobotMode)
-            {
-                Debug.Log("원격 플레이어 - Robot 모드가 감지되어 VR 입력만 비활성화됩니다.");
-            }
+            string playerType = isLocalPlayer ? "🟢 로컬" : "🔴 원격";
+            Debug.Log($"[PlayerSetup] {playerType} 플레이어 설정 시작 - ActorNumber: {photonView.Owner.ActorNumber}, IsPlayerOne: {IsPlayerOne}");
         }
         
-        // XR 관련 컴포넌트 비활성화
-        XRPlayerArmatureSetup xrSetup = GetComponent<XRPlayerArmatureSetup>();
-        if (xrSetup != null)
-        {
-            xrSetup.enabled = false;
-        }
+        // 컴포넌트 찾기
+        FindComponents();
         
-        // XR Rig 비활성화
-        EnableXRRig(false);
-        
-        // 카메라와 오디오 리스너 비활성화
-        DisableCameraAndAudio();
-        
-        // VR 컴포넌트 오브젝트가 따로 있다면 비활성화
-        if (vrComponents != null)
-        {
-            vrComponents.SetActive(false);
-        }
-        
-        // 입력 관련 컴포넌트들 비활성화
-        DisableInputComponents();
-        
-        Debug.Log("원격 플레이어 설정 완료 - 모든 입력 및 XR 컴포넌트 비활성화");
-    }
-    
-    /// <summary>
-    /// XR Rig 활성화/비활성화
-    /// </summary>
-    private void EnableXRRig(bool enable)
-    {
-        // XR Origin 또는 XR Rig 찾기
-        Transform xrOrigin = transform.Find("XR Origin (XR Rig)");
-        if (xrOrigin == null)
-            xrOrigin = transform.Find("XR Rig");
-        if (xrOrigin == null)
-            xrOrigin = transform.Find("XR Origin");
-        
-        if (xrOrigin != null)
-        {
-            xrOrigin.gameObject.SetActive(enable);
-            Debug.Log($"XR Rig {(enable ? "활성화" : "비활성화")}: {xrOrigin.name}");
-        }
-        else
-        {
-            Debug.LogWarning("XR Rig를 찾을 수 없습니다.");
-        }
-    }
-    
-    /// <summary>
-    /// 카메라와 오디오 리스너 비활성화
-    /// </summary>
-    private void DisableCameraAndAudio()
-    {
-        // 카메라 비활성화
-        Camera[] cameras = GetComponentsInChildren<Camera>();
-        foreach (Camera cam in cameras)
-        {
-            cam.enabled = false;
-        }
-        
-        // 오디오 리스너 비활성화
-        AudioListener[] listeners = GetComponentsInChildren<AudioListener>();
-        foreach (AudioListener listener in listeners)
-        {
-            listener.enabled = false;
-        }
-    }
-    
-    /// <summary>
-    /// 입력 관련 컴포넌트들 비활성화
-    /// </summary>
-    private void DisableInputComponents()
-    {
-        // 기타 입력 관련 컴포넌트들 비활성화
-        MonoBehaviour[] inputComponents = GetComponentsInChildren<MonoBehaviour>();
-        foreach (MonoBehaviour component in inputComponents)
-        {
-            if (component == this) continue; // 자기 자신은 제외
-            
-            string componentName = component.GetType().Name;
-            if (componentName.Contains("Input") || 
-                componentName.Contains("Controller") ||
-                componentName.Contains("XR") ||
-                componentName.Contains("Interaction"))
-            {
-                component.enabled = false;
-                Debug.Log($"입력 컴포넌트 비활성화: {componentName}");
-            }
-        }
-    }
-    
-    // 네트워크에서 플레이어가 참가했을 때 호출
-    public override void OnJoinedRoom()
-    {
-        // PlayerSpawnManager에서 위치를 관리하므로 여기서는 처리하지 않음
-        Debug.Log($"OnJoinedRoom 호출됨: {gameObject.name} - 위치는 PlayerSpawnManager에서 관리");
-    }
-    
-    /// <summary>
-    /// 플레이어 정보를 반환합니다.
-    /// </summary>
-    public string GetPlayerInfo()
-    {
-        string modeInfo = isRobotMode ? "Robot" : "Humanoid";
-        string playerType = isLocalPlayer ? "Local" : "Remote";
-        string playerPosition = isPlayerOne ? "Player1" : "Player2";
-        
-        return $"Player {photonView.Owner.ActorNumber} ({photonView.Owner.NickName}) - " +
-               $"{playerPosition} - " +
-               $"{playerType} - " +
-               $"Mode: {modeInfo} - " +
-               $"Position: {transform.position}";
-    }
-    
-    /// <summary>
-    /// 디버깅용 - 플레이어 정보 출력
-    /// </summary>
-    [ContextMenu("Print Player Info")]
-    public void PrintPlayerInfo()
-    {
-        Debug.Log(GetPlayerInfo());
-    }
-    
-    /// <summary>
-    /// 외부에서 로컬 플레이어 여부를 설정할 때 사용 (PlayerSpawnManager에서 호출)
-    /// </summary>
-    public void SetAsLocalPlayer(bool isLocal)
-    {
-        isLocalPlayer = isLocal;
-        
-        if (isLocal)
+        // 로컬 플레이어와 원격 플레이어 설정
+        if (isLocalPlayer)
         {
             SetupLocalPlayer();
         }
@@ -279,5 +69,245 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
         {
             SetupRemotePlayer();
         }
+        
+        if (enableDebugLogs)
+        {
+            string playerType = isLocalPlayer ? "🟢 로컬" : "🔴 원격";
+            Debug.Log($"[PlayerSetup] {playerType} 플레이어 설정 완료");
+        }
+    }
+    
+    private void FindComponents()
+    {
+        // 루트에서 컴포넌트들 찾기
+        characterController = GetComponent<CharacterController>();
+        
+        // 타입 이름으로 컴포넌트 찾기 (정확한 타입을 모르는 경우)
+        var allComponents = GetComponents<MonoBehaviour>();
+        foreach (var comp in allComponents)
+        {
+            string typeName = comp.GetType().Name;
+            
+            if (typeName.Contains("XROrigin") || typeName.Contains("Origin"))
+            {
+                xrOrigin = comp;
+            }
+            else if (typeName.Contains("XRInputModality"))
+            {
+                xrInputModalityManager = comp;
+            }
+            else if (typeName.Contains("InputActionManager"))
+            {
+                inputActionManager = comp;
+            }
+        }
+        
+        // 컨트롤러들 찾기
+        leftController = transform.Find("Camera Offset/Left Controller")?.gameObject;
+        rightController = transform.Find("Camera Offset/Right Controller")?.gameObject;
+        
+        // 메인 카메라 찾기
+        Transform cameraTransform = transform.Find("Camera Offset/Main Camera");
+        if (cameraTransform != null)
+        {
+            mainCamera = cameraTransform.GetComponent<Camera>();
+        }
+        
+        if (enableDebugLogs)
+        {
+            Debug.Log($"[PlayerSetup] 컴포넌트 찾기 결과:");
+            Debug.Log($"  - XROrigin: {(xrOrigin != null ? "✅" : "❌")} (타입: {xrOrigin?.GetType().Name}) (현재 상태: {(xrOrigin?.enabled == true ? "활성" : "비활성")})");
+            Debug.Log($"  - CharacterController: {(characterController != null ? "✅" : "❌")} (현재 상태: {(characterController?.enabled == true ? "활성" : "비활성")})");
+            Debug.Log($"  - XRInputModalityManager: {(xrInputModalityManager != null ? "✅" : "❌")} (타입: {xrInputModalityManager?.GetType().Name}) (현재 상태: {(xrInputModalityManager?.enabled == true ? "활성" : "비활성")})");
+            Debug.Log($"  - InputActionManager: {(inputActionManager != null ? "✅" : "❌")} (타입: {inputActionManager?.GetType().Name}) (현재 상태: {(inputActionManager?.enabled == true ? "활성" : "비활성")})");
+            Debug.Log($"  - Left Controller: {(leftController != null ? "✅" : "❌")} (현재 상태: {(leftController?.activeInHierarchy == true ? "활성" : "비활성")})");
+            Debug.Log($"  - Right Controller: {(rightController != null ? "✅" : "❌")} (현재 상태: {(rightController?.activeInHierarchy == true ? "활성" : "비활성")})");
+            Debug.Log($"  - Main Camera: {(mainCamera != null ? "✅" : "❌")} (현재 상태: {(mainCamera?.enabled == true ? "활성" : "비활성")})");
+        }
+    }
+    
+    private void SetupLocalPlayer()
+    {
+        if (enableDebugLogs)
+        {
+            Debug.Log("[PlayerSetup] 🟢 로컬 플레이어 - VR 컴포넌트들을 활성화합니다");
+        }
+        
+        // XR Origin 활성화 (VR 추적을 위해 필수)
+        if (xrOrigin != null)
+        {
+            xrOrigin.enabled = true;
+            if (enableDebugLogs) Debug.Log($"[PlayerSetup] ✅ {xrOrigin.GetType().Name} 활성화 (VR 추적 시작)");
+        }
+        
+        // Character Controller 활성화 (VR 이동을 위해 필수)
+        if (characterController != null)
+        {
+            characterController.enabled = true;
+            if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ CharacterController 활성화 (VR 이동 가능)");
+        }
+        
+        // XR Input Modality Manager 활성화 (VR 입력 모드 관리)
+        if (xrInputModalityManager != null)
+        {
+            xrInputModalityManager.enabled = true;
+            if (enableDebugLogs) Debug.Log($"[PlayerSetup] ✅ {xrInputModalityManager.GetType().Name} 활성화 (VR 입력 모드 관리)");
+        }
+        
+        // Input Action Manager 활성화 (VR 입력 처리)
+        if (inputActionManager != null)
+        {
+            inputActionManager.enabled = true;
+            if (enableDebugLogs) Debug.Log($"[PlayerSetup] ✅ {inputActionManager.GetType().Name} 활성화 (VR 입력 처리)");
+        }
+        
+        // 컨트롤러들 활성화 (VR 컨트롤러 표시 및 상호작용)
+        if (leftController != null)
+        {
+            leftController.SetActive(true);
+            EnableControllerInput(leftController);
+            if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ Left Controller 활성화 (VR 왼손 컨트롤러)");
+        }
+        
+        if (rightController != null)
+        {
+            rightController.SetActive(true);
+            EnableControllerInput(rightController);
+            if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ Right Controller 활성화 (VR 오른손 컨트롤러)");
+        }
+        
+        // 메인 카메라 활성화 (VR 시야)
+        if (mainCamera != null)
+        {
+            mainCamera.enabled = true;
+            if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ Main Camera 활성화 (VR 시야)");
+        }
+        
+        // 로컬 플레이어 태그 설정
+        gameObject.tag = "Player";
+        
+        if (enableDebugLogs)
+        {
+            Debug.Log("[PlayerSetup] 🟢 로컬 플레이어 설정 완료 - 모든 VR 기능이 활성화되었습니다");
+        }
+    }
+    
+    private void SetupRemotePlayer()
+    {
+        if (enableDebugLogs)
+        {
+            Debug.Log("[PlayerSetup] 🔴 원격 플레이어 - VR 컴포넌트들을 비활성화 상태로 유지합니다");
+        }
+        
+        // XR Origin 비활성화 유지 (원격 플레이어는 VR 추적 불필요)
+        if (xrOrigin != null)
+        {
+            xrOrigin.enabled = false;
+            if (enableDebugLogs) Debug.Log($"[PlayerSetup] ❌ {xrOrigin.GetType().Name} 비활성화 유지 (원격 플레이어는 VR 추적 불필요)");
+        }
+        
+        // Character Controller 활성화 (물리 충돌 및 네트워크 동기화를 위해)
+        if (characterController != null)
+        {
+            characterController.enabled = true;
+            if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ CharacterController 활성화 (물리 충돌 및 위치 동기화용)");
+        }
+        
+        // Input 관련 컴포넌트들 비활성화 유지 (원격 플레이어는 입력 처리 불필요)
+        if (xrInputModalityManager != null)
+        {
+            xrInputModalityManager.enabled = false;
+            if (enableDebugLogs) Debug.Log($"[PlayerSetup] ❌ {xrInputModalityManager.GetType().Name} 비활성화 유지");
+        }
+        
+        if (inputActionManager != null)
+        {
+            inputActionManager.enabled = false;
+            if (enableDebugLogs) Debug.Log($"[PlayerSetup] ❌ {inputActionManager.GetType().Name} 비활성화 유지");
+        }
+        
+        // 컨트롤러들은 시각적으로만 활성화 (다른 플레이어가 볼 수 있도록)
+        if (leftController != null)
+        {
+            leftController.SetActive(true);
+            DisableControllerInput(leftController);
+            if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ Left Controller 시각적 활성화, 입력 비활성화");
+        }
+        
+        if (rightController != null)
+        {
+            rightController.SetActive(true);
+            DisableControllerInput(rightController);
+            if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ Right Controller 시각적 활성화, 입력 비활성화");
+        }
+        
+        // 메인 카메라 비활성화 (원격 플레이어 카메라는 불필요)
+        if (mainCamera != null)
+        {
+            mainCamera.enabled = false;
+            if (enableDebugLogs) Debug.Log("[PlayerSetup] ❌ Main Camera 비활성화 (원격 플레이어 카메라 불필요)");
+        }
+        
+        // 원격 플레이어 태그 설정
+        gameObject.tag = "RemotePlayer";
+        
+        if (enableDebugLogs)
+        {
+            Debug.Log("[PlayerSetup] 🔴 원격 플레이어 설정 완료 - 시각적 표현만 활성화되었습니다");
+        }
+    }
+    
+    private void EnableControllerInput(GameObject controller)
+    {
+        // 로컬 플레이어의 컨트롤러 입력 활성화
+        // XRBaseInteractor 대신 MonoBehaviour로 찾아서 타입 체크
+        var monoBehaviours = controller.GetComponentsInChildren<MonoBehaviour>();
+        foreach (var mb in monoBehaviours)
+        {
+            string typeName = mb.GetType().Name;
+            if (typeName.Contains("Interactor") ||
+                typeName.Contains("Tracked") || 
+                typeName.Contains("ActionBased") ||
+                typeName.Contains("Input"))
+            {
+                mb.enabled = true;
+                if (enableDebugLogs) Debug.Log($"[PlayerSetup] ✅ {typeName} 활성화");
+            }
+        }
+    }
+    
+    private void DisableControllerInput(GameObject controller)
+    {
+        // 원격 플레이어의 컨트롤러 입력 비활성화
+        // XRBaseInteractor 대신 MonoBehaviour로 찾아서 타입 체크
+        var monoBehaviours = controller.GetComponentsInChildren<MonoBehaviour>();
+        foreach (var mb in monoBehaviours)
+        {
+            string typeName = mb.GetType().Name;
+            if (typeName.Contains("Interactor") ||
+                typeName.Contains("Tracked") || 
+                typeName.Contains("ActionBased") ||
+                typeName.Contains("Input"))
+            {
+                mb.enabled = false;
+                if (enableDebugLogs) Debug.Log($"[PlayerSetup] ❌ {typeName} 비활성화");
+            }
+        }
+    }
+    
+    // 다른 스크립트들과의 호환성을 위한 메서드들
+    public string GetPlayerInfo()
+    {
+        if (photonView == null || photonView.Owner == null) return "Unknown Player";
+        
+        return $"Player {photonView.Owner.ActorNumber} ({photonView.Owner.NickName}) - " +
+               $"{(IsPlayerOne ? "Player1" : "Player2")} - " +
+               $"{(photonView.IsMine ? "Local" : "Remote")} - " +
+               $"Position: {transform.position}";
+    }
+    
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        // 네트워크 동기화는 PlayerNetworkSync에서 처리
     }
 }
