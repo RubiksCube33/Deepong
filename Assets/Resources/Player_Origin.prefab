@@ -52,6 +52,8 @@ MonoBehaviour:
   baseHapticIntensity: 0.3
   baseHapticDuration: 0.1
   maxVelocityScale: 5
+  enableLocalPlayerOnlyHaptics: 1
+  showDebugLogs: 0
 --- !u!114 &900945430909758795
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -68,6 +70,8 @@ MonoBehaviour:
   baseHapticIntensity: 0.3
   baseHapticDuration: 0.1
   maxVelocityScale: 5
+  enableLocalPlayerOnlyHaptics: 1
+  showDebugLogs: 0
 --- !u!1 &3852349471520507876
 GameObject:
   m_ObjectHideFlags: 0
@@ -396,10 +400,13 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5751180816762871814}
+      addedObject: {fileID: 4351961395857068554}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 4351961395857068554}
+      addedObject: {fileID: 7717500826556798539}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8735274951856230933}
   m_SourcePrefab: {fileID: 100100000, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
 --- !u!4 &1626926066303692411 stripped
 Transform:
@@ -411,28 +418,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
   m_PrefabInstance: {fileID: 1233627712412158352}
   m_PrefabAsset: {fileID: 0}
---- !u!64 &5751180816762871814
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2152667912625370305}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 9151648323755713012, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
 --- !u!54 &4351961395857068554
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -460,6 +445,45 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!65 &7717500826556798539
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2152667912625370305}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.0026281269, y: 0.0016726515, z: 0.0016447989}
+  m_Center: {x: 0.006159291, y: 0.00035509682, z: 0.013063852}
+--- !u!114 &8735274951856230933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2152667912625370305}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b942f14849ad4a93a36420c58283f39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hapticPlayer: {fileID: 0}
+  baseHapticIntensity: 0.5
+  baseHapticDuration: 0.03
+  maxVelocityScale: 5
+  enableLocalPlayerOnlyHaptics: 1
+  showDebugLogs: 0
 --- !u!1001 &1964667830421466071
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -676,7 +700,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1724226729424998, guid: 837b69c41a8880a43ac3434cbbadb285, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1724226729424998, guid: 837b69c41a8880a43ac3434cbbadb285, type: 3}
       propertyPath: m_TagString
@@ -744,10 +768,13 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 1724226729424998, guid: 837b69c41a8880a43ac3434cbbadb285, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 4438742124243566799}
+      addedObject: {fileID: 1900361832861318166}
     - targetCorrespondingSourceObject: {fileID: 1724226729424998, guid: 837b69c41a8880a43ac3434cbbadb285, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1900361832861318166}
+      addedObject: {fileID: 1098187918803286150}
+    - targetCorrespondingSourceObject: {fileID: 1724226729424998, guid: 837b69c41a8880a43ac3434cbbadb285, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3085506124519658538}
   m_SourcePrefab: {fileID: 100100000, guid: 837b69c41a8880a43ac3434cbbadb285, type: 3}
 --- !u!4 &3390163008019435464 stripped
 Transform:
@@ -759,28 +786,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1724226729424998, guid: 837b69c41a8880a43ac3434cbbadb285, type: 3}
   m_PrefabInstance: {fileID: 3394958342911696990}
   m_PrefabAsset: {fileID: 0}
---- !u!64 &4438742124243566799
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3394430494932736056}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: f32442828616b1b4c9e1027923ad9a73, type: 3}
 --- !u!54 &1900361832861318166
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -808,6 +813,45 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!65 &1098187918803286150
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3394430494932736056}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.0695372, y: 1.0036712, z: 0.07724935}
+  m_Center: {x: -0.000000052154064, y: 0.36505187, z: 0.00000044546482}
+--- !u!114 &3085506124519658538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3394430494932736056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b942f14849ad4a93a36420c58283f39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hapticPlayer: {fileID: 0}
+  baseHapticIntensity: 0.15
+  baseHapticDuration: 0.4
+  maxVelocityScale: 5
+  enableLocalPlayerOnlyHaptics: 1
+  showDebugLogs: 0
 --- !u!1001 &4523145625424846609
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1386,10 +1430,13 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5103368992439713102}
+      addedObject: {fileID: 5152083206650783855}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5152083206650783855}
+      addedObject: {fileID: 1107559649341437562}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 543386501362195142}
   m_SourcePrefab: {fileID: 100100000, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
 --- !u!4 &4661014361173711670 stripped
 Transform:
@@ -1401,28 +1448,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
   m_PrefabInstance: {fileID: 5126651775612206301}
   m_PrefabAsset: {fileID: 0}
---- !u!64 &5103368992439713102
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5468759117494518156}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 9151648323755713012, guid: 54d3d4b7a9c16af4fabb76b6b87a6707, type: 3}
 --- !u!54 &5152083206650783855
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1450,6 +1475,45 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!65 &1107559649341437562
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5468759117494518156}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.0026281273, y: 0.0016726517, z: 0.0016447991}
+  m_Center: {x: 0.0061592883, y: 0.0003550953, z: 0.013063847}
+--- !u!114 &543386501362195142
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5468759117494518156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b942f14849ad4a93a36420c58283f39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hapticPlayer: {fileID: 2776334496633723838}
+  baseHapticIntensity: 0.5
+  baseHapticDuration: 0.03
+  maxVelocityScale: 5
+  enableLocalPlayerOnlyHaptics: 1
+  showDebugLogs: 0
 --- !u!1001 &6141556041782267136
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1556,38 +1620,22 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8164078558771037576, guid: 5a95a55e517ff4c9ca4aeb2da11ebc55, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 4195214920146812047}
+      addedObject: {fileID: 5807707830747572106}
     - targetCorrespondingSourceObject: {fileID: 8164078558771037576, guid: 5a95a55e517ff4c9ca4aeb2da11ebc55, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5807707830747572106}
+      addedObject: {fileID: 6328933674641510278}
+    - targetCorrespondingSourceObject: {fileID: 8164078558771037576, guid: 5a95a55e517ff4c9ca4aeb2da11ebc55, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1745360102039790353}
+    - targetCorrespondingSourceObject: {fileID: 8164078558771037576, guid: 5a95a55e517ff4c9ca4aeb2da11ebc55, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5506481719326694848}
   m_SourcePrefab: {fileID: 100100000, guid: 5a95a55e517ff4c9ca4aeb2da11ebc55, type: 3}
 --- !u!1 &2627730121665562760 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8164078558771037576, guid: 5a95a55e517ff4c9ca4aeb2da11ebc55, type: 3}
   m_PrefabInstance: {fileID: 6141556041782267136}
   m_PrefabAsset: {fileID: 0}
---- !u!64 &4195214920146812047
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2627730121665562760}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -2432090755550338912, guid: 5a95a55e517ff4c9ca4aeb2da11ebc55, type: 3}
 --- !u!54 &5807707830747572106
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1615,6 +1663,63 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &6328933674641510278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2627730121665562760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b942f14849ad4a93a36420c58283f39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hapticPlayer: {fileID: 5657960956093155682}
+  baseHapticIntensity: 0.3
+  baseHapticDuration: 0.1
+  maxVelocityScale: 5
+  enableLocalPlayerOnlyHaptics: 1
+  showDebugLogs: 0
+--- !u!65 &1745360102039790353
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2627730121665562760}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.629477, y: 1.194163, z: 0.12562816}
+  m_Center: {x: -0.000013500452, y: 0.00066649925, z: 0.0010390023}
+--- !u!114 &5506481719326694848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2627730121665562760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b942f14849ad4a93a36420c58283f39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hapticPlayer: {fileID: 0}
+  baseHapticIntensity: 0.3
+  baseHapticDuration: 0.1
+  maxVelocityScale: 5
+  enableLocalPlayerOnlyHaptics: 1
+  showDebugLogs: 0
 --- !u!4 &5958695322395568875 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 5a95a55e517ff4c9ca4aeb2da11ebc55, type: 3}
@@ -2444,6 +2549,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6eb4340434054c843aa9380860eadc23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  particleVFX: {fileID: 0}
+  minCollisionForce: 1
+  maxCollisionForce: 10
+  particleIntensityMultiplier: 1
+  weakCollisionColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  strongCollisionColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!114 &4319829403919364267 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5739245880472075158, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
@@ -2521,6 +2632,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6eb4340434054c843aa9380860eadc23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  particleVFX: {fileID: 0}
+  minCollisionForce: 1
+  maxCollisionForce: 10
+  particleIntensityMultiplier: 1
+  weakCollisionColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  strongCollisionColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!82 &8475551019234760899
 AudioSource:
   m_ObjectHideFlags: 0
