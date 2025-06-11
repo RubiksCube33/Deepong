@@ -1916,6 +1916,10 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1767192433, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1767192439, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_BackGroundColor.a
       value: 1
@@ -2017,6 +2021,10 @@ PrefabInstance:
       value: 33
       objectReference: {fileID: 0}
     - target: {fileID: 4088110610454198647, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5167925059111895691, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
@@ -2520,6 +2528,7 @@ MonoBehaviour:
   - {fileID: 3029060727881293274}
   - {fileID: 370576797782343338}
   - {fileID: 6886742489961923346}
+  - {fileID: 2044243884984231135}
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
@@ -2631,6 +2640,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enableDebugLogs: 1
+  enableGroundCheck: 1
+  groundCheckDistance: 2
+  groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!114 &7903797088014469734
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2648,6 +2662,7 @@ MonoBehaviour:
   hasPlayerSetup: 1
   hasPlayerNetworkSync: 1
   hasPlayerAnimationSync: 1
+  hasVRMovementController: 0
 --- !u!4 &7170186760365188371 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
