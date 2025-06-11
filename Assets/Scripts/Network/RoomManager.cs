@@ -5,8 +5,9 @@ using Photon.Realtime;
 
 public class RoomManager : MonoBehaviourPunCallbacks
 {
-    [Header("플레이어 스폰 매니저")]
-    public PlayerSpawnManager playerSpawnManager; // 플레이어 스폰 매니저 참조
+    [Header("플레이어 설정")]
+    public GameObject playerPrefab; // 플레이어 프리팹
+    public Transform[] spawnPoints; // 플레이어 스폰 위치
     
     [Header("게임 설정")]
     public float gameStartDelay = 2f; // 게임 시작 전 대기 시간
@@ -15,18 +16,13 @@ public class RoomManager : MonoBehaviourPunCallbacks
     [Header("UI 요소")]
     public GameObject roomUI; // 방 UI
     
+    private GameObject localPlayerInstance; // 로컬 플레이어 인스턴스
     private bool isGameStarted = false; // 게임 시작 여부
     
     void Awake()
     {
         // 씬 전환 시에도 이 매니저 유지
         DontDestroyOnLoad(this.gameObject);
-        
-        // PlayerSpawnManager 자동 찾기
-        if (playerSpawnManager == null)
-        {
-            playerSpawnManager = FindObjectOfType<PlayerSpawnManager>();
-        }
     }
     
     void Start()
@@ -34,12 +30,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
         // UI 초기화
         if (roomUI != null)
             roomUI.SetActive(false);
-            
-        // PlayerSpawnManager 확인
-        if (playerSpawnManager == null)
-        {
-            Debug.LogError("RoomManager: PlayerSpawnManager를 찾을 수 없습니다!");
-        }
     }
     
     // 방에 입장했을 때 호출
@@ -54,8 +44,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
         // 플레이어가 모두 입장했는지 확인
         CheckAllPlayersJoined();
         
-        // 플레이어 스폰은 PlayerSpawnManager에서 처리
-        Debug.Log("플레이어 스폰은 PlayerSpawnManager에서 처리됩니다.");
+        // 플레이어 인스턴스 생성
+        InstantiateLocalPlayer();
     }
     
     // 다른 플레이어가 방에 입장했을 때 호출
@@ -65,6 +55,53 @@ public class RoomManager : MonoBehaviourPunCallbacks
         
         // 플레이어가 모두 입장했는지 확인
         CheckAllPlayersJoined();
+    }
+    
+    // 로컬 플레이어 인스턴스 생성
+    private void InstantiateLocalPlayer()
+    {
+        // 이미 인스턴스가 있으면 생성하지 않음
+        if (localPlayerInstance != null) return;
+        
+        // 스폰 포인트 결정
+        Transform spawnPoint = GetSpawnPoint();
+        
+        // 플레이어 프리팹이 없으면 Resources 폴더에서 로드
+        if (playerPrefab == null)
+        {
+            playerPrefab = Resources.Load<GameObject>("PlayerPrefab");
+            
+            if (playerPrefab == null)
+            {
+                Debug.LogError("플레이어 프리팹을 찾을 수 없습니다!");
+                return;
+            }
+        }
+        
+        // 플레이어 인스턴스 생성
+        localPlayerInstance = PhotonNetwork.Instantiate(
+            playerPrefab.name, 
+            spawnPoint.position, 
+            spawnPoint.rotation);
+        
+        Debug.Log("로컬 플레이어 인스턴스 생성: " + localPlayerInstance.name);
+    }
+    
+    // 플레이어 스폰 포인트 결정
+    private Transform GetSpawnPoint()
+    {
+        if (spawnPoints == null || spawnPoints.Length == 0)
+        {
+            // 스폰 포인트가 없으면 게임 오브젝트 위치 사용
+            Debug.LogWarning("스폰 포인트가 설정되지 않았습니다. 기본 위치를 사용합니다.");
+            return transform;
+        }
+        
+        // 플레이어 번호에 따라 스폰 포인트 할당
+        int playerIndex = PhotonNetwork.LocalPlayer.ActorNumber - 1;
+        playerIndex = Mathf.Clamp(playerIndex, 0, spawnPoints.Length - 1);
+        
+        return spawnPoints[playerIndex];
     }
     
     // 모든 플레이어가 입장했는지 확인
@@ -89,9 +126,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
         isGameStarted = true;
         
         Debug.Log("게임이 시작되었습니다!");
-        
-        // 게임 시작 관련 추가 로직을 여기에 구현
-        // 예: 게임 타이머 시작, UI 업데이트 등
     }
     
     // 방 나가기
@@ -101,44 +135,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
         {
             Debug.Log("방을 나갑니다...");
             PhotonNetwork.LeaveRoom();
-        }
-    }
-    
-    // 방을 나갔을 때 호출
-    public override void OnLeftRoom()
-    {
-        Debug.Log("방을 나갔습니다.");
-        
-        // UI 비활성화
-        if (roomUI != null)
-            roomUI.SetActive(false);
-            
-        // 게임 상태 초기화
-        isGameStarted = false;
-    }
-    
-    // 플레이어가 방을 나갔을 때 호출
-    public override void OnPlayerLeftRoom(Player otherPlayer)
-    {
-        Debug.Log($"플레이어가 나갔습니다: {otherPlayer.NickName} (ID: {otherPlayer.ActorNumber})");
-        
-        // 게임 중이었다면 일시정지 또는 종료 처리
-        if (isGameStarted)
-        {
-            Debug.Log("게임 중 플레이어가 나갔습니다. 게임을 일시정지합니다.");
-            // 게임 일시정지 로직 구현
-        }
-    }
-    
-    // 방장이 바뀌었을 때 호출
-    public override void OnMasterClientSwitched(Player newMasterClient)
-    {
-        Debug.Log($"방장이 바뀌었습니다: {newMasterClient.NickName}");
-        
-        // 새로운 방장이 게임 상태를 관리하도록 설정
-        if (PhotonNetwork.IsMasterClient && !isGameStarted)
-        {
-            CheckAllPlayersJoined();
         }
     }
 }
