@@ -5,7 +5,6 @@ public class PongRacketHaptics : MonoBehaviour
 {
     [Header("컨트롤러 설정")]
     [SerializeField] private HapticImpulsePlayer hapticPlayer;
-    [SerializeField] private bool isLeftHand = true;
 
     [Header("진동 설정")]
     [SerializeField, Range(0, 1)] private float baseHapticIntensity = 0.3f;
