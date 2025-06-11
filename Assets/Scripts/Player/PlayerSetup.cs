@@ -28,37 +28,13 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
 
     private Rigidbody rb;
     private PlayerNetworkSync networkSync;
-    private VRHumanoidController vrController;
     private Animator playerAnimator;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
         networkSync = GetComponent<PlayerNetworkSync>();
-        vrController = GetComponent<VRHumanoidController>();
         playerAnimator = GetComponent<Animator>();
-        
-        // Robot 모드 자동 감지
-        DetectRobotMode();
-    }
-    
-    /// <summary>
-    /// Robot 모드 자동 감지
-    /// </summary>
-    private void DetectRobotMode()
-    {
-        // VRHumanoidController에서 Robot 모드 확인
-        if (vrController != null)
-        {
-            isRobotMode = vrController.IsRobotMode;
-        }
-        else
-        {
-            // VRHumanoidController가 없는 경우, Animator로 판단
-            isRobotMode = playerAnimator == null || !playerAnimator.isHuman;
-        }
-        
-        Debug.Log($"PlayerSetup - Robot 모드 감지됨: {isRobotMode}");
     }
 
     void Start()
@@ -98,19 +74,6 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
         // 로컬 플레이어 설정
         Debug.Log($"로컬 플레이어 설정: {gameObject.name} (Actor: {photonView.Owner.ActorNumber}) - Robot 모드: {isRobotMode}");
         
-        // VR 컴포넌트들이 활성화되어 있는지 확인
-        if (isVRPlayer && vrController != null)
-        {
-            vrController.enabled = true;
-            
-            // Robot 모드 설정 동기화
-            if (isRobotMode)
-            {
-                vrController.IsRobotMode = true;
-                Debug.Log("VRHumanoidController가 Robot 모드로 설정되었습니다.");
-            }
-        }
-        
         // 네트워크 동기화 컴포넌트 설정
         if (networkSync == null)
         {
@@ -129,18 +92,6 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
     {
         // 원격 플레이어 설정
         Debug.Log($"원격 플레이어 설정: {gameObject.name} (Actor: {photonView.Owner.ActorNumber}) - Robot 모드: {isRobotMode}");
-        
-        // VR 입력 관련 컴포넌트들 비활성화 (Robot 모드에서도 동일)
-        if (vrController != null)
-        {
-            // VR 컨트롤러는 비활성화하지만 Robot 모드 설정은 유지
-            vrController.enabled = false;
-            
-            if (isRobotMode)
-            {
-                Debug.Log("원격 플레이어 - Robot 모드가 감지되어 VR 입력만 비활성화됩니다.");
-            }
-        }
         
         // XR 관련 컴포넌트 비활성화
         //XRPlayerArmatureSetup xrSetup = GetComponent<XRPlayerArmatureSetup>();
@@ -163,8 +114,6 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
         {
             vrComponents.SetActive(false);
         }
-        
-        // Robot 모드인 경우 특별한 처리는 필요 없음 (시각화는 자동으로 비활성화됨)
     }
     
     void SetInitialPosition()
