@@ -2663,6 +2663,7 @@ MonoBehaviour:
   hasPlayerNetworkSync: 1
   hasPlayerAnimationSync: 1
   hasVRMovementController: 0
+  hasPaddleChangeController: 0
 --- !u!4 &7170186760365188371 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
@@ -2853,6 +2854,7 @@ MonoBehaviour:
   paddle_glove_left: {fileID: 5468759117494518156}
   paddle_glove_right: {fileID: 2152667912625370305}
   isRightController: 1
+  enableNetworkSync: 1
   OnPaddleChanged:
     m_PersistentCalls:
       m_Calls: []
