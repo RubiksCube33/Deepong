@@ -14,6 +14,11 @@ public class PlayerSetup : MonoBehaviourPun, IPunObservable
     [Header("Debug")]
     public bool enableDebugLogs = true;
     
+    [Header("바닥 뚫림 방지")]
+    public bool enableGroundCheck = true;
+    public float groundCheckDistance = 2f;
+    public LayerMask groundLayerMask = -1;
+    
     // 주요 컴포넌트들
     private MonoBehaviour xrOrigin;
     private CharacterController characterController;
@@ -25,12 +30,28 @@ public class PlayerSetup : MonoBehaviourPun, IPunObservable
     private GameObject rightController;
     private Camera mainCamera;
     
+    // 바닥 뚫림 방지
+    private Vector3 lastValidPosition;
+    private bool isGrounded = true;
+    
     // 다른 스크립트들과의 호환성을 위한 속성들
     public bool IsPlayerOne { get; private set; }
     
     void Start()
     {
+        // 초기 위치 저장
+        lastValidPosition = transform.position;
+        
         StartCoroutine(DelayedNetworkSetup());
+    }
+    
+    void Update()
+    {
+        // 로컬 플레이어만 바닥 체크
+        if (photonView != null && photonView.IsMine && enableGroundCheck)
+        {
+            CheckGroundAndPreventFalling();
+        }
     }
     
     private IEnumerator DelayedNetworkSetup()
@@ -140,11 +161,21 @@ public class PlayerSetup : MonoBehaviourPun, IPunObservable
             if (enableDebugLogs) Debug.Log($"[PlayerSetup] ✅ {xrOrigin.GetType().Name} 활성화 (VR 추적 시작)");
         }
         
-        // Character Controller 활성화 (VR 이동을 위해 필수)
+        // Character Controller 활성화 및 설정 (VR 이동을 위해 필수)
         if (characterController != null)
         {
             characterController.enabled = true;
-            if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ CharacterController 활성화 (VR 이동 가능)");
+            
+            // CharacterController 설정 최적화 (바닥 뚫림 방지)
+            characterController.center = new Vector3(0, 0.9f, 0); // 중심점을 약간 위로
+            characterController.height = 1.8f; // 적절한 높이
+            characterController.radius = 0.3f; // 적절한 반지름
+            characterController.stepOffset = 0.3f; // 계단 오르기 가능한 높이
+            characterController.slopeLimit = 45f; // 경사면 제한
+            characterController.skinWidth = 0.08f; // 충돌 감지 여유 공간
+            characterController.minMoveDistance = 0.001f; // 최소 이동 거리
+            
+            if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ CharacterController 활성화 및 설정 완료 (VR 이동 가능, 바닥 뚫림 방지)");
         }
         
         // XR Input Modality Manager 활성화 (VR 입력 모드 관리)
@@ -206,11 +237,11 @@ public class PlayerSetup : MonoBehaviourPun, IPunObservable
             if (enableDebugLogs) Debug.Log($"[PlayerSetup] ❌ {xrOrigin.GetType().Name} 비활성화 유지 (원격 플레이어는 VR 추적 불필요)");
         }
         
-        // Character Controller 활성화 (물리 충돌 및 네트워크 동기화를 위해)
+        // Character Controller 비활성화 (원격 플레이어는 물리 충돌 불필요, 네트워크 동기화만 사용)
         if (characterController != null)
         {
-            characterController.enabled = true;
-            if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ CharacterController 활성화 (물리 충돌 및 위치 동기화용)");
+            characterController.enabled = false;
+            if (enableDebugLogs) Debug.Log("[PlayerSetup] ❌ CharacterController 비활성화 (원격 플레이어는 물리 충돌 불필요)");
         }
         
         // Input 관련 컴포넌트들 비활성화 유지 (원격 플레이어는 입력 처리 불필요)
@@ -309,5 +340,51 @@ public class PlayerSetup : MonoBehaviourPun, IPunObservable
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         // 네트워크 동기화는 PlayerNetworkSync에서 처리
+    }
+    
+    /// <summary>
+    /// 바닥 뚫림 방지 체크
+    /// </summary>
+    private void CheckGroundAndPreventFalling()
+    {
+        if (characterController == null || !characterController.enabled) return;
+        
+        // 현재 위치에서 아래로 레이캐스트
+        Vector3 rayStart = transform.position + Vector3.up * 0.1f;
+        RaycastHit hit;
+        
+        bool groundDetected = Physics.Raycast(rayStart, Vector3.down, out hit, groundCheckDistance, groundLayerMask);
+        
+        // 바닥이 감지되지 않고 너무 아래로 떨어진 경우
+        if (!groundDetected && transform.position.y < lastValidPosition.y - 5f)
+        {
+            if (enableDebugLogs)
+            {
+                Debug.LogWarning($"[PlayerSetup] 바닥 뚫림 감지! 마지막 안전 위치로 복원: {lastValidPosition}");
+            }
+            
+            // 안전한 위치로 복원
+            characterController.enabled = false;
+            transform.position = lastValidPosition;
+            characterController.enabled = true;
+            
+            isGrounded = false;
+        }
+        else if (groundDetected)
+        {
+            // 바닥이 감지되면 현재 위치를 안전 위치로 업데이트
+            if (hit.distance < 1f) // 바닥과 충분히 가까운 경우만
+            {
+                lastValidPosition = transform.position;
+                isGrounded = true;
+            }
+        }
+        
+        // 디버그 레이 그리기
+        if (enableDebugLogs)
+        {
+            Color rayColor = groundDetected ? Color.green : Color.red;
+            Debug.DrawRay(rayStart, Vector3.down * groundCheckDistance, rayColor);
+        }
     }
 }
