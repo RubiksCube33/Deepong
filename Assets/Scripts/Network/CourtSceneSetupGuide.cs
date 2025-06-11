@@ -129,8 +129,9 @@ public class CourtSceneSetupGuide : MonoBehaviourPunCallbacks
             PhotonView photonView = prefab.GetComponent<PhotonView>();
             PlayerNetworkSync networkSync = prefab.GetComponent<PlayerNetworkSync>();
             PlayerSetup playerSetup = prefab.GetComponent<PlayerSetup>();
+            VRMovementController vrMovement = prefab.GetComponent<VRMovementController>();
             
-            if (photonView != null && networkSync != null && playerSetup != null)
+            if (photonView != null && networkSync != null && playerSetup != null && vrMovement != null)
             {
                 Debug.Log("✓ Player_Origin.prefab이 네트워크 동기화 준비 완료되었습니다.");
                 hasPrefabReady = true;
@@ -141,6 +142,7 @@ public class CourtSceneSetupGuide : MonoBehaviourPunCallbacks
                 Debug.LogWarning($"  - PhotonView: {(photonView != null ? "✓" : "✗")}");
                 Debug.LogWarning($"  - PlayerNetworkSync: {(networkSync != null ? "✓" : "✗")}");
                 Debug.LogWarning($"  - PlayerSetup: {(playerSetup != null ? "✓" : "✗")}");
+                Debug.LogWarning($"  - VRMovementController: {(vrMovement != null ? "✓" : "✗")}");
                 hasPrefabReady = false;
             }
         }
