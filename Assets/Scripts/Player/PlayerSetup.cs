@@ -127,8 +127,27 @@ public class PlayerSetup : MonoBehaviourPun, IPunObservable
         leftController = transform.Find("Camera Offset/Left Controller")?.gameObject;
         rightController = transform.Find("Camera Offset/Right Controller")?.gameObject;
         
-        // 메인 카메라 찾기
+        // 메인 카메라 찾기 (여러 경로 시도)
         Transform cameraTransform = transform.Find("Camera Offset/Main Camera");
+        if (cameraTransform == null)
+        {
+            // 대안 경로들 시도
+            cameraTransform = transform.Find("Main Camera");
+            if (cameraTransform == null)
+            {
+                // Camera Offset 하위에서 Camera 컴포넌트가 있는 오브젝트 찾기
+                Transform cameraOffset = transform.Find("Camera Offset");
+                if (cameraOffset != null)
+                {
+                    Camera[] cameras = cameraOffset.GetComponentsInChildren<Camera>();
+                    if (cameras.Length > 0)
+                    {
+                        cameraTransform = cameras[0].transform;
+                    }
+                }
+            }
+        }
+        
         if (cameraTransform != null)
         {
             mainCamera = cameraTransform.GetComponent<Camera>();
@@ -143,7 +162,7 @@ public class PlayerSetup : MonoBehaviourPun, IPunObservable
             Debug.Log($"  - InputActionManager: {(inputActionManager != null ? "✅" : "❌")} (타입: {inputActionManager?.GetType().Name}) (현재 상태: {(inputActionManager?.enabled == true ? "활성" : "비활성")})");
             Debug.Log($"  - Left Controller: {(leftController != null ? "✅" : "❌")} (현재 상태: {(leftController?.activeInHierarchy == true ? "활성" : "비활성")})");
             Debug.Log($"  - Right Controller: {(rightController != null ? "✅" : "❌")} (현재 상태: {(rightController?.activeInHierarchy == true ? "활성" : "비활성")})");
-            Debug.Log($"  - Main Camera: {(mainCamera != null ? "✅" : "❌")} (현재 상태: {(mainCamera?.enabled == true ? "활성" : "비활성")})");
+            Debug.Log($"  - Main Camera: {(mainCamera != null ? "✅" : "❌")} (경로: {cameraTransform?.name}) (현재 상태: {(mainCamera?.enabled == true ? "활성" : "비활성")})");
         }
     }
     
@@ -160,6 +179,12 @@ public class PlayerSetup : MonoBehaviourPun, IPunObservable
             xrOrigin.enabled = true;
             if (enableDebugLogs) Debug.Log($"[PlayerSetup] ✅ {xrOrigin.GetType().Name} 활성화 (VR 추적 시작)");
         }
+        
+        // Locomotion 오브젝트 활성화 (로컬 플레이어만 이동 시스템 필요)
+        EnableLocomotionForLocalPlayer();
+        
+        // 메인 카메라 활성화 (로컬 플레이어만 카메라 필요)
+        EnableMainCameraForLocalPlayer();
         
         // Character Controller 활성화 및 설정 (VR 이동을 위해 필수)
         if (characterController != null)
@@ -207,13 +232,6 @@ public class PlayerSetup : MonoBehaviourPun, IPunObservable
             if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ Right Controller 활성화 (VR 오른손 컨트롤러)");
         }
         
-        // 메인 카메라 활성화 (VR 시야)
-        if (mainCamera != null)
-        {
-            mainCamera.enabled = true;
-            if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ Main Camera 활성화 (VR 시야)");
-        }
-        
         // 로컬 플레이어 태그 설정
         gameObject.tag = "Player";
         
@@ -223,11 +241,58 @@ public class PlayerSetup : MonoBehaviourPun, IPunObservable
         }
     }
     
+    /// <summary>
+    /// 로컬 플레이어를 위해 Locomotion 오브젝트 활성화
+    /// </summary>
+    private void EnableLocomotionForLocalPlayer()
+    {
+        // Locomotion 오브젝트 찾기
+        Transform locomotionTransform = transform.Find("Locomotion");
+        if (locomotionTransform != null)
+        {
+            // Locomotion 오브젝트 활성화
+            locomotionTransform.gameObject.SetActive(true);
+            
+            if (enableDebugLogs)
+            {
+                Debug.Log("[PlayerSetup] ✅ Locomotion 오브젝트 활성화 (로컬 플레이어 이동 시스템)");
+            }
+        }
+        else
+        {
+            if (enableDebugLogs)
+            {
+                Debug.LogWarning("[PlayerSetup] Locomotion 오브젝트를 찾을 수 없습니다. 프리팹 구조를 확인해주세요.");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 로컬 플레이어를 위해 Main Camera 활성화
+    /// </summary>
+    private void EnableMainCameraForLocalPlayer()
+    {
+        if (mainCamera != null)
+        {
+            // Main Camera GameObject와 컴포넌트 모두 활성화
+            mainCamera.gameObject.SetActive(true);
+            mainCamera.enabled = true;
+            if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ Main Camera 활성화 (로컬 플레이어 VR 시야)");
+        }
+        else
+        {
+            if (enableDebugLogs)
+            {
+                Debug.LogWarning("[PlayerSetup] Main Camera를 찾을 수 없습니다. 프리팹 구조를 확인해주세요.");
+            }
+        }
+    }
+    
     private void SetupRemotePlayer()
     {
         if (enableDebugLogs)
         {
-            Debug.Log("[PlayerSetup] 🔴 원격 플레이어 - VR 컴포넌트들을 비활성화 상태로 유지합니다");
+            Debug.Log("[PlayerSetup] 🔴 원격 플레이어 - 기본 비활성화 상태 유지");
         }
         
         // XR Origin 비활성화 유지 (원격 플레이어는 VR 추적 불필요)
@@ -235,6 +300,12 @@ public class PlayerSetup : MonoBehaviourPun, IPunObservable
         {
             xrOrigin.enabled = false;
             if (enableDebugLogs) Debug.Log($"[PlayerSetup] ❌ {xrOrigin.GetType().Name} 비활성화 유지 (원격 플레이어는 VR 추적 불필요)");
+        }
+        
+        // Locomotion과 Main Camera는 이미 프리팹에서 비활성화되어 있으므로 그대로 유지
+        if (enableDebugLogs)
+        {
+            Debug.Log("[PlayerSetup] ⏸️ Locomotion과 Main Camera는 프리팹 기본 상태(비활성화) 유지");
         }
         
         // Character Controller 비활성화 (원격 플레이어는 물리 충돌 불필요, 네트워크 동기화만 사용)
@@ -272,19 +343,12 @@ public class PlayerSetup : MonoBehaviourPun, IPunObservable
             if (enableDebugLogs) Debug.Log("[PlayerSetup] ✅ Right Controller 시각적 활성화, 입력 비활성화");
         }
         
-        // 메인 카메라 비활성화 (원격 플레이어 카메라는 불필요)
-        if (mainCamera != null)
-        {
-            mainCamera.enabled = false;
-            if (enableDebugLogs) Debug.Log("[PlayerSetup] ❌ Main Camera 비활성화 (원격 플레이어 카메라 불필요)");
-        }
-        
         // 원격 플레이어 태그 설정
         gameObject.tag = "RemotePlayer";
         
         if (enableDebugLogs)
         {
-            Debug.Log("[PlayerSetup] 🔴 원격 플레이어 설정 완료 - 시각적 표현만 활성화되었습니다");
+            Debug.Log("[PlayerSetup] 🔴 원격 플레이어 설정 완료 - 시각적 표현만 활성화, 나머지는 기본 상태 유지");
         }
     }
     
