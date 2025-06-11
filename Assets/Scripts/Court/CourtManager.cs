@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 
-public class CourtManager : MonoBehaviourPunCallbacks, IPunObservable
+public class CourtManager : MonoBehaviourPunCallbacks
 {
     [Header("Court_Testing 씬 설정")]
     [SerializeField] private Transform player1Position; // 코트 왼쪽 위치
@@ -15,19 +15,6 @@ public class CourtManager : MonoBehaviourPunCallbacks, IPunObservable
     // 직접 할당용 변수
     [SerializeField] private GameObject player1;
     [SerializeField] private GameObject player2;
-    
-    [Header("XR Origin 네트워크 동기화")]
-    [SerializeField] private Transform myXROrigin; // 내 XR Origin
-    
-    // 네트워크 수신 데이터 (다른 곳에서 사용할 수 있도록)
-    private Vector3 enemyXROriginPosition;
-    private Quaternion enemyXROriginRotation;
-    private bool hasReceivedEnemyData = false;
-    
-    // 다른 스크립트에서 접근할 수 있는 프로퍼티
-    public Vector3 EnemyXROriginPosition => enemyXROriginPosition;
-    public Quaternion EnemyXROriginRotation => enemyXROriginRotation;
-    public bool HasReceivedEnemyData => hasReceivedEnemyData;
     
     void Start()
     {
@@ -43,33 +30,8 @@ public class CourtManager : MonoBehaviourPunCallbacks, IPunObservable
             FindPlayerObjects();
         }
         
-        // 내 XR Origin 찾기
-        FindMyXROrigin();
-        
         // 플레이어 초기 위치 설정
         PositionPlayers();
-    }
-    
-    void FindMyXROrigin()
-    {
-        if (myXROrigin != null) return; // 이미 할당된 경우
-        
-        // PhotonView.IsMine인 플레이어 오브젝트 찾기
-        PhotonView[] allPhotonViews = FindObjectsOfType<PhotonView>();
-        foreach (PhotonView pv in allPhotonViews)
-        {
-            if (pv.IsMine && (pv.gameObject.name.Contains("Player") || pv.gameObject.name.Contains("Origin")))
-            {
-                myXROrigin = pv.transform;
-                Debug.Log($"[CourtManager] 내 XR Origin 찾음: {myXROrigin.name}");
-                break;
-            }
-        }
-        
-        if (myXROrigin == null)
-        {
-            Debug.LogWarning("[CourtManager] 내 XR Origin을 찾을 수 없습니다!");
-        }
     }
     
     void CreatePositionMarkers()
@@ -221,39 +183,4 @@ public class CourtManager : MonoBehaviourPunCallbacks, IPunObservable
             player2.transform.position = player2Position.position;
         }
     }
-    
-    #region XR Origin 네트워크 동기화 (송수신만, Transform 조작 안함)
-    
-    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
-    {
-        if (stream.IsWriting)
-        {
-            // 내 XR Origin 데이터 송신
-            if (myXROrigin != null)
-            {
-                stream.SendNext(myXROrigin.position);
-                stream.SendNext(myXROrigin.rotation);
-            }
-            else
-            {
-                stream.SendNext(Vector3.zero);
-                stream.SendNext(Quaternion.identity);
-            }
-        }
-        else
-        {
-            // 상대 XR Origin 데이터 수신 (변수에만 저장, Transform 조작 안함)
-            enemyXROriginPosition = (Vector3)stream.ReceiveNext();
-            enemyXROriginRotation = (Quaternion)stream.ReceiveNext();
-            hasReceivedEnemyData = true;
-            
-            // 디버그 로그 (5초마다)
-            if (Time.time % 5f < 0.1f)
-            {
-                Debug.Log($"[CourtManager] 상대 XR Origin 데이터 수신: Position={enemyXROriginPosition}, Rotation={enemyXROriginRotation.eulerAngles}");
-            }
-        }
-    }
-    
-    #endregion
 }
