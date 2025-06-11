@@ -9,6 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 829165183713544203}
+  - component: {fileID: 688987759649457045}
+  - component: {fileID: 900945430909758795}
   m_Layer: 0
   m_Name: Paddles
   m_TagString: Untagged
@@ -34,6 +36,38 @@ Transform:
   - {fileID: 1626926066303692411}
   m_Father: {fileID: 8383160763933646028}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &688987759649457045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3075572919240565732}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b942f14849ad4a93a36420c58283f39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hapticPlayer: {fileID: 5657960956093155682}
+  baseHapticIntensity: 0.3
+  baseHapticDuration: 0.1
+  maxVelocityScale: 5
+--- !u!114 &900945430909758795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3075572919240565732}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b942f14849ad4a93a36420c58283f39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hapticPlayer: {fileID: 2776334496633723838}
+  baseHapticIntensity: 0.3
+  baseHapticDuration: 0.1
+  maxVelocityScale: 5
 --- !u!1 &3852349471520507876
 GameObject:
   m_ObjectHideFlags: 0
@@ -2237,6 +2271,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9f365cf844c03449bc8973eead2c3c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &2776334496633723838 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5967689310316253315, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+  m_PrefabInstance: {fileID: 8383160765570337597}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8383160765636418610}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b734f2bd29eeddd4d85afb0c266228c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2854528507187165209 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6038107472648090404, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
@@ -2572,6 +2617,17 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &5657960956093155682 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4238984354899526239, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+  m_PrefabInstance: {fileID: 8383160765570337597}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8383160763933646029}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b734f2bd29eeddd4d85afb0c266228c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7170186760365188368 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
