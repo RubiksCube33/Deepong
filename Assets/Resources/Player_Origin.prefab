@@ -2630,12 +2630,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b65904a83c093d246bd24e2b9d853a44, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isPlayerOne: 0
-  player1Position: {x: -1.31, y: 1, z: -5.81}
-  player2Position: {x: -0.98, y: 1, z: 10.207}
-  isVRPlayer: 1
-  vrComponents: {fileID: 0}
-  isRobotMode: 0
+  enableDebugLogs: 1
 --- !u!114 &7903797088014469734
 MonoBehaviour:
   m_ObjectHideFlags: 0
