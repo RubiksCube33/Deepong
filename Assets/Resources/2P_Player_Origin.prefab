@@ -1369,13 +1369,19 @@ PrefabInstance:
       addedObject: {fileID: 6894770183681663839}
     - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7567725599046366196}
-    - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4104610465085587436}
-    - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
-      insertIndex: -1
       addedObject: {fileID: -209995394814170901}
+    - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6315694090941032927}
+    - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5988076554322341494}
+    - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -1747547038283694221}
+    - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4482806077260816668}
     - targetCorrespondingSourceObject: {fileID: 202364687, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4785780121590569058}
@@ -1585,7 +1591,7 @@ MonoBehaviour:
   observableSearch: 2
   ObservedComponents:
   - {fileID: 6894770183681663839}
-  - {fileID: 4104610465085587436}
+  - {fileID: 5988076554322341494}
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
@@ -1614,7 +1620,25 @@ MonoBehaviour:
   leftControllerVisualizer: {fileID: 8383160765636418610}
   rightControllerVisualizer: {fileID: 8383160763933646029}
   createControllerVisualizers: 1
---- !u!95 &7567725599046366196
+--- !u!114 &-209995394814170901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7170186760365188368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b65904a83c093d246bd24e2b9d853a44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isPlayerOne: 0
+  player1Position: {x: -1.31, y: 1, z: -5.81}
+  player2Position: {x: -0.98, y: 1, z: 10.207}
+  isVRPlayer: 1
+  vrComponents: {fileID: 0}
+  isRobotMode: 0
+--- !u!95 &6315694090941032927
 Animator:
   serializedVersion: 5
   m_ObjectHideFlags: 0
@@ -1635,7 +1659,28 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &4104610465085587436
+--- !u!114 &5988076554322341494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7170186760365188368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce5dac4c018e58049b2c9508ea363257, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  floatParameters:
+  - Speed
+  - MotionSpeed
+  boolParameters:
+  - Grounded
+  intParameters: []
+  syncAnimationParameters: 1
+  syncAnimationStates: 1
+  parameterSmoothTime: 0.1
+--- !u!114 &-1747547038283694221
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1663,7 +1708,7 @@ MonoBehaviour:
   sendRate: 20
   positionThreshold: 0.01
   rotationThreshold: 1
---- !u!114 &-209995394814170901
+--- !u!114 &4482806077260816668
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1672,14 +1717,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 7170186760365188368}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b65904a83c093d246bd24e2b9d853a44, type: 3}
+  m_Script: {fileID: 11500000, guid: 4b6783a3ef63d68428f369da1750bd7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isLocalPlayer: 0
-  isPlayerOne: 0
-  isVRPlayer: 1
-  vrComponents: {fileID: 0}
-  isRobotMode: 0
+  autoSetupOnAwake: 0
+  hasPhotonView: 1
+  hasPlayerSetup: 1
+  hasPlayerNetworkSync: 1
+  hasPlayerAnimationSync: 1
 --- !u!4 &7170186760365188371 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
