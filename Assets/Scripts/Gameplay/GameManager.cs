@@ -4,6 +4,15 @@ using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
 
+/// <summary>
+/// 게임 매니저 - 로컬 및 네트워크 멀티플레이어 환경에서 플레이어 스폰 위치를 관리합니다.
+/// 
+/// 네트워크 환경에서는 XR Origin 소유권 문제를 해결하기 위해:
+/// - 각 클라이언트가 자신의 XR Origin만 제어
+/// - MasterClient가 스폰 포인트 정보만 공유
+/// - RPC를 통해 위치 정보를 동기화하되, 실제 Transform 조작은 로컬에서만 수행
+/// </summary>
+[RequireComponent(typeof(PhotonView))]
 public class GameManager : MonoBehaviourPunCallbacks
 {
     [Header("플레이어 설정")]
@@ -22,9 +31,10 @@ public class GameManager : MonoBehaviourPunCallbacks
         // 네트워크 환경인지 확인
         if (PhotonNetwork.IsConnected)
         {
-            Debug.Log("네트워크 멀티플레이어 모드 - NetworkPlayerManager가 플레이어 스폰을 담당합니다.");
-            // 네트워크 환경에서는 NetworkPlayerManager가 플레이어 관리를 담당
+            Debug.Log("네트워크 멀티플레이어 모드 - 각 플레이어가 자신의 XR Origin만 관리합니다.");
+            // 네트워크 환경에서는 각 플레이어가 자신의 XR Origin만 관리
             // GameManager는 게임 로직에만 집중
+            SetupNetworkMode();
             return;
         }
         
@@ -63,6 +73,113 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             Debug.LogError("플레이어 오브젝트를 찾을 수 없습니다. Inspector에서 직접 할당하거나 씬에서 올바른 이름으로 오브젝트를 설정해주세요.");
         }
+    }
+
+    /// <summary>
+    /// 네트워크 모드에서의 초기 설정
+    /// 각 플레이어가 자신의 XR Origin만 관리하도록 설정
+    /// </summary>
+    void SetupNetworkMode()
+    {
+        // PhotonView 확인
+        if (photonView == null)
+        {
+            Debug.LogError("GameManager에 PhotonView 컴포넌트가 없습니다! Inspector에서 PhotonView를 추가해주세요.");
+            return;
+        }
+        
+        // 스폰 포인트 생성 (MasterClient만 담당)
+        if (PhotonNetwork.IsMasterClient)
+        {
+            if (player1SpawnPoint == null || player2SpawnPoint == null)
+            {
+                Debug.Log("네트워크 모드 - MasterClient가 스폰 포인트를 생성합니다.");
+                CreateDefaultSpawnPoints();
+                
+                // 다른 클라이언트들에게 스폰 포인트 정보 전송
+                photonView.RPC("RPC_ReceiveSpawnPoints", RpcTarget.Others, 
+                    player1SpawnPoint.position, player1SpawnPoint.rotation.eulerAngles,
+                    player2SpawnPoint.position, player2SpawnPoint.rotation.eulerAngles);
+            }
+        }
+        
+        // 로컬 플레이어의 위치만 설정 (자신의 XR Origin만 관리)
+        StartCoroutine(SetupLocalPlayerPosition());
+    }
+
+    /// <summary>
+    /// 로컬 플레이어의 위치만 설정하는 코루틴
+    /// 네트워크 플레이어들이 스폰될 때까지 대기 후 자신의 XR Origin만 조작
+    /// </summary>
+    private System.Collections.IEnumerator SetupLocalPlayerPosition()
+    {
+        // 스폰 포인트가 설정될 때까지 대기
+        yield return new WaitUntil(() => player1SpawnPoint != null && player2SpawnPoint != null);
+        
+        // 잠시 대기 (네트워크 플레이어 스폰 완료 대기)
+        yield return new WaitForSeconds(1f);
+        
+        // 로컬 플레이어 찾기 및 위치 설정
+        SetLocalPlayerPosition();
+    }
+
+    /// <summary>
+    /// 로컬 플레이어만 찾아서 위치를 설정
+    /// </summary>
+    void SetLocalPlayerPosition()
+    {
+        // PhotonView.IsMine인 플레이어만 찾기
+        PhotonView[] allPhotonViews = FindObjectsOfType<PhotonView>();
+        
+        foreach (PhotonView pv in allPhotonViews)
+        {
+            if (pv.IsMine)
+            {
+                // PlayerSetup 컴포넌트가 있는 플레이어 오브젝트 찾기
+                PlayerSetup playerSetup = pv.GetComponent<PlayerSetup>();
+                if (playerSetup != null)
+                {
+                    // 플레이어 번호에 따라 위치 설정
+                    bool isPlayerOne = pv.Owner.ActorNumber == 1;
+                    Transform targetSpawn = isPlayerOne ? player1SpawnPoint : player2SpawnPoint;
+                    
+                    if (targetSpawn != null)
+                    {
+                        Debug.Log($"로컬 플레이어 위치 설정: {pv.gameObject.name} -> {targetSpawn.position}");
+                        pv.transform.position = targetSpawn.position;
+                        pv.transform.rotation = targetSpawn.rotation;
+                    }
+                    
+                    break; // 자신의 플레이어만 찾으면 끝
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 다른 클라이언트로부터 스폰 포인트 정보 수신
+    /// </summary>
+    [PunRPC]
+    void RPC_ReceiveSpawnPoints(Vector3 p1Pos, Vector3 p1Rot, Vector3 p2Pos, Vector3 p2Rot)
+    {
+        Debug.Log("다른 클라이언트로부터 스폰 포인트 정보를 수신했습니다.");
+        
+        // 스폰 포인트 생성
+        GameObject spawnPointsHolder = new GameObject("SpawnPoints");
+        
+        // 플레이어 1 스폰 포인트 
+        GameObject p1Spawn = new GameObject("Player1SpawnPoint");
+        p1Spawn.transform.parent = spawnPointsHolder.transform;
+        p1Spawn.transform.position = p1Pos;
+        p1Spawn.transform.rotation = Quaternion.Euler(p1Rot);
+        player1SpawnPoint = p1Spawn.transform;
+        
+        // 플레이어 2 스폰 포인트
+        GameObject p2Spawn = new GameObject("Player2SpawnPoint");
+        p2Spawn.transform.parent = spawnPointsHolder.transform;
+        p2Spawn.transform.position = p2Pos;
+        p2Spawn.transform.rotation = Quaternion.Euler(p2Rot);
+        player2SpawnPoint = p2Spawn.transform;
     }
 
     void CreateDefaultSpawnPoints()
@@ -190,30 +307,9 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
     
-    // 네트워크 환경에서의 플레이어 스폰 방법 (향후 확장용)
-    void SpawnNetworkPlayers()
-    {
-        if (PhotonNetwork.IsConnected)
-        {
-            // 방장인 경우에만 플레이어 위치 설정 권한 부여
-            if (PhotonNetwork.IsMasterClient)
-            {
-                // 네트워크 이벤트를 통해 모든 클라이언트에게 위치 설정 명령 전송
-                photonView.RPC("RPC_SetPlayerPositions", RpcTarget.All);
-            }
-        }
-        else
-        {
-            // 비 네트워크 환경일 경우 바로 위치 설정
-            PositionPlayers();
-        }
-    }
-    
-    [PunRPC]
-    void RPC_SetPlayerPositions()
-    {
-        PositionPlayers();
-    }
+    // 기존의 문제가 있던 SpawnNetworkPlayers 메서드는 제거됨
+    // 이제 SetupNetworkMode()와 SetLocalPlayerPosition()으로 대체되어
+    // 각 클라이언트가 자신의 XR Origin만 관리하게 됨
     
     // 에디터에서 플레이어 오브젝트를 쉽게 설정할 수 있도록 도와주는 메서드
     [ContextMenu("Find And Set Player Objects")]
