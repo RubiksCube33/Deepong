@@ -2339,6 +2339,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6eb4340434054c843aa9380860eadc23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  particleVFX: {fileID: 8926484042661614526, guid: c4793324d18300f4d9f68a2a4661c3ca, type: 3}
+  minCollisionForce: 1
+  maxCollisionForce: 10
+  particleIntensityMultiplier: 1
+  weakCollisionColor: {r: 0.015686274, g: 1, b: 0.9242295, a: 1}
+  strongCollisionColor: {r: 0, g: 0.53948474, b: 1, a: 1}
 --- !u!114 &4319829403919364267 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5739245880472075158, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
@@ -2416,6 +2422,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6eb4340434054c843aa9380860eadc23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  particleVFX: {fileID: 8926484042661614526, guid: c4793324d18300f4d9f68a2a4661c3ca, type: 3}
+  minCollisionForce: 1
+  maxCollisionForce: 10
+  particleIntensityMultiplier: 1
+  weakCollisionColor: {r: 0.2229334, g: 0.8037735, b: 0.6435217, a: 1}
+  strongCollisionColor: {r: 0, g: 0.66540194, b: 1, a: 1}
 --- !u!82 &8475551019234760899
 AudioSource:
   m_ObjectHideFlags: 0
@@ -2702,6 +2714,7 @@ MonoBehaviour:
   paddle_glove_left: {fileID: 5468759117494518156}
   paddle_glove_right: {fileID: 2152667912625370305}
   isRightController: 1
+  enableNetworkSync: 1
   OnPaddleChanged:
     m_PersistentCalls:
       m_Calls: []

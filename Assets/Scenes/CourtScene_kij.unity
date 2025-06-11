@@ -304,17 +304,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 89a89ff4e52f8384ca6ae6ce4aa6e1b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  connectingInfoPanel: {fileID: 0}
-  createRoomButton: {fileID: 0}
-  joinRoomButton: {fileID: 0}
-  roomNameInput: {fileID: 0}
-  roomListContent: {fileID: 0}
-  roomListItemPrefab: {fileID: 0}
   debugText: {fileID: 0}
-  autoCreateRoomOnStart: 1
-  testRoomName: TestRoom
-  createRoomKey: 282
-  joinRoomKey: 283
+  leaveRoomButton: {fileID: 0}
+  networkStatusPanel: {fileID: 0}
+  showDebugInfo: 1
+  leaveRoomKey: 27
 --- !u!4 &54432434
 Transform:
   m_ObjectHideFlags: 0
@@ -1683,6 +1677,10 @@ PrefabInstance:
       propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[1].value
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3056618033077479788, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: -876546973899608171, guid: eed674e6bf9a09e439118e312ea507bf, type: 3}
     - target: {fileID: 4096290590159216971, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
       propertyPath: m_Name
       value: GameBall
@@ -2033,7 +2031,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3d70edfb7650b0344bc29d2b7bb7377a, type: 2}
+  - {fileID: -876546973899608171, guid: fb0ec250c49fbf94c8178e22300aca68, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2986,7 +2984,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d324cbc83dae895499772e5870409dd9, type: 2}
+  - {fileID: -876546973899608171, guid: fb0ec250c49fbf94c8178e22300aca68, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
