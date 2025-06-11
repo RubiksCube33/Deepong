@@ -549,7 +549,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3d70edfb7650b0344bc29d2b7bb7377a, type: 2}
+  - {fileID: -876546973899608171, guid: fb0ec250c49fbf94c8178e22300aca68, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1825,13 +1825,17 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3056618033077479788, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: -876546973899608171, guid: eed674e6bf9a09e439118e312ea507bf, type: 3}
     - target: {fileID: 4096290590159216971, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
       propertyPath: m_Name
       value: GameBall
       objectReference: {fileID: 0}
     - target: {fileID: 4196494231499730308, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.14
+      value: 0.122
       objectReference: {fileID: 0}
     - target: {fileID: 4196494231499730308, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1839,7 +1843,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4196494231499730308, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.122
+      value: 0.294
       objectReference: {fileID: 0}
     - target: {fileID: 4196494231499730308, guid: 880c00de70263433997c97dc0d4fa1a0, type: 3}
       propertyPath: m_LocalRotation.w
