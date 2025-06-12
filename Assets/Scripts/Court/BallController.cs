@@ -85,8 +85,7 @@ public class BallController : MonoBehaviourPunCallbacks
     private void OnCollisionEnter(Collision collision)
     {
         ContactPoint contact = collision.contacts[0];
-        // 올바른 반사 방향 계산: 충돌 지점에서 공 중심으로의 방향
-        Vector3 hitDirection = (transform.position - contact.point).normalized;
+        Vector3 hitDirection = (collision.transform.position - contact.point).normalized;
         Vector3 forceDirection = hitDirection;
         float forceMagnitude = baseForce;
         
@@ -201,33 +200,14 @@ public class BallController : MonoBehaviourPunCallbacks
         Rigidbody controllerRb = collision.gameObject.GetComponent<Rigidbody>();
         if (controllerRb != null)
         {
+            // 컨트롤러의 속도를 기본 힘에 더함
             Vector3 controllerVelocity = controllerRb.velocity;
-            
-            // 더 현실적인 방향 계산
-            // 1. 기본 반사 방향 (법선 벡터 기반)
-            Vector3 reflectionDirection = Vector3.Reflect(-rb.velocity.normalized, contact.normal);
-            
-            // 2. 컨트롤러 움직임 방향 고려
-            Vector3 controllerDirection = controllerVelocity.normalized;
-            
-            // 3. 두 방향을 가중 평균으로 결합 (컨트롤러 속도가 클수록 더 많이 반영)
-            float controllerInfluence = Mathf.Clamp01(controllerVelocity.magnitude / 10f); // 10은 최대 영향 속도
-            Vector3 finalDirection = Vector3.Lerp(reflectionDirection, controllerDirection, controllerInfluence * 0.7f);
-            
-            // 4. 최종 힘 계산
+            forceDirection = (hitDirection + controllerVelocity.normalized) / 2f;
             forceMagnitude = baseForce + (controllerVelocity.magnitude * velocityMultiplier);
+            rb.velocity = forceDirection * forceMagnitude;
             
-            // 5. 공에 힘 적용
-            rb.velocity = finalDirection.normalized * forceMagnitude;
-            
-            Debug.Log($"컨트롤러 속도: {controllerVelocity.magnitude}, 적용된 힘: {forceMagnitude}, 최종 방향: {finalDirection}");
-        }
-        else
-        {
-            // 컨트롤러 정보가 없을 경우 기본 반사 적용
-            Vector3 reflectionDirection = Vector3.Reflect(-rb.velocity.normalized, contact.normal);
-            rb.velocity = reflectionDirection * forceMagnitude;
-        }
+            Debug.Log($"컨트롤러 속도: {controllerVelocity.magnitude}, 적용된 힘: {forceMagnitude}");
+        } 
     }
     
     /// <summary>
