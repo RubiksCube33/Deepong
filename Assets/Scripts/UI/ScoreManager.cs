@@ -108,6 +108,18 @@ public class ScoreView : MonoBehaviour
             
             string scoreDisplay = $"{myScoreText} : {opponentScoreText}";
             scoreText3D.text = scoreDisplay;
+            
+            // 플레이어별로 3D 텍스트 회전 조정
+            if (!isPlayer1)
+            {
+                // 플레이어 2의 경우 텍스트를 180도 회전시켜 올바른 방향으로 보이게 함
+                scoreText3D.transform.rotation = Quaternion.Euler(0, 180, 0);
+            }
+            else
+            {
+                // 플레이어 1의 경우 기본 회전 유지
+                scoreText3D.transform.rotation = Quaternion.Euler(0, 0, 0);
+            }
         }
     }
 
