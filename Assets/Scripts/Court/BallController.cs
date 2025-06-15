@@ -85,7 +85,7 @@ public class BallController : MonoBehaviourPunCallbacks
     private void OnCollisionEnter(Collision collision)
     {
         ContactPoint contact = collision.contacts[0];
-        Vector3 hitDirection = (collision.transform.position - contact.point).normalized;
+        Vector3 hitDirection = (contact.point - collision.transform.position).normalized; // 패들에서 충돌점으로의 방향
         Vector3 forceDirection = hitDirection;
         float forceMagnitude = baseForce;
         
