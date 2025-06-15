@@ -48,6 +48,14 @@ public class BallSync : MonoBehaviourPun, IPunObservable
         {
             photonView.RequestOwnership();
         }
+        
+        // 게임 중이므로 네트워크 송수신 빈도를 높임
+        if (PhotonNetwork.IsConnected)
+        {
+            PhotonNetwork.SendRate = 60; // 기본값 30에서 60으로 증가
+            PhotonNetwork.SerializationRate = 60; // 기본값 10에서 60으로 증가
+            Debug.Log($"BallSync 활성화: SendRate={PhotonNetwork.SendRate}, SerializationRate={PhotonNetwork.SerializationRate}");
+        }
     }
 
     void FixedUpdate()
