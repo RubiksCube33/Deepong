@@ -478,7 +478,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7a6d8a2a4911faa4a871759e7701c54d, type: 3}
       propertyPath: m_ConstrainProportionsScale
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -5192021721943186856, guid: 7a6d8a2a4911faa4a871759e7701c54d, type: 3}
       propertyPath: m_Enabled
@@ -1429,7 +1429,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_Name
-      value: Player_Origin
+      value: Player_Origin_old
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_RootOrder
@@ -1752,6 +1752,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6eb4340434054c843aa9380860eadc23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  particleVFX: {fileID: 0}
+  minCollisionForce: 1
+  maxCollisionForce: 10
+  particleIntensityMultiplier: 1
+  weakCollisionColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  strongCollisionColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!4 &3372923174574731291 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6528530117482412838, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
@@ -1834,6 +1840,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6eb4340434054c843aa9380860eadc23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  particleVFX: {fileID: 0}
+  minCollisionForce: 1
+  maxCollisionForce: 10
+  particleIntensityMultiplier: 1
+  weakCollisionColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  strongCollisionColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!82 &8475551019234760899
 AudioSource:
   m_ObjectHideFlags: 0
