@@ -165,12 +165,17 @@ cd Deepong
 ## 게임플레이 가이드
 
 ### **기본 조작법**
-- **이동**: VR 헤드셋 움직임으로 자연스러운 이동
+![image](https://github.com/user-attachments/assets/56386f02-7ac8-48b9-9ebd-5d316b02cd11)
+
+- **이동**: 왼쪽 컨트롤러 스틱을 움직여 이동
+- **시점 이동** 오른쪽 컨트롤러 스틱을 움직여 이동
 - **패들 조작**: VR 컨트롤러로 직관적인 패들 스윙
 - **패들 변경**: A 버튼 (Primary Button) 눌러서 패들 타입 변경
 - **메뉴 조작**: VR 컨트롤러로 3D UI 요소 선택
 
 ### **게임 진행**
+![image](https://github.com/user-attachments/assets/3601dcc7-1073-4950-a3fb-e3ab7b256b42)
+
 1. **메인 메뉴**에서 멀티플레이어 선택
 2. **방 생성** 또는 **기존 방 참가**
 3. **상대방 입장 대기** (최대 2명)
@@ -180,7 +185,7 @@ cd Deepong
 
 ### **패들 타입별 특징**
 - **탁구 라켓**: 기본 패들, 균형잡힌 성능
-- **사이버 검**: 특수 효과음과 시각 효과
+- **사이버 검**: 특수 효과음과 시각 효과, 긴 사거리
 - **복싱 글러브**: 양손 사용, 강력한 햅틱 피드백
 
 ## 네트워크 아키텍처
@@ -207,11 +212,9 @@ float interpSpeed = Mathf.Lerp(minSyncSpeed, maxSyncSpeed, distance / distanceMu
 - 패들 변경 상태 동기화
 
 ### **매칭 시스템 플로우**
-```
-클라이언트 접속 → 로비 입장 → 방 생성/참가 → 게임 시작 → 실시간 플레이
-```
+![KakaoTalk_20250618_213046635_05](https://github.com/user-attachments/assets/ea2afc6d-ca3a-435f-9a56-039ce64bbfd5)
 
-## 🔍 주요 기술적 특징
+## 주요 기술적 특징
 
 ### **1. 정밀한 물리 동기화**
 - **마스터 클라이언트** 기반 공 소유권 관리
@@ -244,17 +247,7 @@ float interpSpeed = Mathf.Lerp(minSyncSpeed, maxSyncSpeed, distance / distanceMu
 adb install Deepong.apk
 ```
 
-## 기여하기
+## DOCS
+상세한 개발 내용 정리는 아래의 링크에서 확인 가능합니다.
 
-### **개발 환경 설정**
-1. 이 저장소를 포크합니다
-2. 새로운 기능 브랜치를 생성합니다 (`git checkout -b feature/새기능`)
-3. 변경사항을 커밋합니다 (`git commit -am '새 기능 추가'`)
-4. 브랜치에 푸시합니다 (`git push origin feature/새기능`)
-5. Pull Request를 생성합니다
-
-### **코딩 컨벤션**
-- **C# 네이밍 컨벤션** 준수
-- **Unity 코딩 표준** 따르기
-- **주석 작성** - 복잡한 로직에 대한 설명
-- **네트워크 관련 코드** - 동기화 안전성 고려
+https://nostalgic-side-a53.notion.site/2161d8eecc37800f82bff815d2aa4529?v=2161d8eecc3781f39899000cf6ccc0e9&pvs=73
