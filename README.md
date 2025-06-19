@@ -239,8 +239,3 @@ float interpSpeed = Mathf.Lerp(minSyncSpeed, maxSyncSpeed, distance / distanceMu
 ```bash
 adb install Deepong.apk
 ```
-
-## DOCS
-상세한 개발 내용 정리는 아래의 링크에서 확인 가능합니다.
-
-https://nostalgic-side-a53.notion.site/2161d8eecc37800f82bff815d2aa4529?v=2161d8eecc3781f39899000cf6ccc0e9&pvs=73
