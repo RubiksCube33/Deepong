@@ -127,7 +127,7 @@ Assets/
 
 ### **1. 프로젝트 클론**
 ```bash
-git clone <repository-url>
+git clone RubiksCube33/Deepong
 cd Deepong
 ```
 
@@ -176,6 +176,7 @@ cd Deepong
 4. **게임 자동 시작** - 게임 코트로 이동
 5. **실시간 Pong 게임** 진행
 6. **점수 달성** 시 승부 결정
+   
 ![스크린샷 2025-06-12 001125](https://github.com/user-attachments/assets/7adf8fcb-0e30-420e-a6e8-90ee15686f5d)
 ![스크린샷 2025-06-12 000611](https://github.com/user-attachments/assets/b0fdb4ca-a5fe-484b-b7c1-73b721b54811)
 ### **패들 타입별 특징**
@@ -224,7 +225,7 @@ float interpSpeed = Mathf.Lerp(minSyncSpeed, maxSyncSpeed, distance / distanceMu
 ### **3. 확장 가능한 아키텍처**
 - **모듈화된 구조** - 각 시스템의 독립성 보장
 - **이벤트 기반 통신** - 느슨한 결합을 통한 유지보수성
-- **플러그인 지원** - 새로운 패들 타입 쉽게 추가 가능
+- **프리팹 기반 오브젝트 관리** - 프리팹 수정을 통해 새로운 요소 추가 가능
 
 ## 빌드 및 배포
 
