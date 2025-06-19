@@ -1,4 +1,4 @@
-# Deepong - VR 멀티플레이어 탁구 게임
+# Deepong - 고전게임 Pong을 재해석한 VR 멀티플레이어 게임
 
 ![Unity](https://img.shields.io/badge/Unity-2022.3.x-blue)
 ![XR](https://img.shields.io/badge/XR-Meta%20Quest%20Series-green)
@@ -7,7 +7,7 @@
 
 ![ChatGPT Image 2025년 6월 18일 오후 11_52_37](https://github.com/user-attachments/assets/246bcbd5-c6f9-456d-a812-d857e5482456)
 
-Deepong은 Unity와 Meta XR SDK를 기반으로 개발된 실시간 멀티플레이어 VR 탁구 게임입니다. Photon PUN2 네트워킹을 통해 최대 2명의 플레이어가 VR 환경에서 실시간으로 탁구를 즐길 수 있습니다.
+Deepong은 Unity와 Meta XR SDK를 기반으로 고전게임 Pong을 재해석한 실시간 멀티플레이어 게임입니다. Photon PUN2 네트워킹을 통해 최대 2명의 플레이어가 VR 환경에서 실시간으로 3차원 버전의 Pong을 즐길 수 있습니다.
 
 ## 팀 소개
 
@@ -22,13 +22,13 @@ Deepong은 Unity와 Meta XR SDK를 기반으로 개발된 실시간 멀티플레
 
 ### **몰입형 VR 경험**
 - **Meta Quest 시리즈 완벽 지원** (Quest, Quest 2, Quest Pro, Quest 3, Quest 3S)
-- **자연스러운 VR 상호작용** - 실제 탁구와 같은 패들 조작
+- **자연스러운 VR 상호작용** - 실제 물체와 같은 느낌의 패들 조작
 - **정확한 물리 시뮬레이션** - 현실적인 공의 움직임과 충돌
 - **햅틱 피드백** - 공과 패들 충돌 시 진동 피드백
 
 ### **실시간 멀티플레이어**
 - **Photon PUN2 기반** - 안정적인 클라우드 네트워킹
-- **최대 2명 동시 플레이** - 1:1 탁구 매치
+- **최대 2명 동시 플레이** - 1:1 게임 매치
 - **실시간 동기화** - 플레이어 움직임, 공 물리, 점수 동기화
 - **지연 보정 시스템** - 네트워크 지연을 보정하는 예측 알고리즘
 
@@ -92,9 +92,9 @@ Assets/
 │   │   ├── BallSync.cs                # 공 물리 동기화 (핵심)
 │   │   ├── GameManager.cs             # 게임 상태 관리
 │   │   └── PongRacketHaptics.cs       # 패들 햅틱 피드백
-│   ├── Court/             # 탁구장 관련
+│   ├── Court/             # 메인 스테이지 (게임 코트) 관련
 │   │   ├── BallController.cs          # 공 제어 로직
-│   │   ├── CourtManager.cs            # 탁구장 관리
+│   │   ├── CourtManager.cs            # 게임 코트 관리
 │   │   └── PaddleChangeController.cs  # 패들 변경 시스템
 │   ├── UI/                # 사용자 인터페이스
 │   │   ├── ChoosingRoomUI.cs          # 방 선택 UI
@@ -105,7 +105,7 @@ Assets/
 ├── Scenes/                # 게임 씬들
 │   ├── MainMenuScene.unity            # 메인 메뉴
 │   ├── BasicScene.unity               # 기본 게임 씬
-│   └── CourtSceneAds.unity           # 탁구장 씬
+│   └── CourtSceneAds.unity           # 테스트용 코트 씬
 ├── Prefabs/               # 프리팹들
 │   ├── Player_Origin.prefab           # VR 플레이어 프리팹
 │   ├── GameBall.prefab               # 게임 공 프리팹
@@ -172,8 +172,8 @@ cd Deepong
 1. **메인 메뉴**에서 멀티플레이어 선택
 2. **방 생성** 또는 **기존 방 참가**
 3. **상대방 입장 대기** (최대 2명)
-4. **게임 자동 시작** - 탁구장으로 이동
-5. **실시간 탁구 게임** 진행
+4. **게임 자동 시작** - 게임 코트로 이동
+5. **실시간 Pong 게임** 진행
 6. **점수 달성** 시 승부 결정
 
 ### **패들 타입별 특징**
@@ -215,7 +215,7 @@ float interpSpeed = Mathf.Lerp(minSyncSpeed, maxSyncSpeed, distance / distanceMu
 - **순간이동 방지** - 임계값 기반 텔레포트 처리
 
 ### **2. 최적화된 VR 성능**
-- **프레임률 최적화** - 90FPS 유지를 위한 렌더링 최적화
+- **프레임 최적화** - 90FPS 유지를 위한 렌더링 최적화
 - **배터리 효율성** - 불필요한 연산 최소화
 - **메모리 관리** - 동적 로딩 및 언로딩
 
