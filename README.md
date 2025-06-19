@@ -6,6 +6,7 @@
 ![Platform](https://img.shields.io/badge/Platform-Android%20VR-red)
 
 ![ChatGPT Image 2025년 6월 18일 오후 11_52_37](https://github.com/user-attachments/assets/246bcbd5-c6f9-456d-a812-d857e5482456)
+![스크린샷 2025-06-12 000916](https://github.com/user-attachments/assets/d4bf71cc-64e8-48a1-a0bd-618bdd7a8c60)
 
 Deepong은 Unity와 Meta XR SDK를 기반으로 고전게임 Pong을 재해석한 실시간 멀티플레이어 게임입니다. Photon PUN2 네트워킹을 통해 최대 2명의 플레이어가 VR 환경에서 실시간으로 3차원 버전의 Pong을 즐길 수 있습니다.
 
@@ -13,7 +14,7 @@ Deepong은 Unity와 Meta XR SDK를 기반으로 고전게임 Pong을 재해석�
 
 | 팀원 | 역할 | 주요 담당 업무 |
 |------|------|----------------|
-| **권혜능** | **팀 리더** | • 팀 일정 관리 및 기획<br>• 빌드 환경 관리<br>• 물리 효과, 충돌 인터랙션 구현 |
+| **권혜능** | **팀 리더 (개발, PM, QA)** | • 팀 일정 관리 및 기획<br>• 빌드 환경 관리<br>• 물리 효과, 충돌 인터랙션 구현<br>• 프로젝트 전반적 이슈 파악, 디버깅|
 | **권익주** | **에셋 담당** | • SFX, VFX 담당<br>• 프리팹 구성<br>• 게임 에셋 관리 |
 | **서주은** | **UI 담당** | • 각 씬간의 이동 시스템<br>• 메인, 스코어, 팀 매칭 등의 UI<br>• VR UI/UX 디자인 |
 | **안대성** | **네트워크 담당** | • 포톤 멀티플레이어 구현<br>• 공, 캐릭터, 패들, 점수 동기화<br>• 실시간 네트워크 코드 최적화 |
@@ -86,7 +87,7 @@ Assets/
 │   │   └── VRMovementController.cs    # VR 이동 제어
 │   ├── VR/                # VR 전용 시스템
 │   │   ├── VRControllerNetworkSync.cs # VR 컨트롤러 동기화
-│   │   ├── VRHumanoidController.cs    # VR 휴머노이드 제어
+│   │   ├── VRHumanoidController.cs    # (미사용 코드) VR 휴머노이드 프리팹 제어
 │   │   └── XRPlayerArmatureSetup.cs   # XR 플레이어 아바타 설정
 │   ├── Gameplay/          # 게임플레이 로직
 │   │   ├── BallSync.cs                # 공 물리 동기화 (핵심)
@@ -168,14 +169,15 @@ cd Deepong
 
 ### **게임 진행**
 ![image](https://github.com/user-attachments/assets/3601dcc7-1073-4950-a3fb-e3ab7b256b42)
-
+![스크린샷 2025-06-12 000816](https://github.com/user-attachments/assets/7d2cb62f-2b21-46a4-a572-ce66ec7821a9)
 1. **메인 메뉴**에서 멀티플레이어 선택
 2. **방 생성** 또는 **기존 방 참가**
 3. **상대방 입장 대기** (최대 2명)
 4. **게임 자동 시작** - 게임 코트로 이동
 5. **실시간 Pong 게임** 진행
 6. **점수 달성** 시 승부 결정
-
+![스크린샷 2025-06-12 001125](https://github.com/user-attachments/assets/7adf8fcb-0e30-420e-a6e8-90ee15686f5d)
+![스크린샷 2025-06-12 000611](https://github.com/user-attachments/assets/b0fdb4ca-a5fe-484b-b7c1-73b721b54811)
 ### **패들 타입별 특징**
 - **탁구 라켓**: 기본 패들, 균형잡힌 성능
 - **사이버 검**: 특수 효과음과 시각 효과, 긴 사거리
